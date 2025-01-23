@@ -5,10 +5,14 @@ VOS-OOG (ValueOnSys Out of Gauge Project)
 OOG CARGO (Out of Gauge Cargo)란 
 
 기준 부피를 벗어난 대형 화물이나 수하물로, 특수 컨테이너인 플랫렉(Flat Rack)과 오픈탑(Open Top)에 적입한 화물을 가리킨다.
-OOG(Out of Gauge)는 정해진 틀이나 계량치를 벗어난다는 뜻으로 기준 부피를 벗어난 대형 화물이나 수하물을 뜻한다. 즉, 크기나 중량 면에서 일반 GP(Gerneral Purpose) 컨테이너에 적입할 수 없는 화물을 특수 컨테이너인 플랫렉(flat rack)과 오픈탑(open top)에 적입한 것이다.
+
+OOG(Out of Gauge)는 정해진 틀이나 계량치를 벗어난다는 뜻으로 기준 부피를 벗어난 대형 화물이나 수하물을 뜻한다.
+즉, 크기나 중량 면에서 일반 GP(Gerneral Purpose) 컨테이너에 적입할 수 없는 화물을 특수 컨테이너인 플랫렉(flat rack)과 오픈탑(open top)에 적입한 것이다.
+
 OOG 화물이 적재되는 플랫랙 컨테이너(flat rack container)는 보통 컨테이너에 비하여 바닥 강도가 강하고 화물을 고박할 수 있는 설비를 갖춘 개방형 컨테이너이며, 오픈탑 컨테이너(open top container)는 말 그대로 천장 부분이 개방된 컨테이너를 말한다.
 
 ## 설치 방법
+```
 md vos-oog
 cd vos-oog
 npm install -g pnpm
@@ -16,6 +20,7 @@ pnpm init
 pnpm add @mui/x-data-grid
 pnpm add @mui/material @emotion/react @emotion/styled
 pnpm add @mui/styled-engine-sc styled-components
+```
 
 ## 사용 방법
 // ...existing code...
