@@ -15,11 +15,23 @@ OOG 화물이 적재되는 플랫랙 컨테이너(flat rack container)는 보통
 ```
 md vos-oog
 cd vos-oog
-npm install -g pnpm
-pnpm init
-pnpm add @mui/x-data-grid
-pnpm add @mui/material @emotion/react @emotion/styled
-pnpm add @mui/styled-engine-sc styled-components
+#npm install -g pnpm
+#pnpm init
+#pnpm add @mui/x-data-grid
+#pnpm add @mui/material @emotion/react @emotion/styled
+#pnpm add @mui/styled-engine-sc styled-components
+
+npm uninstall -g create-react-app
+npm install -g create-react-app
+npx create-react-app frontend
+cd frontend
+npm install web-vitals
+npm add @mui/x-data-grid
+npm add @mui/material @emotion/react @emotion/styled
+npm add @mui/styled-engine-sc styled-components
+npm install @mui/x-data-grid
+npm i @mui/x-data-grid-generator --legacy-peer-deps
+npm i @mui/icons-material --legacy-peer-deps
 ```
 
 ## 사용 방법
