@@ -1,62 +1,94 @@
-'use client';
-// React Grid Logic
-import React, { StrictMode, useState } from "react";
+"use client";
+
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  StrictMode,
+} from "react";
 import { createRoot } from "react-dom/client";
-
-// Theme
-import type { ColDef } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry, themeBalham, themeQuartz } from "ag-grid-community";
-// Core CSS
 import { AgGridReact } from "ag-grid-react";
-
+import {
+  AllCommunityModule,
+  ColDef,
+  ColGroupDef,
+  GridApi,
+  GridOptions,
+  GridReadyEvent,
+  ModuleRegistry,
+  Theme,
+  createGrid,
+  iconSetMaterial,
+  themeQuartz,
+} from "ag-grid-community";
+import { IOlympicData } from "./interfaces";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-// Row Data Interface
-interface IRow {
-  make: string;
-  model: string;
-  price: number;
-  electric: boolean;
-}
-const customTheme = themeQuartz
+const myTheme = themeQuartz
+  .withPart(iconSetMaterial)
 	.withParams({
-        backgroundColor: "#1f2836",
-        browserColorScheme: "dark",
-        chromeBackgroundColor: {
-            ref: "foregroundColor",
-            mix: 0.07,
-            onto: "backgroundColor"
+        browserColorScheme: "light",
+        fontFamily: {
+            googleFont: "Open Sans"
         },
-        foregroundColor: "#FFF",
-        headerFontSize: 14,
-        rowVerticalPaddingScale: 0.5
-    });
-// Create new GridExample component
+        fontSize: 15,
+        headerBackgroundColor: "#0E4491",
+        headerFontFamily: {
+            googleFont: "Open Sans"
+        },
+        headerFontSize: 20,
+        headerTextColor: "#FFFFFF",
+        iconSize: 18
+});
+
 const GridExample = () => {
-  // Row Data: The data to be displayed.
-  const [rowData, setRowData] = useState<IRow[]>([
-    { make: "Tesla", model: "Model Y", price: 64950, electric: true },
-    { make: "Ford", model: "F-Series", price: 33850, electric: false },
-    { make: "Toyota", model: "Corolla", price: 29600, electric: false },
+  const containerStyle = useMemo(() => ({ width: "100%", height: "100%" }), []);
+  const gridStyle = useMemo(() => ({ height: "100%", width: "100%" }), []);
+  const [rowData, setRowData] = useState<IOlympicData[]>();
+  const [columnDefs, setColumnDefs] = useState<ColDef[]>([
+    { field: "athlete", minWidth: 170 },
+    { field: "age" },
+    { field: "country" },
+    { field: "year" },
+    { field: "date" },
+    { field: "sport" },
+    { field: "gold" },
+    { field: "silver" },
+    { field: "bronze" },
+    { field: "total" },
   ]);
+  const theme = useMemo<Theme | "legacy">(() => {
+    return myTheme;
+  }, []);
+  const defaultColDef = useMemo<ColDef>(() => {
+    return {
+      editable: true,
+      filter: true,
+    };
+  }, []);
 
-  // Column Definitions: Defines & controls grid columns.
-  const [colDefs, setColDefs] = useState<ColDef<IRow>[]>([
-    { field: "make" },
-    { field: "model" },
-    { field: "price" },
-    { field: "electric" },
-  ]);
+  const onGridReady = useCallback((params: GridReadyEvent) => {
+    fetch("https://www.ag-grid.com/example-assets/olympic-winners.json")
+      .then((resp) => resp.json())
+      .then((data: IOlympicData[]) => setRowData(data));
+  }, []);
 
-  // Container: Defines the grid's theme & dimensions.
   return (
-    <div style={{ width: "100%", height: "100%" }}>
-      <AgGridReact theme={customTheme} rowData={rowData} columnDefs={colDefs} />
+    <div style={containerStyle}>
+      <div style={gridStyle}>
+        <AgGridReact<IOlympicData>
+          rowData={rowData}
+          columnDefs={columnDefs}
+          theme={theme}
+          defaultColDef={defaultColDef}
+          onGridReady={onGridReady}
+        />
+      </div>
     </div>
   );
 };
 
-// Render GridExample
 const root = createRoot(document.getElementById("root")!);
 root.render(
   <StrictMode>
