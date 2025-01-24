@@ -76,6 +76,51 @@ const GridExample = () => {
 
   return (
     <div style={containerStyle}>
+
+      <div style={{ marginBottom: "10px", textAlign: "center" }}>
+        <button
+          onClick={() => setRowData([])}
+          style={{
+        marginRight: "10px",
+        padding: "10px 20px",
+        backgroundColor: "#0E4491",
+        color: "#FFFFFF",
+        border: "none",
+        borderRadius: "5px",
+        cursor: "pointer",
+          }}
+        >
+          Import
+        </button>
+        <button
+          onClick={() => setRowData([{ athlete: "Michael Phelps", country: "US" }])}
+          style={{
+        marginRight: "10px",
+        padding: "10px 20px",
+        backgroundColor: "#0E4491",
+        color: "#FFFFFF",
+        border: "none",
+        borderRadius: "5px",
+        cursor: "pointer",
+          }}
+        >
+          Export
+        </button>
+        <button
+          onClick={() => setRowData([])}
+          style={{
+        padding: "10px 20px",
+        backgroundColor: "#0E4491",
+        color: "#FFFFFF",
+        border: "none",
+        borderRadius: "5px",
+        cursor: "pointer",
+          }}
+        >
+          Template Download
+        </button>
+      </div>
+
       <div style={gridStyle}>
         <AgGridReact<IOlympicData>
           rowData={rowData}
