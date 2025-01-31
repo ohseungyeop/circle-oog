@@ -1,5 +1,5 @@
 # 프로젝트 이름
-VOS-OOG-Backend Project
+VOS-OOG Backend Project
 
 ## 설치 방법
 ```
@@ -13,6 +13,9 @@ npm run local
 npm run dev
 npm run prd
 ```
+
+## POSTMAN
+(https://vos-solution-team.postman.co/workspace/ValueOnSys-Workspace~339fa560-a1c7-420e-b963-b9f1d8a9379e/folder/6413309-30827bbf-1e30-49a2-96d8-3403d5a07feb?action=share&source=copy-link&creator=6413309&ctx=documentation)
 
 ## 파일 구조
 ```
