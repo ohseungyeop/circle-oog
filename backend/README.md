@@ -5,6 +5,7 @@ VOS-OOG Backend Project
 ```
 cd backend
 npm i
+npm install nodemon --save-dev
 ```
 
 ## 사용 방법
@@ -16,6 +17,12 @@ npm run prd
 
 ## POSTMAN
 (https://vos-solution-team.postman.co/workspace/ValueOnSys-Workspace~339fa560-a1c7-420e-b963-b9f1d8a9379e/folder/6413309-30827bbf-1e30-49a2-96d8-3403d5a07feb?action=share&source=copy-link&creator=6413309&ctx=documentation)
+
+## MariaDB 권한
+```
+GRANT ALL PRIVILEGES ON vos_oog.* TO 'oogown'@'%' IDENTIFIED BY 'oogown$#@';
+FLUSH PRIVILEGES;
+```
 
 ## 파일 구조
 ```
