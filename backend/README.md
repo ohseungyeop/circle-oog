@@ -5,6 +5,7 @@ VOS-OOG Backend Project
 ```
 cd backend
 npm i
+npm install nodemon --save-dev
 ```
 
 ## 사용 방법
