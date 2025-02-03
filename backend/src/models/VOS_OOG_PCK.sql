@@ -1,8 +1,8 @@
 DROP TABLE IF EXISTS VOS_OOG_PCK;
 
 CREATE TABLE VOS_OOG_PCK (
-    PCK_ORD_SEQ INT(10) NOT NULL COMMENT '(PK) Upload Sequence',
     PCK_ITM_SEQ INT(10) NOT NULL COMMENT '(PK) Upload Item Sequence',
+    PCK_ORD_SEQ INT(10) NOT NULL COMMENT 'Upload Sequence(Upload 차수)',
 -- ----------------S: user-defined
     PCK_NO INT(10) NOT NULL COMMENT 'Packing Order No(display)',
     ITM_NM VARCHAR(255) DEFAULT NULL COMMENT 'Item Name',
@@ -21,5 +21,5 @@ CREATE TABLE VOS_OOG_PCK (
 -- ----------------E: user-defined
     CRE_DT DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Created Time',
     UPD_DT DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'Updated Time',
-    PRIMARY KEY (PCK_ORD_SEQ, PCK_ITM_SEQ)
+    PRIMARY KEY (PCK_ITM_SEQ)
 ) COMMENT = 'OOG Packing Information';
