@@ -1,0 +1,21 @@
+CREATE TABLE VOS_OOG_UPLD_DTL (
+    PCK_ITM_SEQ     INT AUTO_INCREMENT PRIMARY KEY,
+    PCK_ORD_SEQ     INT NOT NULL,
+-- --------S: user defined
+    PCK_NO          INT,
+    ITM_NM          VARCHAR(255),
+    PCK_LEN         DECIMAL(10),
+    PCK_WDT         DECIMAL(10),
+    PCK_HGT         DECIMAL(10),
+    PCK_QTY         INT,
+    PCK_WGT         DECIMAL(10),
+    PCK_RMK         VARCHAR(255),
+    ESTM_PCK_LEN    DECIMAL(10),
+    ESTM_PCK_WDT    DECIMAL(10),
+    ESTM_PCK_HGT    DECIMAL(10),
+    PCK_CBM         DECIMAL(10),
+    PCK_TP_CD       VARCHAR(255),
+    PCK_GRS_WGT     DECIMAL(12),
+-- --------E: user defined
+    FOREIGN KEY (PCK_ORD_SEQ) REFERENCES VOS_OOG_UPLD_MST(PCK_ORD_SEQ) ON DELETE CASCADE
+);
