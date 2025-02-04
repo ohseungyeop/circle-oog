@@ -7,6 +7,12 @@ cd backend
 npm i
 npm install nodemon --save-dev
 ```
+```
+[node_modules 초기화(필요시)]
+rm -rf node_modules
+rm package-lock.json
+npm i
+```
 
 ## 사용 방법
 ```

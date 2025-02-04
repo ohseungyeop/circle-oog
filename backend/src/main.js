@@ -19,9 +19,12 @@ console.log(`✅ Loaded environment: ${process.env.NODE_ENV}`);
 console.log(`✅ Using DB: ${process.env.DB_NAME}`);
 
 // 플러그인 & 라우트 등록
-fastify.register(require('./plugins/cors'));  // ✅ CORS 추가
-fastify.register(require('./plugins/db'));
-fastify.register(require('./routes'));
+fastify.register(require('./plugins/cors'));     // ✅ CORS 추가
+fastify.register(require('./plugins/db'));       // ✅ DB 플러그인
+fastify.register(require('./plugins/mailer'));   // ✅ 메일러 플러그인 등록 (라우트보다 먼저)
+fastify.register(require('./routes'));           // ✅ 기존 라우트
+
+// fastify.register(require('./routes/email'));     // ✅ 이메일 라우트 등록
 
 // 서버 실행
 const start = async () => {
