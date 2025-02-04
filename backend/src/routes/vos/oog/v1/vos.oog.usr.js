@@ -16,7 +16,9 @@ async function registOogUser(fastify, options) {
       .first();
 
     if (existingUser) {
-      //redirect main page
+      // 리다이렉트 처리 (검증 성공 시)
+      const redirectUrl = `${process.env.CLIENT_URL}`;
+      return reply.redirect(302, redirectUrl);  // 302 리다이렉트
     }
 
     // 2️⃣ 새로운 사용자 또는 비활성화된 사용자 등록/업데이트

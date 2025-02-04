@@ -21,6 +21,9 @@ fastify.post('/', async (request, reply) => {
 }
   
 async function verifyEmail(fastify, options) {
+
+    const redirectUrl = `${process.env.CLIENT_URL}`;
+
     fastify.get('/', async (request, reply) => {
       const token = request.query.token;
   
@@ -43,7 +46,7 @@ async function verifyEmail(fastify, options) {
                 <div class="container">
                   <h1>❌ Token is missing</h1>
                   <p>유효한 토큰이 필요합니다.</p>
-                  <a href="/">🏠 홈으로 가기</a>
+                  <a href="${redirectUrl}">🏠 홈으로 가기</a>
                 </div>
               </body>
             </html>
@@ -81,7 +84,7 @@ async function verifyEmail(fastify, options) {
                   <div class="container">
                     <h1>❌ 사용자 정보를 찾을 수 없습니다.</h1>
                     <p>이메일 주소가 잘못되었거나 이미 검증된 계정입니다.</p>
-                    <a href="/">🏠 홈으로 가기</a>
+                    <a href="${redirectUrl}">🏠 홈으로 가기</a>
                   </div>
                 </body>
               </html>
@@ -108,7 +111,7 @@ async function verifyEmail(fastify, options) {
                 <div class="container">
                   <h1>✅ 이메일이 성공적으로 검증되었습니다!</h1>
                   <p>이제 모든 서비스를 자유롭게 이용하실 수 있습니다.</p>
-                  <a href="/">🏠 홈으로 가기</a>
+                  <a href="${redirectUrl}">🏠 홈으로 가기</a>
                 </div>
               </body>
             </html>
@@ -133,7 +136,7 @@ async function verifyEmail(fastify, options) {
                 <div class="container">
                   <h1>❌ 이메일 검증에 실패했습니다</h1>
                   <p>토큰이 만료되었거나 잘못되었습니다.</p>
-                  <a href="/">🏠 홈으로 가기</a>
+                  <a href="${redirectUrl}">🏠 홈으로 가기</a>
                 </div>
               </body>
             </html>
