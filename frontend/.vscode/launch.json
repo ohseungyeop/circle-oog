@@ -5,12 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "pwa-msedge",
+            "type": "chrome",
             "request": "launch",
-            "name": "localhost에 대해 edge 시작",
+            "name": "디버그 시작",
             "url": "http://localhost:3000",
             "webRoot": "${workspaceFolder}",
-            "preLaunchTask": "npm: start"
+            "preLaunchTask": "npm: start",
+            "runtimeExecutable": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
         }
     ]
 }
