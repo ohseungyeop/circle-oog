@@ -3,20 +3,30 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.2",
+    "@mui/material": "^6.4.2",
+    "@mui/styled-engine-sc": "^6.4.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "ag-grid-community": "33.0.4",
     "ag-grid-enterprise": "33.0.4",
     "ag-grid-react": "33.0.4",
+    "axios": "^1.7.9",
     "react": "18",
     "react-dom": "18",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "styled-components": "^6.1.14"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "local": "cross-env NODE_ENV=local react-scripts start",
+    "dev": "cross-env NODE_ENV=dev     react-scripts start",
+    "prd": "cross-env NODE_ENV=prd     react-scripts start"
   },
   "eslintConfig": {
     "extends": [
@@ -38,6 +48,9 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "typescript": "^5.7.3"
-  }
+    "@types/node": "^22.13.1",
+    "cross-env": "^7.0.3",
+    "ts-node": "^10.9.2"
+  },
+  "proxy": "http://localhost:3300"
 }
