@@ -5,9 +5,11 @@
   "main": "src/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"No build step required for backend project.\"",
     "local": "cross-env NODE_ENV=local NODE_PATH=./src nodemon --inspect=3301 --verbose src/main.js",
     "dev": "cross-env NODE_ENV=dev NODE_PATH=./src node src/main.js",
     "prd": "cross-env NODE_ENV=prd NODE_PATH=./src node src/main.js"
+
   },
   "keywords": [],
   "author": "",
