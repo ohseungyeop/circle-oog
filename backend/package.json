@@ -9,7 +9,6 @@
     "local": "cross-env NODE_ENV=local NODE_PATH=./src nodemon --inspect=3301 --verbose src/app.js",
     "dev": "cross-env NODE_ENV=dev NODE_PATH=./src node src/app.js",
     "prd": "cross-env NODE_ENV=prd NODE_PATH=./src node src/app.js"
-
   },
   "keywords": [],
   "author": "",
@@ -17,6 +16,7 @@
   "dependencies": {
     "@fastify/cors": "^10.0.2",
     "@fastify/multipart": "^9.0.3",
+    "cross-env": "^7.0.3",
     "fastify": "^5.2.1",
     "fastify-env": "^2.2.0",
     "fastify-jwt": "^4.2.0",
@@ -29,8 +29,5 @@
     "nodemailer": "^6.10.0",
     "pino-pretty": "^13.0.0",
     "uuid": "^11.0.5"
-  },
-  "devDependencies": {
-    "cross-env": "^7.0.3"
   }
 }
