@@ -3,7 +3,7 @@ const { helpers } = require('routes/helpers');
 
 async function registOogUser(fastify, options) {
   fastify.post('/', async (request, reply) => {
-    const email = request.query.email;
+    const { email } = request.body;
     console.log('📧 이메일 요청:', email);
   
     // 1️⃣ 이메일로 사용자 조회
