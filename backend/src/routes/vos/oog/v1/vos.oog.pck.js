@@ -33,10 +33,10 @@ async function uploadOogFile(fastify, options) {
       try {
 
 console.log(access_token);
-console.log(process.env.JWT_SECRET);
+console.log(process.env.JWT_SECRET_KEY);
 
 
-        const decoded = jwt.verify(access_token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(access_token, process.env.JWT_SECRET_KEY);
         if (decoded.email !== email) {
           return reply.status(403).send('Email does not match token');
         }
