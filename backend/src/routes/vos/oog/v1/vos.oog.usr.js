@@ -42,7 +42,7 @@ async function registOogUser(fastify, options) {
     );
   
     // 4️⃣ 이메일 검증 링크 생성
-    const verificationLink = `${process.env.SERVER_URL}/verify-email?token=${verificationToken}`;
+    const verificationLink = `${process.env.BACKEND_URL}/verify-email?token=${verificationToken}`;
   
     // 5️⃣ 이메일 전송
     const subject = '[VOS OOG System] Email Verification';

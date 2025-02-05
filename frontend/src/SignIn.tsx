@@ -31,7 +31,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
   }),
 }));
 
-const apiUrl = process.env.REACT_APP_API_URL;
+const apiUrl = process.env.BACKEND_URL;
 
 const SignInContainer = styled(Stack)(({ theme }) => ({
   height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',

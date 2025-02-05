@@ -29,8 +29,8 @@ fastify.register(require('./routes'));           // ✅ 기존 라우트
 // 서버 실행
 const start = async () => {
   try {
-    await fastify.listen({ port: process.env.SERVER_PORT });
-    console.log(`🚀 Server running at ${process.env.SERVER_URL}`);
+    await fastify.listen({ port: process.env.BACKEND_PORT });
+    console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
