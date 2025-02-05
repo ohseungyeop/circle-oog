@@ -8,7 +8,7 @@
     "build": "echo \"No build step required for backend project.\"",
     "local": "cross-env NODE_ENV=local NODE_PATH=./src nodemon --inspect=3301 --verbose src/app.js",
     "dev": "cross-env NODE_ENV=dev NODE_PATH=./src node src/app.js",
-    "prd": "cross-env NODE_ENV=prd NODE_PATH=./src node src/app.js"
+    "prd": "cross-env NODE_ENV=prd NODE_PATH=$(pwd)/src node src/app.js"
   },
   "keywords": [],
   "author": "",
