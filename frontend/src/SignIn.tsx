@@ -91,6 +91,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       console.log("서버 응답:", result);
     } catch (error) {
       console.error("오류 발생:", error);
+      
     }
   };
 
