@@ -75,7 +75,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       return;
     }
     const data = new FormData(event.currentTarget);
-    const email = data.get("USR_EML");
+    const email = data.get("email");
     console.log("Form Data:", { email });
   
     try {
@@ -84,7 +84,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ USR_EML: email }),
+        body: JSON.stringify({ email: email }),
       });
   
       const result = await response.json();
@@ -145,7 +145,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 helperText={emailErrorMessage}
                 id="email"
                 type="email"
-                name="USR_EML"
+                name="email"
                 placeholder="your@email.com"
                 autoComplete="email"
                 autoFocus
