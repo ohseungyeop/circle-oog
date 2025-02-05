@@ -29,7 +29,10 @@ fastify.register(require('./routes'));           // ✅ 기존 라우트
 // 서버 실행
 const start = async () => {
   try {
-    await fastify.listen({ port: process.env.BACKEND_PORT });
+    await fastify.listen({
+      port: process.env.BACKEND_PORT,
+      host: '0.0.0.0'
+    });
     console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
   } catch (err) {
     fastify.log.error(err);
