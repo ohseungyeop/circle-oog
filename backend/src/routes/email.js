@@ -22,7 +22,7 @@ fastify.post('/', async (request, reply) => {
   
 async function verifyEmail(fastify, options) {
 
-    const redirectUrl = `${process.env.CLIENT_URL}`;
+    const redirectUrl = `${process.env.FRONTEND_URL}`;
 
     fastify.get('/', async (request, reply) => {
       const token = request.query.token;
@@ -111,7 +111,7 @@ async function verifyEmail(fastify, options) {
                 <div class="container">
                   <h1>✅ 이메일이 성공적으로 검증되었습니다!</h1>
                   <p>이제 모든 서비스를 자유롭게 이용하실 수 있습니다.</p>
-                  <a href="${redirectUrl}">🏠 홈으로 가기</a>
+                  <a href="${redirectUrl}/grid">🏠 홈으로 가기</a>
                 </div>
               </body>
             </html>
@@ -149,4 +149,3 @@ module.exports = {
     sendEmail,
     verifyEmail
 };
-  

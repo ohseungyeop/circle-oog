@@ -16,6 +16,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import { useNavigate } from 'react-router-dom';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -62,6 +63,8 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
+  const navigate = useNavigate();
+  const [navigateToGrid, setNavigateToGrid] = React.useState(false);
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
@@ -69,6 +72,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
   const handleClose = () => {
     setOpen(false);
+    if (navigateToGrid) {
+      navigate('/grid');
+    }
   };
 
   const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
@@ -94,10 +100,12 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       console.log("서버 응답:", result);
       setDialogMessage("메일 인증을 완료해 주세요.");
       setOpen(true);
+      setNavigateToGrid(true); // 로그인 성공 시 페이지 이동 플래그 설정
     } catch (error) {
       console.error("오류 발생:", error);
       setDialogMessage("오류가 발생했습니다. 다시 시도해주세요.");
       setOpen(true);
+      setNavigateToGrid(false); // 오류 발생 시 페이지 이동 플래그 해제
     }
   };
 
