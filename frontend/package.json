@@ -2,6 +2,11 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -15,35 +20,7 @@
     "ag-grid-react": "33.0.4",
     "react": "18",
     "react-dom": "18",
-    "react-scripts": "^5.0.1",
     "styled-components": "^6.1.14"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "local": "cross-env NODE_ENV=local react-scripts start",
-    "dev": "cross-env NODE_ENV=dev     react-scripts start",
-    "prd": "cross-env NODE_ENV=prd     react-scripts start"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
@@ -53,9 +30,9 @@
     "@babel/plugin-transform-private-methods": "^7.25.9",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.1",
-    "cross-env": "^7.0.3",
     "ts-node": "^10.9.2",
-    "typescript": "^4.9.5"
-  },
-  "proxy": "http://localhost:3300"
+    "typescript": "^4.9.5",
+    "@vitejs/plugin-react-swc": "^3.0.0",
+    "vite": "^4.0.0"
+  }
 }
