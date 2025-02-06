@@ -10,7 +10,6 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from './theme/AppTheme.tsx';
-import ColorModeSelect from './theme/ColorModeSelect.tsx';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -77,41 +76,47 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     }
   };
 
-  const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateInputs()) {
       return;
     }
     const data = new FormData(event.currentTarget);
-    const email = data.get("email");
-    console.log("Form Data:", { email });
+    const email = data.get('email');
+    console.log('Form Data:', { email });
     console.log(apiUrl);
 
     try {
       const response = await fetch(`${apiUrl}/vos/oog/v1/usr`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email: email }),
       });
 
       const result = await response.json();
-      console.log("서버 응답:", result);
-      setDialogMessage("메일 인증을 완료해 주세요.");
-      setOpen(true);
-      setNavigateToGrid(true); // 로그인 성공 시 페이지 이동 플래그 설정
+      console.log('서버 응답:', result);
+      if ('S' === result.code) {
+        setNavigateToGrid(true);
+        setDialogMessage('로그인 성공');
+        setOpen(true);
+      } else if ('V' === result.code || 'N' === result.code) {
+        setDialogMessage('메일 인증을 완료해 주세요.');
+        setOpen(true);
+      } else if ('E' === result.code) {
+        setDialogMessage('서버 에러 입니다.');
+        setOpen(true);
+      }
     } catch (error) {
-      console.error("오류 발생:", error);
-      setDialogMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      console.error('오류 발생:', error);
+      setDialogMessage('오류가 발생했습니다. 다시 시도해주세요.');
       setOpen(true);
-      setNavigateToGrid(false); // 오류 발생 시 페이지 이동 플래그 해제
     }
   };
 
   const validateInputs = () => {
     const email = document.getElementById('email') as HTMLInputElement;
-
     let isValid = true;
 
     if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
@@ -126,19 +131,30 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     return isValid;
   };
 
+  React.useEffect(() => {
+    const root = document.getElementById('root');
+    if (root) {
+      root.setAttribute('aria-hidden', 'false');
+    }
+    return () => {
+      if (root) {
+        root.removeAttribute('aria-hidden');
+      }
+    };
+  }, [open]);
+
   return (
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
-        <ColorModeSelect sx={{ position: 'fixed', top: '1rem', right: '1rem' }} />
         <Card variant="outlined">
-          <object data="https://www.valueonsys.com/logo.html?size=24&amp;option=1&amp;anim=yes&amp;bw=b&amp;t=1738630981328" type="text/html" width="230" height="35"></object>
-          
-          <Typography
-            component="h1"
-            variant="h4"
-            sx={{ width: '100%', textAlign:'center'}}
-          >
+          <object
+            data="https://www.valueonsys.com/logo.html?size=24&amp;option=1&amp;anim=yes&amp;bw=b&amp;t=1738630981328"
+            type="text/html"
+            width="230"
+            height="35"
+          ></object>
+          <Typography component="h1" variant="h4" sx={{ width: '100%', textAlign: 'center' }}>
             Out of Gauge System
           </Typography>
           <Box
@@ -152,7 +168,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               gap: 2,
             }}
           >
-            <FormControl >
+            <FormControl>
               <FormLabel htmlFor="email">Email</FormLabel>
               <TextField
                 error={emailError}
@@ -169,11 +185,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 color={emailError ? 'error' : 'primary'}
               />
             </FormControl>
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-            >
+            <Button type="submit" fullWidth variant="contained">
               Submit
             </Button>
           </Box>
@@ -182,10 +194,12 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       <Dialog
         open={open}
         onClose={handleClose}
+        aria-labelledby="dialog-title"
+        aria-describedby="dialog-description"
       >
-        <DialogTitle>알림</DialogTitle>
+        <DialogTitle id="dialog-title">알림</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="dialog-description">
             {dialogMessage}
           </DialogContentText>
         </DialogContent>

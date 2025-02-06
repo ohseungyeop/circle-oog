@@ -175,11 +175,4 @@ const GridExample = () => {
   );
 };
 
-const root = createRoot(document.getElementById("root")!);
-root.render(
-  <StrictMode>
-    <GridExample />
-  </StrictMode>
-);
-
 export default GridExample;

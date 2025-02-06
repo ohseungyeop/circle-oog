@@ -5,7 +5,9 @@ import { StyledEngineProvider } from '@mui/material/styles';
 import SignIn from './SignIn.tsx';
 import GridExample from './grid.tsx';
 
-ReactDOM.createRoot(document.querySelector("#root")!).render(
+const root = ReactDOM.createRoot(document.querySelector("#root")!);
+
+root.render(
   <React.StrictMode>
     <StyledEngineProvider injectFirst>
       <Router>
