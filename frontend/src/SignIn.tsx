@@ -11,6 +11,11 @@ import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from './theme/AppTheme.tsx';
 import ColorModeSelect from './theme/ColorModeSelect.tsx';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -59,15 +64,12 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
-  // const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [dialogMessage, setDialogMessage] = React.useState('');
 
-  // const handleClickOpen = () => {
-  //   setOpen(true);
-  // };
-
-  // const handleClose = () => {
-  //   setOpen(false);
-  // };
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const handleSubmit = async(event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -77,7 +79,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const data = new FormData(event.currentTarget);
     const email = data.get("email");
     console.log("Form Data:", { email });
-  
+    console.log(apiUrl);
+
     try {
       const response = await fetch(`${apiUrl}/vos/oog/v1/usr`, {
         method: "POST",
@@ -86,12 +89,15 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         },
         body: JSON.stringify({ email: email }),
       });
-  
+
       const result = await response.json();
       console.log("서버 응답:", result);
+      setDialogMessage("메일 인증을 완료해 주세요.");
+      setOpen(true);
     } catch (error) {
       console.error("오류 발생:", error);
-      
+      setDialogMessage("오류가 발생했습니다. 다시 시도해주세요.");
+      setOpen(true);
     }
   };
 
@@ -108,7 +114,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       setEmailError(false);
       setEmailErrorMessage('');
     }
-
 
     return isValid;
   };
@@ -164,37 +169,24 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               Submit
             </Button>
           </Box>
-          {/* <Divider>or</Divider>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign in with Google')}
-              startIcon={<GoogleIcon />}
-            >
-              Sign in with Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={() => alert('Sign in with Facebook')}
-              startIcon={<FacebookIcon />}
-            >
-              Sign in with Facebook
-            </Button>
-            <Typography sx={{ textAlign: 'center' }}>
-              Don&apos;t have an account?{' '}
-              <Link
-                href="/material-ui/getting-started/templates/sign-in/"
-                variant="body2"
-                sx={{ alignSelf: 'center' }}
-              >
-                Sign up
-              </Link>
-            </Typography>
-          </Box> */}
         </Card>
       </SignInContainer>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+      >
+        <DialogTitle>알림</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {dialogMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="primary">
+            닫기
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppTheme>
   );
 }

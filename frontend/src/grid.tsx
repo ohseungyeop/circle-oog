@@ -77,13 +77,15 @@ const GridExample = () => {
   const exportBtn = useCallback(() => {
     gridRef.current?.api.exportDataAsCsv();
   }, []);
+  
+  const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
   const importExcel = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const response = await fetch("http://localhost:3300/vos/oog/v1/pcks/upload", {
+      const response = await fetch(`${apiUrl}vos/oog/v1/pcks/upload`),{
         method: "POST",
         body: formData,
       });
