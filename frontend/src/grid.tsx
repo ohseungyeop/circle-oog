@@ -90,7 +90,7 @@ debugger;
         method: "POST",
         headers: {
 
-           "Content-Type": "application/json", 
+           "Content-Type": "multipart/form-data", 
            "Authorization": `Bearer ${cookies.authToken}`,
         },
         body: formData,
