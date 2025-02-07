@@ -72,7 +72,37 @@ const sendEmail = async (fastify, to, subject, text) => {
   }
 };
 
+// 토큰 검증 함수
+const verifyToken = (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+      if (err) {
+        reject(new Error('Invalid or expired token'));
+      } else {
+        resolve(decoded);
+      }
+    });
+  });
+};
+
+// 토큰 검증을 위한 엔드포인트
+async function verifyTokenRoute(fastify, options) {
+  fastify.post('/verify-token', async (request, reply) => {
+    const { token } = request.body;
+
+    try {
+      const decoded = await verifyToken(token);
+      // 토큰이 유효한 경우(decoded가 반환되면)
+      return reply.send({ code: 'S', status: 'Success', message: 'Token is valid', data: decoded });
+    } catch (error) {
+      // 토큰이 유효하지 않은 경우
+      return reply.status(400).send({ code: 'E', status: 'Error', message: 'Invalid or expired token' });
+    }
+  });
+}
+
 module.exports = {
   registerOogUser,
-  sendEmail
+  sendEmail,
+  verifyTokenRoute
 };
