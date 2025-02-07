@@ -18,11 +18,17 @@ dotenv.config({ path: envFile });
 console.log(`✅ Loaded environment: ${process.env.NODE_ENV}`);
 console.log(`✅ Using DB: ${process.env.DB_NAME}`);
 
+const cookie = require('@fastify/cookie');
+
 // 플러그인 & 라우트 등록
 fastify.register(require('./plugins/cors'));     // ✅ CORS 추가
 fastify.register(require('./plugins/db'));       // ✅ DB 플러그인
 fastify.register(require('./plugins/mailer'));   // ✅ 메일러 플러그인 등록 (라우트보다 먼저)
 fastify.register(require('./routes'));           // ✅ 기존 라우트
+fastify.register(cookie, {
+  // secret: process.env.COOKIE_SECRET, // 선택적 (서명된 쿠키에 사용)
+  parseOptions: {} // 쿠키 옵션 설정 가능
+});
 
 // fastify.register(require('./routes/email'));     // ✅ 이메일 라우트 등록
 
