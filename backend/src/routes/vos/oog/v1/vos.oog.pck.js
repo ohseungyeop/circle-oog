@@ -2,6 +2,7 @@ const { replyHelper } = require('helpers/replyHelper');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fastifyMulter = require('fastify-multer');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 async function getPckRoutes(fastify, options) {
   fastify.get('/', replyHelper(async (request, reply) => {
@@ -21,7 +22,12 @@ async function uploadOogFile(fastify, options) {
     const upload = fastifyMulter({ storage: fastifyMulter.memoryStorage() });
 
     // 파일 업로드 엔드포인트
-    fastify.post('/', { preHandler: upload.single('file') }, async (req, reply) => {
+    fastify.post('/', {
+        preHandler: [
+          authMiddleware,
+          upload.single('file')
+        ]
+      }, async (req, reply) => {
       if (!req.file) {
         return reply.status(400).send('No file uploaded');
       }
