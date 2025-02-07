@@ -6,8 +6,8 @@ const authMiddleware = require('../middlewares/authMiddleware');
 
 async function getPckRoutes(fastify, options) {
   fastify.get('/', replyHelper(async (request, reply) => {
-    const pcks = await fastify.knex('vos_oog_pck').select('*');
-    return pcks;
+    const pckList = await fastify.knex('vos_oog_pck').select('*');
+    return pckList;
   }));
 };
 
@@ -79,11 +79,6 @@ console.log(process.env.JWT_SECRET_KEY);
         reply.status(500).send('Error saving file info to database');
       }
     });
-
-
-
-    // const pcks = await fastify.knex('vos_oog_pck').select('*');
-    // return pcks;
 };
 
 // routes/insertPckRoute.js
