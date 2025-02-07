@@ -10,17 +10,28 @@ async function registerOogUser(fastify, options) {
       // 1️⃣ 이메일로 사용자 조회
       const existingUser = await fastify.knex('vos_oog_usr').where({ USR_EML: email }).first();
     
+      // 2️⃣ 검증 토큰 생성 (24시간 유효)
+      const verificationToken = jwt.sign(
+        {
+          email,
+          iat: Math.floor(Date.now() / 1000),
+          exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24), // 24시간 후 만료
+        },
+        process.env.JWT_SECRET_KEY,
+        { algorithm: 'HS256' }
+      );
+      
       if (existingUser) {
-        // 2️⃣ 기존 사용자 상태 체크
+        // 3️⃣ 기존 사용자 상태 체크
         if ('A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
           // ✅ **쿠키에 토큰 저장**
-          setAuthToken(reply, token);
+          setAuthToken(reply, verificationToken);
           return reply.send({ code: 'S', status: 'Success', message: 'User already exists' });
         } else if ('I' === existingUser.USR_STS && 'N' === existingUser.EML_VRF_YN) {
           return reply.send({ code: 'V', status: 'Verify', message: 'Email exists, but not verified. Please verify your email.' });
         }
       } else {
-        // 3️⃣ 새로운 사용자 등록
+        // 4️⃣ 새로운 사용자 등록
         await fastify.knex('vos_oog_usr')
           .insert({
             USR_EML: email,
@@ -28,17 +39,6 @@ async function registerOogUser(fastify, options) {
             EML_VRF_YN: 'N'       // 검증되지 않음
           });
 
-        // 4️⃣ 검증 토큰 생성 (24시간 유효)
-        const verificationToken = jwt.sign(
-          {
-            email,
-            iat: Math.floor(Date.now() / 1000),
-            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24), // 24시간 후 만료
-          },
-          process.env.JWT_SECRET_KEY,
-          { algorithm: 'HS256' }
-        );
-      
         // 5️⃣ 이메일 검증 링크 생성
         const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/verify-email?token=${verificationToken}`;
       
