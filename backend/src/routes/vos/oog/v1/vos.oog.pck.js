@@ -2,7 +2,7 @@ const { replyHelper } = require('helpers/replyHelper');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fastifyMulter = require('fastify-multer');
-const authMiddleware = require('../middlewares/authMiddleware');
+const authMiddleware = require('middlewares/authMiddleware');
 
 async function getPckRoutes(fastify, options) {
   fastify.get('/', replyHelper(async (request, reply) => {
