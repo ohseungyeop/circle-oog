@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { helpers } = require('routes/helpers');
+const { setAuthToken  } = require('helpers/cookieHelper');
 
 async function registerOogUser(fastify, options) {
   fastify.post('/', async (request, reply) => {
@@ -13,6 +13,8 @@ async function registerOogUser(fastify, options) {
       if (existingUser) {
         // 2️⃣ 기존 사용자 상태 체크
         if ('A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
+          // ✅ **쿠키에 토큰 저장**
+          setAuthToken(reply, token);
           return reply.send({ code: 'S', status: 'Success', message: 'User already exists' });
         } else if ('I' === existingUser.USR_STS && 'N' === existingUser.EML_VRF_YN) {
           return reply.send({ code: 'V', status: 'Verify', message: 'Email exists, but not verified. Please verify your email.' });
@@ -38,7 +40,7 @@ async function registerOogUser(fastify, options) {
         );
       
         // 5️⃣ 이메일 검증 링크 생성
-        const verificationLink = `${process.env.BACKEND_URL}/verify-email?token=${verificationToken}`;
+        const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/verify-email?token=${verificationToken}`;
       
         // 6️⃣ 이메일 전송
         const subject = '[VOS OOG System] Email Verification';

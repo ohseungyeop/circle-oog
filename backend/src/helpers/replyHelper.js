@@ -1,4 +1,4 @@
-function helpers(fn) {
+function replyHelper(fn) {
   return async (request, reply) => {
     const timestamp = new Date().toISOString();
     try {
@@ -26,4 +26,4 @@ function helpers(fn) {
   };
 }
 
-module.exports = { helpers };
+module.exports = { replyHelper };

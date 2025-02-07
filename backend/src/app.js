@@ -30,8 +30,6 @@ fastify.register(cookie, {
   parseOptions: {} // 쿠키 옵션 설정 가능
 });
 
-// fastify.register(require('./routes/email'));     // ✅ 이메일 라우트 등록
-
 // 서버 실행
 const start = async () => {
   try {

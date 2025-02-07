@@ -1,10 +1,10 @@
-const { helpers } = require('routes/helpers');
+const { replyHelper } = require('helpers/replyHelper');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fastifyMulter = require('fastify-multer');
 
 async function getPckRoutes(fastify, options) {
-  fastify.get('/', helpers(async (request, reply) => {
+  fastify.get('/', replyHelper(async (request, reply) => {
     const pcks = await fastify.knex('vos_oog_pck').select('*');
     return pcks;
   }));
@@ -82,7 +82,7 @@ console.log(process.env.JWT_SECRET_KEY);
 
 // routes/insertPckRoute.js
 async function insertPckRoute(fastify, options) {
-  fastify.post('/', helpers(async (request, reply) => {
+  fastify.post('/', replyHelper(async (request, reply) => {
     const {
       PCK_ORD_NO,
       PCK_NO,
