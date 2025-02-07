@@ -5,9 +5,9 @@ import React, {
   useMemo,
   useRef,
   useState,
-  StrictMode,
+
 } from "react";
-import { createRoot } from "react-dom/client";
+import { useCookies } from "react-cookie";
 import { AgGridReact } from "ag-grid-react";
 import {
   AllCommunityModule,
@@ -18,7 +18,6 @@ import {
   iconSetMaterial,
   themeQuartz,
 } from "ag-grid-community";
-
 
 
 ModuleRegistry.registerModules([AllCommunityModule, CsvExportModule]);
@@ -41,7 +40,7 @@ const myTheme = themeQuartz
     iconSize: 18,
   });
 
-const GridExample = () => {
+const GridIndex = () => {
   const gridRef = useRef(null);
   const containerStyle = useMemo(() => ({ width: "100%", height: "100%" }), []);
   const gridStyle = useMemo(() => ({ height: "100%", width: "100%" }), []);
@@ -80,13 +79,20 @@ const GridExample = () => {
   
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
+  const [cookies] = useCookies(['authToken']);
+
   const importExcel = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-
+debugger;
     try {
-      const response = await fetch(`${apiUrl}/vos/oog/v1/pcks/upload`, {
+      const response = await fetch(`${apiUrl}/vos/oog/v1/pck/upload`, {
         method: "POST",
+        headers: {
+
+           "Content-Type": "application/json", 
+           "Authorization": `Bearer ${cookies.authToken}`,
+        },
         body: formData,
       });
 
@@ -175,4 +181,4 @@ const GridExample = () => {
   );
 };
 
-export default GridExample;
+export default GridIndex;

@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { StyledEngineProvider } from '@mui/material/styles';
 import SignIn from './SignIn.tsx';
-import GridExample from './grid.tsx';
+import GridIndex from './grid.tsx';
 
 const root = ReactDOM.createRoot(document.querySelector("#root")!);
 
@@ -13,7 +13,7 @@ root.render(
       <Router>
         <Routes>
           <Route path="/" element={<SignIn />} />
-          <Route path="/grid" element={<GridExample />} />
+          <Route path="/mainPage" element={<GridIndex />} />
         </Routes>
       </Router>
     </StyledEngineProvider>

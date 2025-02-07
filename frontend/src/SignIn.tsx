@@ -90,7 +90,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         console.log(data);
         if ('S'===data.code) {
           // 토큰이 유효하면 메인 페이지로 이동
-          navigate('/grid');
+          navigate('/mainPage');
         } else {
           // 토큰이 유효하지 않으면 로그인 페이지로 이동
           navigate('/');
@@ -110,12 +110,14 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       }
     };
   }, [open]);
-
-  const handleClose = () => {
-    setOpen(false);
-    if (navigateToGrid) {
-      navigate('/grid');
+  React.useEffect(() => {
+    if (!open && navigateToGrid) {
+      navigate('/mainPage'); 
     }
+  }, [open, navigateToGrid]);
+  
+  const handleClose = () => {
+    setOpen(false); // 상태 변경 후 useEffect가 실행됨
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -143,6 +145,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         setNavigateToGrid(true);
         setDialogMessage('로그인 성공');
         setOpen(true);
+
       } else if ('V' === result.code || 'N' === result.code) {
         setDialogMessage('메일 인증을 완료해 주세요.');
         setOpen(true);
