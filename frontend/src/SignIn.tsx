@@ -16,7 +16,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useNavigate } from 'react-router-dom';
-import { useCookies } from 'react-cookie';
+import withAuth from './withAuth';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -62,59 +62,31 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function SignIn(props: { disableCustomTheme?: boolean }) {
+export default withAuth(function SignIn(props: { disableCustomTheme?: boolean }) {
   const navigate = useNavigate();
   const [navigateToGrid, setNavigateToGrid] = React.useState(false);
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [dialogMessage, setDialogMessage] = React.useState('');
-  const [cookies] = useCookies(['authToken']);
+  // const [cookies] = useCookies(['authToken']);
 
   React.useEffect(() => {
     const root = document.getElementById('root');
     if (root) {
       root.setAttribute('aria-hidden', 'false');
     }
-    if (cookies.authToken) {
-      // 서버에 토큰을 보내서 검증하도록 함
-      fetch(`${apiUrl}/vos/oog/v1/usr/verify-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: cookies.authToken })
-      })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        if ('S'===data.code) {
-          // 토큰이 유효하면 메인 페이지로 이동
-          navigate('/mainPage');
-        } else {
-          // 토큰이 유효하지 않으면 로그인 페이지로 이동
-          navigate('/');
-        }
-      })
-      .catch((error) => {
-        console.log('Error verifying token:', error);
-        navigate('/');
-      });
-    } else {
-        navigate('/');
-    }
-
     return () => {
       if (root) {
         root.removeAttribute('aria-hidden');
       }
     };
   }, [open]);
-  React.useEffect(() => {
-    if (!open && navigateToGrid) {
-      navigate('/mainPage'); 
-    }
-  }, [open, navigateToGrid]);
+  // React.useEffect(() => {
+  //   if (!open && navigateToGrid) {
+  //     navigate('/mainPage'); 
+  //   }
+  // }, [open, navigateToGrid]);
   
   const handleClose = () => {
     setOpen(false); // 상태 변경 후 useEffect가 실행됨
@@ -145,7 +117,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         setNavigateToGrid(true);
         setDialogMessage('로그인 성공');
         setOpen(true);
-
+        navigate('/mainPage');
       } else if ('V' === result.code || 'N' === result.code) {
         setDialogMessage('메일 인증을 완료해 주세요.');
         setOpen(true);
@@ -244,4 +216,4 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       </Dialog>
     </AppTheme>
   );
-}
+});

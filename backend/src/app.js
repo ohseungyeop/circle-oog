@@ -1,13 +1,14 @@
 const fastify = require('fastify')({
-    logger: {
-        level: process.env.LOG_LEVEL || 'info',
-        transport: process.env.NODE_ENV === 'prd'
-          ? undefined
-          : {
-              target: 'pino-pretty',
-              options: { colorize: true, translateTime: 'HH:MM:ss Z' },
-            },
-      },
+  logger: {
+    level: process.env.LOG_LEVEL || 'info',
+    transport: process.env.NODE_ENV === 'prd'
+      ? undefined
+      : {
+          target: 'pino-pretty',
+          options: { colorize: true, translateTime: 'HH:MM:ss Z' },
+        },
+  },
+  bodyLimit: 10485760, // 10MB로 설정
 });
 
 // 환경별 `.env` 파일 불러오기
@@ -19,6 +20,10 @@ console.log(`✅ Loaded environment: ${process.env.NODE_ENV}`);
 console.log(`✅ Using DB: ${process.env.DB_NAME}`);
 
 const cookie = require('@fastify/cookie');
+
+// Fastify에서 플러그인은 라우트보다 먼저 등록해야 합니다
+// ✅ 플러그인 등록 (라우트 등록 전에 해야 함)
+fastify.register(require('@fastify/multipart'));
 
 // 플러그인 & 라우트 등록
 fastify.register(require('./plugins/cors'));     // ✅ CORS 추가

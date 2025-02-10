@@ -25,9 +25,9 @@ async function verifyEmail(fastify, options) {
   const redirectUrl = `${process.env.FRONTEND_URL}`;
 
   fastify.get('/', async (request, reply) => {
-      const token = request.query.token;
+      const emailToken = request.query.token;
 
-      if (!token) {
+      if (!emailToken) {
           return reply.status(400).type('text/html').send(`
               <html>
                 <head>
@@ -52,7 +52,7 @@ async function verifyEmail(fastify, options) {
 
       try {
           // JWT 검증
-          const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+          const decoded = jwt.verify(emailToken, process.env.JWT_SECRET_KEY);
           const email = decoded.email;
 
           // DB 업데이트 (이메일 인증 완료 처리)
@@ -87,11 +87,16 @@ async function verifyEmail(fastify, options) {
               `);
           }
 
+          // ✅ JWT 생성 (7일 유효) - 로그인용
+          const authToken = jwt.sign(
+            { email },
+            process.env.JWT_SECRET_KEY,
+            { expiresIn: '7d' }
+          );
           // ✅ **쿠키에 토큰 저장**
-          setAuthToken(reply, token);
+          setAuthToken(reply, authToken);
 
           // ✅ **클라이언트로 리다이렉트**
-          // return reply.redirect(`${redirectUrl}/grid`);
           return reply.type('text/html').send(`
               <html>
                 <head>
@@ -110,7 +115,7 @@ async function verifyEmail(fastify, options) {
                   <div class="container">
                     <h1>✅ 이메일이 성공적으로 검증되었습니다!</h1>
                     <p>이제 모든 서비스를 자유롭게 이용하실 수 있습니다.</p>
-                    <a href="${redirectUrl}/grid">🏠 홈으로 가기</a>
+                    <a href="${redirectUrl}/mainPage">🏠 홈으로 가기</a>
                   </div>
                 </body>
               </html>

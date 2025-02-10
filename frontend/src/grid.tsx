@@ -18,10 +18,9 @@ import {
   iconSetMaterial,
   themeQuartz,
 } from "ag-grid-community";
-
+import withAuth from "./withAuth";
 
 ModuleRegistry.registerModules([AllCommunityModule, CsvExportModule]);
-
 
 const myTheme = themeQuartz
   .withPart(iconSetMaterial)
@@ -89,7 +88,6 @@ debugger;
       const response = await fetch(`${apiUrl}/vos/oog/v1/pck/upload`, {
         method: "POST",
         headers: {
-
            "Content-Type": "multipart/form-data", 
            "Authorization": `Bearer ${cookies.authToken}`,
         },
@@ -181,4 +179,4 @@ debugger;
   );
 };
 
-export default GridIndex;
+export default withAuth(GridIndex);

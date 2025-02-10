@@ -1,7 +1,7 @@
 const { replyHelper } = require('helpers/replyHelper');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-const fastifyMulter = require('fastify-multer');
+const fastifyMultipart = require("@fastify/multipart");
 const authMiddleware = require('middlewares/authMiddleware');
 
 async function getPckRoutes(fastify, options) {
@@ -12,74 +12,64 @@ async function getPckRoutes(fastify, options) {
 };
 
 async function uploadOogFile(fastify, options) {
-    // Multer 설정
-    // fastify.register(fastifyMulter.contentParser);  // ✅ contentParser 등록
-
-    fastify.addContentTypeParser('multipart/form-data', (request, payload, done) => {
-      done();
-    });
-
-    const upload = fastifyMulter({ storage: fastifyMulter.memoryStorage() });
-
-    // 파일 업로드 엔드포인트
-    fastify.post('/', {
-        preHandler: [
-          authMiddleware,
-          upload.single('file')
-        ]
-      }, async (req, reply) => {
-      if (!req.file) {
-        return reply.status(400).send('No file uploaded');
-      }
-
-      const { email, access_token } = req.body;
-
-      // JWT 토큰 검증
-      const jwt = require('jsonwebtoken');
-      try {
-
-console.log(access_token);
-console.log(process.env.JWT_SECRET_KEY);
-
-
-        const decoded = jwt.verify(access_token, process.env.JWT_SECRET_KEY);
-        if (decoded.email !== email) {
-          return reply.status(403).send('Email does not match token');
+  // 파일 업로드 엔드포인트
+  fastify.post('/', {
+    preHandler: [
+      authMiddleware,
+      async (req, reply) => {
+        const { email } = req.body;
+        if (!email) {
+          return reply.status(400).send('Email is required');
         }
-      } catch (err) {
-        console.log(err);
-        return reply.status(401).send('Invalid access token');
+        req.email = email; // email을 req 객체에 저장하여, 이후 사용할 수 있도록 전달
       }
-    
-      // UUID 생성 및 timestamp 추가
+    ]
+  }, async (req, reply) => {
+
+    try {
+      const data = await req.file(); // ✅ 단일 파일 받기
+
+      if (!data) {
+        return reply.status(400).send({ error: "No file uploaded" });
+      }
+
+      // UUID & Timestamp
       const fileUUID = uuidv4();
       const timestamp = new Date().toISOString();
-    
-      // 업로드된 파일 경로 생성
-      // const filePath = `/uploads/${Date.now()}-${path.extname(req.file.originalname)}`;
-      const filePath = `/uploads/${fileUUID}-${Date.now()}-${path.extname(req.file.originalname)}`;
+      const extname = path.extname(data.filename);
+      const filename = `${fileUUID}-${timestamp}${extname}`;
 
-      try {
-        // Knex.js를 사용하여 DB에 파일 정보 저장
-        await fastify.knex('VOS_OOG_UPLD_MST').insert({
-          file_uuid: fileUUID,
-          file_path: filePath,
-          email: email,
-          timestamp: timestamp,
-        });
-    
-        reply.status(200).send({
-          message: 'File uploaded successfully',
-          fileUUID,
-          filePath,
-          timestamp,
-        });
-      } catch (err) {
-        console.error(err);
-        reply.status(500).send('Error saving file info to database');
+      // 저장할 경로 생성 (이메일 기준)
+      const filePath = path.join(process.env.ATTACH_PATH, req.email);
+      if (!fs.existsSync(filePath)) {
+        fs.mkdirSync(filePath, { recursive: true });
       }
-    });
-};
+
+      // 파일 저장
+      const saveToPath = path.join(filePath, filename);
+      await data.toBuffer().then((buffer) => fs.writeFileSync(saveToPath, buffer));
+
+      // DB 저장
+      await fastify.knex("VOS_OOG_UPLD_MST").insert({
+        UPLD_DT: timestamp, // 업로드 날짜
+        FILE_PATH: saveToPath, // 저장된 파일 경로
+        ORGN_FILE_NM: data.filename, // 원본 파일명
+        EMAIL: req.email, // 이메일
+      });
+
+      reply.status(200).send({
+        message: "File uploaded successfully",
+        fileUUID,
+        filePath,
+        filename,
+        timestamp,
+      });
+    } catch (err) {
+      console.error("File upload error:", err);
+      reply.status(500).send({ error: "Error uploading file" });
+    }
+  });
+}
 
 // routes/insertPckRoute.js
 async function insertPckRoute(fastify, options) {

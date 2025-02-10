@@ -10,8 +10,8 @@ async function registerOogUser(fastify, options) {
       // 1️⃣ 이메일로 사용자 조회
       const existingUser = await fastify.knex('vos_oog_usr').where({ USR_EML: email }).first();
     
-      // 2️⃣ 검증 토큰 생성 (24시간 유효)
-      const verificationToken = jwt.sign(
+      // 2️⃣ 검증 토큰 생성 (24시간 유효) - 이메일 검증용용
+      const emailToken = jwt.sign(
         {
           email,
           iat: Math.floor(Date.now() / 1000),
@@ -20,12 +20,18 @@ async function registerOogUser(fastify, options) {
         process.env.JWT_SECRET_KEY,
         { algorithm: 'HS256' }
       );
+      // ✅ JWT 생성 (7일 유효) - 로그인용
+      const authToken = jwt.sign(
+        { email },
+        process.env.JWT_SECRET_KEY,
+        { expiresIn: '7d' }
+      );
       
       if (existingUser) {
         // 3️⃣ 기존 사용자 상태 체크
         if ('A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
           // ✅ **쿠키에 토큰 저장**
-          setAuthToken(reply, verificationToken);
+          setAuthToken(reply, authToken);
           return reply.send({ code: 'S', status: 'Success', message: 'User already exists' });
         } else if ('I' === existingUser.USR_STS && 'N' === existingUser.EML_VRF_YN) {
           return reply.send({ code: 'V', status: 'Verify', message: 'Email exists, but not verified. Please verify your email.' });
@@ -40,7 +46,7 @@ async function registerOogUser(fastify, options) {
           });
 
         // 5️⃣ 이메일 검증 링크 생성
-        const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/verify-email?token=${verificationToken}`;
+        const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/verify-email?token=${emailToken}`;
       
         // 6️⃣ 이메일 전송
         const subject = '[VOS OOG System] Email Verification';
@@ -90,8 +96,8 @@ const verifyToken = (token) => {
 // 토큰 검증을 위한 엔드포인트
 async function verifyTokenRoute(fastify, options) {
   fastify.post('/verify-token', async (request, reply) => {
-    const { token } = request.body;
-
+    // const { token } = request.body;
+    const token = request.headers['authorization']?.split(' ')[1]; // "Bearer <token>"에서 <token>만 추출
     try {
       const decoded = await verifyToken(token);
       // 토큰이 유효한 경우(decoded가 반환되면)
