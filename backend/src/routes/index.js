@@ -1,5 +1,5 @@
-const { getPckRoutes, uploadOogFile, insertPckRoute } = require('./vos/oog/v1/vos.oog.pck');
-const { registerOogUser, verifyTokenRoute } = require('./vos/oog/v1/vos.oog.usr');
+const { getPckRoutes, uploadOogFile, insertPckRoute } = require('./vos/oog/v1/pck');
+const { registerOogUser, verifyTokenRoute } = require('./vos/oog/v1/usr');
 const { sendEmail, verifyEmail } = require('helpers/emailHelper');
 
 async function routes(fastify, options) {
