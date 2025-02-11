@@ -105,6 +105,7 @@ export default withAuth(function SignIn(props: { disableCustomTheme?: boolean })
     try {
       const response = await fetch(`${apiUrl}/vos/oog/v1/usr`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

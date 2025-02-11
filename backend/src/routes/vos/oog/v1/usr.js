@@ -1,15 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { setAuthToken } = require('helpers/cookieHelper');
 
-// JWT 토큰을 생성하는 공통 함수
-const generateAuthToken = (email, expiresIn = '7d') => {
-  return jwt.sign(
-    { email },
-    process.env.JWT_SECRET_KEY,
-    { expiresIn }
-  );
-};
-
 async function registerOogUser(fastify, options) {
   fastify.post('/', async (request, reply) => {
     const { email } = request.body;
@@ -33,9 +24,19 @@ async function registerOogUser(fastify, options) {
       if (existingUser) {
         // 3️⃣ 기존 사용자 상태 체크
         if ('A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
-          // ✅ **쿠키에 토큰 저장**
-          const authToken = generateAuthToken(email); // 공통 함수로 토큰 발급
-          setAuthToken(reply, authToken);
+          // ✅ 기존 쿠키 확인
+          const existingAuthToken = request.cookies.authToken;
+          
+          if (!existingAuthToken) {
+            // 쿠키가 없는 경우 새로운 토큰 발급
+            setAuthToken(reply, email);  
+            return reply.send({ 
+              code: 'S', 
+              status: 'Success', 
+              message: 'User exists, new auth token generated'
+              // ,              data: { tokenRefreshed: true }
+            });
+          }
           return reply.send({ code: 'S', status: 'Success', message: 'User already exists' });
         } else if ('I' === existingUser.USR_STS && 'N' === existingUser.EML_VRF_YN) {
           return reply.send({ code: 'V', status: 'Verify', message: 'Email exists, but not verified. Please verify your email.' });
@@ -113,8 +114,7 @@ async function verifyTokenRoute(fastify, options) {
 
         if (existingUser && 'A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
           // 유효한 사용자가 존재하면 새 토큰 발급
-          const newAuthToken = generateAuthToken(tokenEmail);  // 공통 함수로 새 토큰 발급
-          setAuthToken(reply, newAuthToken);  // 쿠키에 새 토큰 저장
+          setAuthToken(reply, tokenEmail);  // 쿠키에 새 토큰 저장
           return reply.send({ code: 'S', status: 'Success', message: 'New token issued', data: { token: newAuthToken } });
         } else {
           return reply.status(400).send({ code: 'E', status: 'Error', message: 'Invalid or expired token, user does not exist or is inactive' });

@@ -87,14 +87,8 @@ async function verifyEmail(fastify, options) {
               `);
           }
 
-          // ✅ JWT 생성 (7일 유효) - 로그인용
-          const authToken = jwt.sign(
-            { email },
-            process.env.JWT_SECRET_KEY,
-            { expiresIn: '7d' }
-          );
           // ✅ **쿠키에 토큰 저장**
-          setAuthToken(reply, authToken);
+          setAuthToken(reply, email);
 
           // ✅ **클라이언트로 리다이렉트**
           return reply.type('text/html').send(`
