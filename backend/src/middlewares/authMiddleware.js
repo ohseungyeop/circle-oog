@@ -11,7 +11,7 @@ async function authMiddleware(request, reply) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    request.user = decoded.email;  // ✅ 검증된 사용자 정보 저장
+    request.user = {email:decoded.email};  // ✅ 검증된 사용자 정보 저장
   } catch (error) {
     return reply.status(401).send({ code: 'E', status: 'Error', message: 'Invalid or expired token' });
   }

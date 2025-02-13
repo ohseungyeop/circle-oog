@@ -1,7 +1,7 @@
 const { replyHelper } = require('helpers/replyHelper');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-const fastifyMultipart = require("@fastify/multipart");
+const fs = require('fs').promises; 
 const authMiddleware = require('middlewares/authMiddleware');
 
 async function getPckRoutes(fastify, options) {
@@ -17,7 +17,7 @@ async function uploadOogFile(fastify, options) {
     preHandler: [
       authMiddleware,
       async (req, reply) => {
-        const { email } = req.body;
+        const email = req.user?.email;
         if (!email) {
           return reply.status(400).send('Email is required');
         }
@@ -28,27 +28,42 @@ async function uploadOogFile(fastify, options) {
 
     try {
       const data = await req.file(); // ✅ 단일 파일 받기
-
+      
       if (!data) {
         return reply.status(400).send({ error: "No file uploaded" });
       }
 
-      // UUID & Timestamp
-      const fileUUID = uuidv4();
-      const timestamp = new Date().toISOString();
-      const extname = path.extname(data.filename);
-      const filename = `${fileUUID}-${timestamp}${extname}`;
 
       // 저장할 경로 생성 (이메일 기준)
       const filePath = path.join(process.env.ATTACH_PATH, req.email);
-      if (!fs.existsSync(filePath)) {
-        fs.mkdirSync(filePath, { recursive: true });
+
+      console.log("File path:", filePath);
+      
+      // 📌 디렉토리 확인 후 생성
+      try {
+        await fs.access(filePath)
       }
+      catch(error){
+        await fs.mkdir(filePath, { recursive: true });
+      }
+       console.log("Directory is ready:", filePath);
 
-      // 파일 저장
+
+      // Timestamp
+      //const fileUUID = uuidv4();
+      const timestamp = new Date().toISOString().replace('T', ' ').split('.')[0]; 
+      // const extname = path.extname(data.filename);
+      // const filename = `${fileUUID}-${timestamp}${extname}`;
+      const filename = data.filename;
       const saveToPath = path.join(filePath, filename);
-      await data.toBuffer().then((buffer) => fs.writeFileSync(saveToPath, buffer));
 
+      console.log("Final file path:", saveToPath);
+     
+      // 파일 저장
+      const buffer = await data.toBuffer();
+      fs.writeFile(saveToPath,buffer);
+      console.log("File successfully saved!");
+ 
       // DB 저장
       await fastify.knex("VOS_OOG_UPLD_MST").insert({
         UPLD_DT: timestamp, // 업로드 날짜
@@ -59,7 +74,6 @@ async function uploadOogFile(fastify, options) {
 
       reply.status(200).send({
         message: "File uploaded successfully",
-        fileUUID,
         filePath,
         filename,
         timestamp,
