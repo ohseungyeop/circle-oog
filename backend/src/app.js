@@ -45,17 +45,16 @@ fastify.addHook('onRequest', (request, reply, done) => {
 const start = async () => {
   try {
 
-    //운영 서버
-    if ('prd'===process.env.NODE_ENV) {
+    //로컬 서버
+    if ('local'===process.env.NODE_ENV) {
       await fastify.listen({
         port: process.env.BACKEND_PORT,
         host: '0.0.0.0'
       });
       console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
 
-    //로컬 서버
-    } else if ('local'===process.env.NODE_ENV) {
-
+    //운영 서버
+    } else if ('prd'===process.env.NODE_ENV) {
       const fs = require('fs');
       const https = require('https');
       const options = {
