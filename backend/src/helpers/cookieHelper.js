@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 
 function setAuthToken(reply, email) {
+
+console.log('-------------------');
+console.log(process.env.NODE_ENV);
+console.log(process.env.COOKIE_DOMAIN);
+console.log('-------------------');
+
     const authToken = jwt.sign(
       { email },
       process.env.JWT_SECRET_KEY,
