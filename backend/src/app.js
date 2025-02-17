@@ -35,6 +35,12 @@ fastify.register(cookie, {
   parseOptions: {} // 쿠키 옵션 설정 가능
 });
 
+// 요청 로그 미들웨어
+fastify.addHook('onRequest', (request, reply, done) => {
+  console.log(`[${new Date().toISOString()}] Request: ${request.method} ${request.url}`);
+  done();
+});
+
 // 서버 실행
 const start = async () => {
   try {
