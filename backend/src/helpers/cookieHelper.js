@@ -9,7 +9,7 @@ function setAuthToken(reply, email) {
     console.log('Setting cookie with token:', authToken);
     reply.setCookie('authToken', authToken, {
       httpOnly: false,  // 클라이언트에서 쿠키를 읽을 수 있도록 설정
-      // secure: true,  // HTTPS 환경에서만 동작하도록 설정 (배포 시 true)
+      secure: process.env.NODE_ENV === 'prd',
       sameSite: 'Strict',
       domain: process.env.COOKIE_DOMAIN,
       path: '/',
