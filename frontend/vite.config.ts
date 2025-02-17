@@ -19,13 +19,6 @@ export default defineConfig(({ mode }) => {
       strictPort: true, // 사용 중이면 실행 실패 (다른 포트로 변경 X)
       host: true, // 네트워크에서도 접근 가능
       open: true, // 브라우저 자동 실행
-      proxy: {
-        '/': {
-          target: 'http://172.20.12.6:3300',
-          changeOrigin: true,
-          secure: false, // HTTPS 안 쓸 때만 false
-        },
-      },
     },
     resolve: {
       alias: {
