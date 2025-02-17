@@ -1,4 +1,4 @@
-const { getPckRoutes, uploadOogFile, insertPckRoute } = require('./vos/oog/v1/pck');
+const { getPckRoutes, uploadOogFile, insertPckRoute, selectOogFile } = require('./vos/oog/v1/pck');
 const { registerOogUser, verifyTokenRoute } = require('./vos/oog/v1/usr');
 const { sendEmail, verifyEmail } = require('helpers/emailHelper');
 
@@ -9,6 +9,7 @@ async function routes(fastify, options) {
   fastify.register(getPckRoutes, { prefix: '/vos/oog/v1/pck' });
   fastify.register(uploadOogFile, { prefix: '/vos/oog/v1/pck/upload' });
   fastify.register(insertPckRoute, { prefix: '/vos/oog/v1/pck' });
+  fastify.register(selectOogFile, { prefix: '/vos/oog/v1/pck/select'});
 
   fastify.register(registerOogUser, { prefix: '/vos/oog/v1/usr' });
   fastify.register(verifyTokenRoute, { prefix: '/vos/oog/v1/usr' });

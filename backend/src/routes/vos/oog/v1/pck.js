@@ -51,7 +51,11 @@ async function uploadOogFile(fastify, options) {
 
       // Timestamp
       //const fileUUID = uuidv4();
-      const timestamp = new Date().toISOString().replace('T', ' ').split('.')[0]; 
+      const timestamp = new Date(new Date().getTime() + 9 * 60 * 60 * 1000) // UTC+9 보정
+                        .toISOString()
+                        .replace('T', ' ')
+                        .split('.')[0]; 
+
       // const extname = path.extname(data.filename);
       // const filename = `${fileUUID}-${timestamp}${extname}`;
       const filename = data.filename;
@@ -133,8 +137,32 @@ async function insertPckRoute(fastify, options) {
   }));
 };
 
+async function selectOogFile(fastify, options){
+  fastify.post('/', replyHelper(async (request, reply) => {
+    try {
+      console.log("📩 Received request body:", request.body);
+
+      const { email } = request.body;
+      if (!email) {
+        console.error("❌ Missing email in request");
+        throw new Error("Email is required"); // 🚨 `reply.send()` 없이 예외 던지기
+      }
+
+      const fileList = await fastify.knex('VOS_OOG_UPLD_MST')
+        .where({ EMAIL: email })
+        .select('*');
+
+      console.log("📂 update file list:", fileList);
+      return fileList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
+    } catch (error) {
+      console.error("❌ Error fetching file list:", error);
+      throw error; // 🚨 `replyHelper`가 오류 처리하도록 예외 던지기
+    }
+  }));
+};
 module.exports = {
   getPckRoutes,
   uploadOogFile,
-  insertPckRoute
+  insertPckRoute,
+  selectOogFile
 };
