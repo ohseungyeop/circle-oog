@@ -61,8 +61,8 @@ const start = async () => {
       const options = {
         key: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/privkey.pem'),
         cert: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/fullchain.pem'),
-        secureProtocol: 'TLS_method',  // TLS 버전을 자동으로 선택하도록 설정
-        minVersion: 'TLSv1.3'  // 최소 TLS 버전 설정 (예: TLS 1.2)
+        secureProtocol: 'TLSv1_3_method',  // TLS 버전을 자동으로 선택하도록 설정
+        minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
       };
 
       https.createServer(options, fastify.server).listen(443, (err) => {
