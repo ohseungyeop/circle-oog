@@ -44,11 +44,34 @@ fastify.addHook('onRequest', (request, reply, done) => {
 // 서버 실행
 const start = async () => {
   try {
-    await fastify.listen({
-      port: process.env.BACKEND_PORT,
-      host: '0.0.0.0'
-    });
-    console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
+
+    //운영 서버
+    if ('prd'===process.env.NODE_ENV) {
+      await fastify.listen({
+        port: process.env.BACKEND_PORT,
+        host: '0.0.0.0'
+      });
+      console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
+
+    //로컬 서버
+    } else if ('local'===process.env.NODE_ENV) {
+
+      const fs = require('fs');
+      const https = require('https');
+      const options = {
+        key: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/privkey.pem'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/fullchain.pem')
+      };
+
+      https.createServer(options, fastify.server).listen(443, (err) => {
+        if (err) {
+          console.error(err);
+          process.exit(1);
+        }
+        console.log('Fastify HTTPS server running on https://oog.valueonsys.com');
+      });
+    }
+
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
