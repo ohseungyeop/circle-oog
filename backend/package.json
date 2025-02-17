@@ -1,7 +1,7 @@
 {
-  "name": "backend",
+  "name": "vos-oog-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "VOS - Out of Gauge System",
   "main": "src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -11,7 +11,7 @@
     "prd": "cross-env NODE_ENV=prd NODE_PATH=./src node src/app.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "valueonsys",
   "license": "ISC",
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
