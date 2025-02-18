@@ -17,7 +17,7 @@ console.log('-------------------');
       httpOnly: false,  // 클라이언트에서 쿠키를 읽을 수 있도록 설정
       secure: process.env.NODE_ENV === 'prd',
       sameSite: 'Strict',
-      domain: process.env.COOKIE_DOMAIN,
+      // domain: process.env.COOKIE_DOMAIN,
       path: '/',
       maxAge: 60 * 60 * 24 * 7,  // 7일 (선택 사항)
     });
