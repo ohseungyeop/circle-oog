@@ -63,7 +63,7 @@ const start = async () => {
         minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
       };
 
-      https.createServer(options, fastify.server).listen(443, (err) => {
+      https.createServer(options, fastify.handler).listen(443, (err) => {
         if (err) {
           console.error(err);
           process.exit(1);
