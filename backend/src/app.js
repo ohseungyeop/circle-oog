@@ -63,12 +63,12 @@ const start = async () => {
         minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
       };
 
-      https.createServer(options, fastify.handler).listen(443, (err) => {
+      https.createServer(options, fastify.handler).listen(8443, (err) => {
         if (err) {
           console.error(err);
           process.exit(1);
         }
-        console.log('Fastify HTTPS server running on https://oog.valueonsys.com');
+        console.log('Fastify HTTPS server running on https://oogback.valueonsys.com');
       });
     }
 
