@@ -46,7 +46,7 @@ const start = async () => {
   try {
 
     //로컬 서버
-    if ('local'===process.env.NODE_ENV) {
+    // if ('local'===process.env.NODE_ENV) {
       await fastify.listen({
         port: process.env.BACKEND_PORT,
         host: '0.0.0.0'
@@ -54,23 +54,23 @@ const start = async () => {
       console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
 
     //운영 서버
-    } else if ('prd'===process.env.NODE_ENV) {
-      const fs = require('fs');
-      const https = require('https');
-      const options = {
-        key: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/privkey.pem'),
-        cert: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/fullchain.pem'),
-        minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
-      };
+    // } else if ('prd'===process.env.NODE_ENV) {
+    //   const fs = require('fs');
+    //   const https = require('https');
+    //   const options = {
+    //     key: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/privkey.pem'),
+    //     cert: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/fullchain.pem'),
+    //     minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
+    //   };
 
-      https.createServer(options, fastify.handler).listen(8443, '0.0.0.0', (err) => {
-        if (err) {
-          console.error(err);
-          process.exit(1);
-        }
-        console.log('Fastify HTTPS server running on https://oogback.valueonsys.com');
-      });
-    }
+    //   https.createServer(options, fastify.handler).listen(8443, '0.0.0.0', (err) => {
+    //     if (err) {
+    //       console.error(err);
+    //       process.exit(1);
+    //     }
+    //     console.log('Fastify HTTPS server running on http://172.20.12.6');
+    //   });
+    // }
 
   } catch (err) {
     fastify.log.error(err);
