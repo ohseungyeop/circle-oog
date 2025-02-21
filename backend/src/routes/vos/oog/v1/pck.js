@@ -75,7 +75,6 @@ async function uploadOogFile(fastify, options) {
         ORGN_FILE_NM: data.filename, // 원본 파일명
         EMAIL: req.email, // 이메일
       });
-
       reply.status(200).send({
         message: "File uploaded successfully",
         filePath,
@@ -89,9 +88,56 @@ async function uploadOogFile(fastify, options) {
   });
 }
 
-// routes/insertPckRoute.js
+async function uploadPckDtl(fastify, options) {
+fastify.post('/', replyHelper(async (request) => {
+    const {data} = request.body;
+
+    console.log("📩 Received request body:", data);
+
+    await fastify.knex('VOS_OOG_UPLD_DTL').insert(
+      data.map((item) => ({
+
+      PCK_ORD_SEQ: item.pckOrdSeq,
+      PCK_NO: item.pckNo,
+      ITM_NM: item.itmNm,
+      PCK_LEN: item.pckLeg,
+      PCK_WDT: item.pckWdt,
+      PCK_HGT: item.pckHgt,
+      PCK_QTY: item.pckQty,
+      PCK_WGT: item.pckWgt,
+      PCK_RMK: item.pckRmk,
+    }))
+  );
+    
+    
+
+    return { message: 'Packing dtl inserted successfully' };
+  }));
+}
+
+async function deleteOogFile(fastify, options) {
+  fastify.post('/', replyHelper(async (request) => {
+    const { data } = request.body;
+
+    console.log("📩 Received request body for deletion:", data);
+
+    // `VOS_OOG_UPLD_MST` 테이블에서 삭제
+    await fastify.knex('VOS_OOG_UPLD_MST')
+      .whereIn('PCK_ORD_SEQ', data)
+      .del();
+
+    // `VOS_OOG_UPLD_DTL` 테이블에서 삭제
+    await fastify.knex('VOS_OOG_UPLD_DTL')
+      .whereIn('PCK_ORD_SEQ', data)
+      .del();
+
+    return { message: 'Rows deleted successfully' };
+  }));
+}
+
 async function insertPckRoute(fastify, options) {
-  fastify.post('/', replyHelper(async (request, reply) => {
+  fastify.post('/', replyHelper(async (request) => {
+    console.log("📩 Received request body:", request.body); // 요청 본문 확인
     const {
       PCK_ORD_NO,
       PCK_NO,
@@ -164,5 +210,7 @@ module.exports = {
   getPckRoutes,
   uploadOogFile,
   insertPckRoute,
-  selectOogFile
+  selectOogFile,
+  uploadPckDtl,
+  deleteOogFile
 };

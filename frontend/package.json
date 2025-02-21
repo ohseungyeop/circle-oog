@@ -29,7 +29,8 @@
     "react-router-dom": "^7.1.5",
     "readable-stream": "^4.7.0",
     "styled-components": "^6.1.14",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
