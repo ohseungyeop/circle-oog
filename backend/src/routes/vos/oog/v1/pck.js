@@ -56,8 +56,7 @@ async function uploadOogFile(fastify, options) {
                         .replace('T', ' ')
                         .split('.')[0]; 
 
-      // const extname = path.extname(data.filename);
-      // const filename = `${fileUUID}-${timestamp}${extname}`;
+
       const filename = data.filename;
       const saveToPath = path.join(filePath, filename);
 
@@ -75,12 +74,26 @@ async function uploadOogFile(fastify, options) {
         ORGN_FILE_NM: data.filename, // 원본 파일명
         EMAIL: req.email, // 이메일
       });
-      reply.status(200).send({
-        message: "File uploaded successfully",
-        filePath,
-        filename,
-        timestamp,
-      });
+   
+        const result = await fastify.knex.raw('SELECT LAST_INSERT_ID() AS PCK_ORD_SEQ');
+        console.log("DB 쿼리 결과:", result); // 쿼리 결과를 콘솔로 확인
+
+   // 결과 형식이 배열인지 확인
+   if (result && result[0] && result[0][0]) {
+    const pckOrdSeq = result[0][0].PCK_ORD_SEQ;
+    console.log("PCK_ORD_SEQ:", pckOrdSeq); // pckOrdSeq 확인
+        reply.status(200).send({
+          message: "파일 업로드 성공",
+          filePath,
+          filename,
+          timestamp,
+          pckOrdSeq, // 응답에 PCK_ORD_SEQ 포함
+        });
+      }
+      else {
+        console.error("DB query failed:", result);
+        reply.status(500).send({ error: "DB query failed" });
+      }
     } catch (err) {
       console.error("File upload error:", err);
       reply.status(500).send({ error: "Error uploading file" });
@@ -177,7 +190,7 @@ async function insertPckRoute(fastify, options) {
       PCK_GRS_WGT,
       UPD_USR_NM,
       CRE_USR_NM
-    });
+    }); 
 
     return reply.code(201).send({ message: 'Packing record inserted successfully' });
   }));

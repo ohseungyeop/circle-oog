@@ -7,6 +7,7 @@ import jwtDecode from "jwt-decode";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import * as XLSX from "xlsx";
+import { drawerClasses } from '@mui/material';
 
 
 
@@ -34,10 +35,9 @@ const FileListGrid = () => {
     id: number;
     fileName: string;
     fileDate: string;
+    pckOrdSeq: number;
   }
   interface ExcelRowData {
-  // pckItemSeq: number;
-    
     pckNo: number;
     itmNm: string;
     pckLeg: number;
@@ -102,10 +102,10 @@ const FileListGrid = () => {
         fileDate: new Date(item.UPLD_DT).toLocaleString("ko-KR", {
           timeZone: "Asia/Seoul",
         }),
+        pckOrdSeq: item.PCK_ORD_SEQ,
       }));
   
       setRows(formattedData);
-      return data.data[0]?.PCK_ORD_SEQ || null; // ✅ PCK_ORD_SEQ 제대로 반환
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -230,17 +230,12 @@ const importExcel = async (file: File): Promise<number | null> => {
 
     const result = await response.json();
     console.log("파일 업로드 결과:", result); // 디버깅용 로그 추가
-    if (!response.ok) throw new Error(result.message || "파일 업로드 실패");
+    setSnackbar({ open: true, message: "파일 업로드 성공!", severity: "success" });
 
-    console.log("파일 업로드 성공:", result);
-   
     // ✅ PCK_ORD_SEQ를 반환
-      const pckOrdSeq = await fetchData(); // 여기에 fetchData()를 호출하여 PCK_ORD_SEQ를 반환받음
-      return pckOrdSeq;
-
+      return result.pckOrdSeq; // ✅ 서버에서 받은 새 PCK_ORD_SEQ 반환
 
   } catch (error) {
-    console.error("파일 업로드 오류:", error);
     setSnackbar({ open: true, message: "파일 업로드 실패!", severity: "error" });
     return null;
   }
@@ -251,7 +246,6 @@ const insertExcelData = async (data: ExcelRowData[]) => {
     setSnackbar({ open: true, message: "업로드된 데이터가 없습니다!", severity: "error" });
     return;
   }
-  console.log("📤 서버로 전송할 데이터:", JSON.stringify(data, null, 2)); // 🔹 확인용 로그 추가
 
   try {
     const response = await fetch(`${apiUrl}/vos/oog/v1/pck/uploadDtl`, {
@@ -273,21 +267,25 @@ const insertExcelData = async (data: ExcelRowData[]) => {
 };
 
 const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
-const [selectedRows, setSelectedRows] = React.useState<RowData[]>([]);
-
-const handleRowSelection = (newSelection: number[]) => {
-  const selectedData = rows.filter(row => newSelection.includes(row.id));
-  setSelectedRows(selectedData);
-  console.log("Selected Rows Data:", selectedData);
-};
 
 debugger;
-const handleDeleteRows = async () => {
+const handleRowClick = async (params: any) => {
+  const selectedRow = fomatter.find(row => row.id === params.id);
+  console.log("Selected Row:", selectedRow); // selectedRow 객체 출력
+
+  if (selectedRow) {
+    console.log("Selected Row Data:", selectedRow);
+       // pckOrdSeq 값을 가져와서 삭제 처리
+       await handleDeleteRows(selectedRow.pckOrdSeq);
+  }
+};
+
+const handleDeleteRows = async (pckOrdSeq?: number) => {
   if (selectionModel.length === 0) {
     setSnackbar({ open: true, message: "선택된 로우가 없습니다!", severity: "error" });
     return;
   }
-
+ debugger;
   try {
     const response = await fetch(`${apiUrl}/vos/oog/v1/pck/delete`, {
       method: "POST",
@@ -295,14 +293,14 @@ const handleDeleteRows = async () => {
         "Authorization": `Bearer ${cookies.authToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ data: selectionModel }),
+      body: JSON.stringify({ data: pckOrdSeq ? [pckOrdSeq] : selectionModel }),
     });
-    console.log("data", selectionModel );
+    console.log("data", pckOrdSeq || selectionModel);
 
-    if (!response.ok) throw new Error("로우 삭제 실패");
-    console.log("로우 삭제 성공!");
+    if (!response.ok) throw new Error("리스트 삭제 실패");
+    console.log("리스트 삭제 !");
 
-    setSnackbar({ open: true, message: "로우 삭제 성공!", severity: "success" });
+    setSnackbar({ open: true, message: "리스트 삭제 성공!", severity: "success" });
 
     fetchData(); // 🔄 파일 리스트 새로고침
   } catch (error) {
@@ -311,15 +309,6 @@ const handleDeleteRows = async () => {
   }
 };
 
-debugger;
-const handleRowClick = async (params: any) => {
-  const selectedRow = rows.find(row => row.id === params.id);
-  if (selectedRow) {
-    console.log("Selected Row Data:", selectedRow);
-    setSelectionModel([selectedRow.id]);
-    await handleDeleteRows();
-  }
-};
 
 React.useEffect(() => {
     fetchData();
@@ -362,7 +351,7 @@ React.useEffect(() => {
       </button>
 
       <button
-        onClick={handleDeleteRows}
+        onClick={() => handleDeleteRows()}
         style={{
           marginBottom: "10px",
           margin: "15px" ,
@@ -389,8 +378,7 @@ React.useEffect(() => {
         checkboxSelection
         onRowClick={handleRowClick}
         onRowSelectionModelChange={(newSelection) => {
-          setSelectionModel(newSelection as number[]);
-          handleRowSelection(newSelection as number[]);
+        setSelectionModel(newSelection as number[]);
         }}
             disableRowSelectionOnClick
       />
