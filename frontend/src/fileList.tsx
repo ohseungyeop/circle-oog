@@ -125,7 +125,7 @@ React.useEffect(() => {
 const handleTemplateDownload = () => {
   // 템플릿 파일 다운로드 로직 추가
   const link = document.createElement('a');
-  link.href = '/home/nodeapp/vos-oog/frontend/PackingList.xlsx'; // 템플릿 파일 경로
+  link.href = `${apiUrl}/vos/oog/v1/pck/download/template/`; // 템플릿 파일 경로
   link.download = 'template.xlsx';
   link.click();
 };

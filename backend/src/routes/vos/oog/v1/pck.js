@@ -11,6 +11,23 @@ async function getPckRoutes(fastify, options) {
   }));
 };
 
+async function downloadTemplate(fastify, options) {
+  fastify.get('/', async (request, reply) => {
+    try {
+      const templatePath = path.join(__dirname, '/home/nodeapp/vos-oog/frontend/PackingList.xlsx');
+
+      // 파일이 존재하는지 확인
+      await fs.access(templatePath);
+      
+      reply.header('Content-Disposition', 'attachment; filename=PackingList.xlsx');
+      reply.send(fs.createReadStream(templatePath));
+    } catch (error) {
+      console.error("❌ Template file not found:", error);
+      reply.status(404).send({ error: "Template file not found" });
+    }
+  });
+}
+
 async function uploadOogFile(fastify, options) {
   // 파일 업로드 엔드포인트
   fastify.post('/', {
@@ -225,5 +242,6 @@ module.exports = {
   insertPckRoute,
   selectOogFile,
   uploadPckDtl,
-  deleteOogFile
+  deleteOogFile,
+  downloadTemplate
 };
