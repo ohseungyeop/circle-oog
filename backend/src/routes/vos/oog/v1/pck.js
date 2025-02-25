@@ -12,18 +12,24 @@ async function getPckRoutes(fastify, options) {
 };
 
 async function downloadTemplate(fastify, options) {
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', async (req, reply) => {
     try {
-      const templatePath = path.resolve('/home/nodeapp/vos-oog/frontend/PackingList.xlsx');
+      const templatePath = path.join(process.env.TEMPLATE_PATH, 'PackingList.xlsx');
 
-      // 파일이 존재하는지 확인
+      // 파일 존재 여부 확인
       await fs.access(templatePath);
-      
+
+      // 파일을 전체 읽기
+      const fileBuffer = await fs.readFile(templatePath);
+
+      // 파일을 클라이언트로 전송
       reply.header('Content-Disposition', 'attachment; filename=PackingList.xlsx');
-      reply.send(fs.createReadStream(templatePath));
+      reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      reply.send(fileBuffer);  // 파일의 내용을 Buffer로 전송
+
     } catch (error) {
-      console.error("❌ Template file not found:", error);
-      reply.status(404).send({ error: "Template file not found" });
+      console.error("❌ 템플릿 파일을 찾을 수 없습니다:", error);
+      reply.status(404).send({ error: "템플릿 파일을 찾을 수 없습니다" });
     }
   });
 }
