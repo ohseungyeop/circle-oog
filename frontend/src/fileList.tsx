@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useCookies } from "react-cookie";
@@ -7,7 +8,6 @@ import jwtDecode from "jwt-decode";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import * as XLSX from "xlsx";
-import { drawerClasses } from '@mui/material';
 
 
 
@@ -48,11 +48,13 @@ const FileListGrid = () => {
     pckRmk: string;
   }
   const [rows, setRows] = React.useState<RowData[]>([]);
+  const navigate = useNavigate(); 
   const [excelRows, setExcelRows] = React.useState<ExcelRowData[]>([]);
   const [cookies] = useCookies(["authToken"]);
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
   const [snackbar, setSnackbar] = React.useState<{ open: boolean, message: string, severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -128,8 +130,6 @@ const handleTemplateDownload = () => {
   link.click();
 };
 
-
-
 // 🔹 엑셀 파일 읽기
 const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
   const file = event.target.files?.[0];
@@ -204,6 +204,22 @@ const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
   event.target.value = "";
 };
 
+const handleExportToExcel =() =>{
+ 
+  if (excelRows.length === 0) {
+    setSnackbar({ open: true, message: "내보낼 데이터가 없습니다!", severity: "error" });
+    return;
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(excelRows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "PackingList");
+
+
+  // 파일 다운로드
+  XLSX.writeFile(workbook, "OogList.xlsx");
+}
+
 // 📌 Step 1: 파일 업로드 함수
 const importExcel = async (file: File): Promise<number | null> => {
   let email = "";
@@ -266,26 +282,40 @@ const insertExcelData = async (data: ExcelRowData[]) => {
   }
 };
 
-const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
-
-debugger;
-const handleRowClick = async (params: any) => {
-  const selectedRow = fomatter.find(row => row.id === params.id);
+// 로우 클릭시 페이지 이동 
+ const handleRowClick = async (params: any) => {
+  const selectedRow = rows.find(row => row.id === params.id);
   console.log("Selected Row:", selectedRow); // selectedRow 객체 출력
 
   if (selectedRow) {
     console.log("Selected Row Data:", selectedRow);
-       // pckOrdSeq 값을 가져와서 삭제 처리
-       await handleDeleteRows(selectedRow.pckOrdSeq);
+    console.log("📌 Selected Row pckOrdSeq:", selectedRow.pckOrdSeq); // ✅ pckOrdSeq 값 확인
+    
+    sessionStorage.setItem('pckOrdSeq', selectedRow.pckOrdSeq.toString());
+
+    // ✅ 다른 페이지로 이동 (예: "/details/:pckOrdSeq")
+      navigate('/exportGrid', { state: { data: selectedRow } });
   }
-};
+ };
+
 
 const handleDeleteRows = async (pckOrdSeq?: number) => {
-  if (selectionModel.length === 0) {
+  // ✅ 단일 삭제 (pckOrdSeq가 전달된 경우)
+   let selectedRows: number[] = [];
+  
+  if(pckOrdSeq){ // 
+    selectedRows = [pckOrdSeq];
+  } else {
+
+  selectedRows = rows.filter(row => selectionModel.includes(row.id)).map(row => row.pckOrdSeq);
+  console.log("Selected Rows:", selectedRows);
+  }
+
+  
+  if (selectedRows.length === 0) {
     setSnackbar({ open: true, message: "선택된 로우가 없습니다!", severity: "error" });
     return;
   }
- debugger;
   try {
     const response = await fetch(`${apiUrl}/vos/oog/v1/pck/delete`, {
       method: "POST",
@@ -293,7 +323,7 @@ const handleDeleteRows = async (pckOrdSeq?: number) => {
         "Authorization": `Bearer ${cookies.authToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ data: pckOrdSeq ? [pckOrdSeq] : selectionModel }),
+      body: JSON.stringify({ data: selectedRows }),
     });
     console.log("data", pckOrdSeq || selectionModel);
 
@@ -351,10 +381,27 @@ React.useEffect(() => {
       </button>
 
       <button
+        onClick={() => handleExportToExcel()}
+        style={{
+          marginBottom: "10px",
+          margin :"15px",
+          padding: "10px 20px",
+          backgroundColor: "#0E4491",
+          color: "#FFFFFF",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+          fontFamily: "sans-serif",
+          fontSize:"15px"
+        }}
+      >
+        Export
+      </button>
+
+      <button
         onClick={() => handleDeleteRows()}
         style={{
           marginBottom: "10px",
-          margin: "15px" ,
           padding: "10px 20px",
           backgroundColor: "#0E4491",
           color: "#FFFFFF",

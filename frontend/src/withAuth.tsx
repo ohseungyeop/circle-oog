@@ -38,6 +38,9 @@ const withAuth = (WrappedComponent: ComponentType) => {
             if (location.pathname !== '/mainPage') {
               navigate('/mainPage');
             }
+           else if (location.pathname == '/mainPage') {
+              navigate('/exportGrid');
+           }
           } else {
             navigate('/'); // 인증 실패 시 로그인 페이지로 이동
           }
