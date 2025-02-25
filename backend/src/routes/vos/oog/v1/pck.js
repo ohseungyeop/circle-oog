@@ -14,7 +14,7 @@ async function getPckRoutes(fastify, options) {
 async function downloadTemplate(fastify, options) {
   fastify.get('/', async (request, reply) => {
     try {
-      const templatePath = path.join(__dirname, '/home/nodeapp/vos-oog/frontend/PackingList.xlsx');
+      const templatePath = path.resolve('/home/nodeapp/vos-oog/frontend/PackingList.xlsx');
 
       // 파일이 존재하는지 확인
       await fs.access(templatePath);
