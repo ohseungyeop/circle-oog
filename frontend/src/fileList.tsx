@@ -27,6 +27,7 @@ const excelColumns: GridColDef[] = [
   { field: "pckHgt", headerName: "PckHgt", width: 200 },
   { field: "pckQty", headerName: "PckQty", width: 200 },
   { field: "pckWgt", headerName: "PckWgt", width: 200 },
+  { field: "pckCbm", headerName: "PckCbm", width: 200 },
   { field: "pckRmk", headerName: "PckRmk", width: 200 },
 ];
 
@@ -45,6 +46,7 @@ const FileListGrid = () => {
     pckHgt: number;
     pckQty: number;
     pckWgt: number;
+    pckCbm: number;
     pckRmk: string;
   }
   const [rows, setRows] = React.useState<RowData[]>([]);
@@ -126,7 +128,7 @@ const handleTemplateDownload = () => {
   // 템플릿 파일 다운로드 로직 추가
   const link = document.createElement('a');
   link.href = `${apiUrl}/vos/oog/v1/pck/download/template/`; // 템플릿 파일 경로
-  link.download = 'template.xlsx';
+  //link.download = 'template.xlsx';
   link.click();
 };
 
@@ -148,30 +150,41 @@ const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const jsonData: any[] = XLSX.utils.sheet_to_json(sheet, { header: 0 });
+      console. log("jsonData", jsonData);
 
       if (jsonData.length === 0) {
         setSnackbar({ open: true, message: "엑셀 파일이 비어 있습니다!", severity: "error" });
         return;
       }
+      debugger;
       // 🔹 JSON 데이터를 변환
       const formattedData = jsonData.slice(1).map((row, index) => {
-        const excelRow = Object.fromEntries(
-          Object.entries(row).map(([key, value]) => [key.replace(/\r\n/g, "").trim(), value])
-        );
-
+        const excelRow = Object.entries(row).map(([key, value]) => {
+          // \r\n과 ↵ 모두 제거하고, 양옆 공백도 제거
+          const cleanedKey = key.replace(/[\r\n↵]+/g, '').trim();
+          const cleanedValue = (value || '').toString().replace(/[\r\n↵]+/g, '').trim();
+          return [cleanedKey, cleanedValue];
+        }); // map 끝
+      
+        // 배열을 객체로 변환
+        const excelRowObject = Object.fromEntries(excelRow);
+      
         return {
           id: index + 1,
-          pckNo: Number(excelRow["No번호"]) || 0,
-          itmNm: String(excelRow["Item Name품목"]) || "",
-          pckLeg: Number(excelRow["Package Dimension(㎜)"]) || 0,
-          pckWdt: Number(excelRow["Width세로"]) || 0,
-          pckHgt: Number(excelRow["Height높이"]) || 0,
-          pckQty: Number(excelRow["Q'ty수량"]) || 0,
-          pckWgt: Number(excelRow["G/W중량(㎏)"]) || 0,
-          pckRmk: String(excelRow["RMKS비고"]) || "No remark",
+          pckNo: Number(excelRowObject["No번호"]) || 0,
+          itmNm: String(excelRowObject["Item Name품목"]) || "",
+          pckLeg: Number(excelRowObject["Package Dimension(㎜)"]) || 0,
+          pckWdt: Number(excelRowObject["__EMPTY"]) || 0,  // 공백 및 특수문자 제거된 키 사용
+          pckHgt: Number(excelRowObject["__EMPTY_1"]) || 0,  // 공백 및 특수문자 제거된 키 사용
+          pckQty: Number(excelRowObject["Q'ty수량"]) || 0,
+          pckWgt: Number(excelRowObject["G/W중량(㎏)"]) || 0,
+          pckCbm: Number(excelRowObject["CBM입방미터"]) || 0,
+          pckRmk: (excelRowObject["RMKS비고"] !== undefined && excelRowObject["RMKS비고"] !== null) 
+          ? String(excelRowObject["RMKS비고"]).trim() 
+          : "", 
         };
       });
-
+      
       setExcelRows(formattedData);
       console.log("Formatted Data:", formattedData);
        
@@ -416,7 +429,7 @@ React.useEffect(() => {
       </button>
 
       {/* 파일 리스트 그리드 */}
-      <Box sx={{ height: 400, width: '100%' }}>
+      <Box sx={{ width: '100%' }}>
         <h3>📂 File List</h3>
       <DataGrid
         rows={rows}
@@ -431,17 +444,35 @@ React.useEffect(() => {
       />
     </Box>
 
-         {/* 엑셀 업로드 후 데이터 그리드 */}
-        {/* {excelRows.length > 0 && ( */}
-        <Box sx={{ height: 400, width: '100%' }}>
-          <h3>📊 업로드된 엑셀 데이터  미리보기 </h3>
-          <DataGrid
-            rows={excelRows}
-            columns={excelColumns}
-            pageSizeOptions={[5]}
-            disableRowSelectionOnClick
-          />
-      </Box>
+
+    {/* 엑셀 업로드 후 Calcuator */}
+    <Box sx={{ height: 400, width: '100%' }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "10px" }}>
+        <h3>🧮 Out of Gauge System</h3>
+        <button
+          onClick={() => handleDeleteRows()}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#0E4491",
+            color: "#FFFFFF",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            fontFamily: "sans-serif",
+            fontSize: "15px"
+          }}
+        >
+          Calculator
+        </button>
+      </div>
+
+      <DataGrid
+        rows={excelRows}
+        columns={excelColumns}
+        pageSizeOptions={[5]}
+        disableRowSelectionOnClick
+      />
+    </Box>
       <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}

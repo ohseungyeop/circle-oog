@@ -141,6 +141,7 @@ fastify.post('/', replyHelper(async (request) => {
       PCK_HGT: item.pckHgt,
       PCK_QTY: item.pckQty,
       PCK_WGT: item.pckWgt,
+      PCK_CBM: item.pckCbm,
       PCK_RMK: item.pckRmk,
     }))
   );
