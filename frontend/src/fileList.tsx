@@ -450,7 +450,7 @@ React.useEffect(() => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "10px" }}>
         <h3>🧮 Out of Gauge System</h3>
         <button
-          onClick={() => handleDeleteRows()}
+          //onClick={() => handleDeleteRows()}
           style={{
             padding: "10px 20px",
             backgroundColor: "#0E4491",
