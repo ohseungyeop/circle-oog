@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { useCookies } from 'react-cookie';
 import withAuth from './withAuth';
 import jwtDecode from 'jwt-decode';
@@ -17,10 +16,10 @@ const columns: GridColDef[] = [
 
 const excelColumns: GridColDef[] = [
   // { field: "pckItemSeq", headerName: "ItemSeq", width: 90 },
-  // { field: "pckOrdSeq", headerName: "OrdSeq", width: 200 },
+  { field: "id", headerName: "No", width: 200 },
   { field: 'pckNo', headerName: 'PckNo', width: 200 },
   { field: 'itmNm', headerName: 'ItmNm', width: 200 },
-  { field: 'pckLeg', headerName: 'PckLeg', width: 200 },
+  { field: 'pckLen', headerName: 'PckLen', width: 200 },
   { field: 'pckWdt', headerName: 'PckWdt', width: 200 },
   { field: 'pckHgt', headerName: 'PckHgt', width: 200 },
   { field: 'pckQty', headerName: 'PckQty', width: 200 },
@@ -37,9 +36,10 @@ const FileListGrid = () => {
     pckOrdSeq: number;
   }
   interface ExcelRowData {
+    id: number;
     pckNo: number;
     itmNm: string;
-    pckLeg: number;
+    pckLen: number;
     pckWdt: number;
     pckHgt: number;
     pckQty: number;
@@ -48,7 +48,6 @@ const FileListGrid = () => {
     pckRmk: string;
   }
   const [rows, setRows] = React.useState<RowData[]>([]);
-  const navigate = useNavigate();
   const [excelRows, setExcelRows] = React.useState<ExcelRowData[]>([]);
   const [cookies] = useCookies(['authToken']);
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
@@ -58,7 +57,8 @@ const FileListGrid = () => {
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
+  const [selectionModel, setSelectionModel] = React.useState<GridRowSelectionModel>([]);
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -189,9 +189,8 @@ const FileListGrid = () => {
             id: index + 1,
             pckNo: Number(excelRowObject['No번호']) || 0,
             itmNm: String(excelRowObject['Item Name품목']) || '',
-            pckLeg:
-              Number(excelRowObject['Package Dimension(㎜)']) ||
-              0,
+            pckLen:
+              Number(excelRowObject['Package Dimension(㎜)']) || 0,
             pckWdt: Number(excelRowObject['__EMPTY']) || 0, // 공백 및 특수문자 제거된 키 사용
             pckHgt: Number(excelRowObject['__EMPTY_1']) || 0, // 공백 및 특수문자 제거된 키 사용
             pckQty: Number(excelRowObject["Q'ty수량"]) || 0,
@@ -343,22 +342,77 @@ const FileListGrid = () => {
     }
   };
 
-  // 로우 클릭시 페이지 이동
-  const handleRowClick = async (params: any) => {
-    const selectedRow = rows.find((row) => row.id === params.id);
-    console.log('Selected Row:', selectedRow); // selectedRow 객체 출력
+  const handleExcelChk = async (pckOrdSeq: number) => {
+    if (!pckOrdSeq) return; // pckOrdSeq가 없으면 실행하지 않음
 
-    if (selectedRow) {
-      console.log('Selected Row Data:', selectedRow);
-      console.log('📌 Selected Row pckOrdSeq:', selectedRow.pckOrdSeq); // ✅ pckOrdSeq 값 확인
+    console.log('📌 선택된 pckOrdSeq:', pckOrdSeq); // ✅ pckOrdSeq 값 확인
 
-      sessionStorage.setItem(
-        'pckOrdSeq',
-        selectedRow.pckOrdSeq.toString(),
-      );
+    // ✅ 엑셀 데이터를 가져오기 위한 API 호출
+    const excelData = await fetchExcelData(pckOrdSeq);
+    console.log('📌 Excel Data:', excelData);
 
-      // ✅ 다른 페이지로 이동 (예: "/details/:pckOrdSeq")
-      navigate('/exportGrid', { state: { data: selectedRow } });
+    setExcelRows(excelData); // 데이터 설정
+  };
+
+  // ✅ 체크박스 선택 이벤트 핸들러
+  const handleSelectionChange = async (newSelection: GridRowSelectionModel) => {
+
+    if (newSelection.length > 1) {
+      newSelection = [newSelection[newSelection.length - 1]];  // 가장 마지막 항목만 유지
+    }
+
+    if (newSelection.length > 0) {
+      const selectedId = newSelection[0];
+      const selectedRow = rows.find((row) => row.id === selectedId);
+
+      if (selectedRow) {
+        await handleExcelChk(selectedRow.pckOrdSeq); // pckOrdSeq 전달하여 엑셀 데이터 불러오기
+      }
+    } else {
+      setExcelRows([]); // 선택 해제 시 초기화
+    }
+
+    setSelectionModel(newSelection as number[]); // 선택 상태 업데이트
+  };
+
+  // 엑셀 데이터를 서버에서 가져오는 함수 (예시)
+  const fetchExcelData = async (pckOrdSeq: number) => {
+    try {
+      const response = await fetch(`${apiUrl}/vos/oog/v1/pck/selectPckDtl`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${cookies.authToken}`,  // 인증 토큰이 필요할 경우
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pckOrdSeq: pckOrdSeq,  // pckOrdSeq를 POST 요청 본문에 포함
+        }),
+      });
+
+      // 응답이 성공적이면 JSON을 반환
+      if (!response.ok) {
+        throw new Error('엑셀 데이터를 불러오는 데 실패했습니다.');
+      }
+
+      const result = await response.json();
+
+      const formattedData = result.data.map((item: any, index: number) => ({
+        id: index + 1,
+        pckNo: item.PCK_NO,
+        itmNm: item.ITM_NM,
+        pckLen: item.PCK_LEN,
+        pckWdt: item.PCK_WDT,
+        pckHgt: item.PCK_HGT,
+        pckQty: item.PCK_QTY,
+        pckWgt: item.PCK_WGT,
+        pckCbm: item.PCK_CBM,
+        pckRmk: item.PCK_RMK,
+      }));
+
+      return formattedData; // 엑셀 데이터 반환
+    } catch (error) {
+      console.error('엑셀 데이터 로드 오류:', error);
+      return []; // 오류 발생 시 빈 배열 반환
     }
   };
 
@@ -506,10 +560,8 @@ const FileListGrid = () => {
           paginationMode="server"
           pagination
           checkboxSelection
-          onRowClick={handleRowClick}
-          onRowSelectionModelChange={(newSelection) => {
-            setSelectionModel(newSelection as number[]);
-          }}
+          rowSelectionModel={selectionModel}
+          onRowSelectionModelChange={handleSelectionChange}
           disableRowSelectionOnClick
         />
       </Box>
