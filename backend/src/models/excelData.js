@@ -4,7 +4,7 @@
  * @typedef {object} ExcelRowData
  * @property {number} pckNo
  * @property {string} itmNm
- * @property {number} pckLeg
+ * @property {number} pckLen
  * @property {number} pckWdt
  * @property {number} pckHgt
  * @property {number} pckQty
@@ -17,7 +17,7 @@
  * @typedef {object} ProcessedExcelRowData
  * @property {number} pckNo
  * @property {string} itmNm
- * @property {number} pckLeg
+ * @property {number} pckLen
  * @property {number} pckWdt
  * @property {number} pckHgt
  * @property {number} pckQty

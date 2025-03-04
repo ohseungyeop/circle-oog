@@ -152,7 +152,7 @@ async function uploadPckDtl(fastify, options) {
                     PCK_ORD_SEQ: item.pckOrdSeq,
                     PCK_NO: item.pckNo,
                     ITM_NM: item.itmNm,
-                    PCK_LEN: item.pckLeg,
+                    PCK_LEN: item.pckLen,
                     PCK_WDT: item.pckWdt,
                     PCK_HGT: item.pckHgt,
                     PCK_QTY: item.pckQty,
