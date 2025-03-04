@@ -68,7 +68,7 @@ async function registerOogUser(fastify, options) {
                 });
 
                 // 5️⃣ 이메일 검증 링크 생성
-                const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/verify-email?token=${emailToken}`;
+                const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/emails/verify?token=${emailToken}`;
 
                 // 6️⃣ 이메일 전송
                 const subject = '[VOS OOG System] Email Verification';
@@ -88,13 +88,11 @@ async function registerOogUser(fastify, options) {
                 'Error during user registration or email sending:',
                 error,
             );
-            return reply
-                .status(500)
-                .send({
-                    code: 'E',
-                    status: 'Error',
-                    message: 'Internal server error. Please try again later.',
-                });
+            return reply.status(500).send({
+                code: 'E',
+                status: 'Error',
+                message: 'Internal server error. Please try again later.',
+            });
         }
     });
 }
@@ -130,7 +128,7 @@ const verifyToken = (token) => {
 
 // 토큰 검증을 위한 엔드포인트
 async function verifyTokenRoute(fastify, options) {
-    fastify.post('/verify-token', async (request, reply) => {
+    fastify.post('/', async (request, reply) => {
         const token = request.headers['authorization']?.split(' ')[1]; // "Bearer <token>"에서 <token>만 추출
         try {
             const decoded = await verifyToken(token);
@@ -164,14 +162,12 @@ async function verifyTokenRoute(fastify, options) {
                         data: { token: newAuthToken },
                     });
                 } else {
-                    return reply
-                        .status(400)
-                        .send({
-                            code: 'E',
-                            status: 'Error',
-                            message:
-                                'Invalid or expired token, user does not exist or is inactive',
-                        });
+                    return reply.status(400).send({
+                        code: 'E',
+                        status: 'Error',
+                        message:
+                            'Invalid or expired token, user does not exist or is inactive',
+                    });
                 }
             }
             return reply

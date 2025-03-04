@@ -19,198 +19,202 @@ import { useNavigate } from 'react-router-dom';
 import withAuth from '../components/withAuth';
 
 const Card = styled(MuiCard)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignSelf: 'center',
-  width: '100%',
-  padding: theme.spacing(4),
-  gap: theme.spacing(2),
-  margin: 'auto',
-  [theme.breakpoints.up('sm')]: {
-    maxWidth: '450px',
-  },
-  boxShadow:
-    'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
-  ...theme.applyStyles('dark', {
+    display: 'flex',
+    flexDirection: 'column',
+    alignSelf: 'center',
+    width: '100%',
+    padding: theme.spacing(4),
+    gap: theme.spacing(2),
+    margin: 'auto',
+    [theme.breakpoints.up('sm')]: {
+        maxWidth: '450px',
+    },
     boxShadow:
-      'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
-  }),
+        'hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px',
+    ...theme.applyStyles('dark', {
+        boxShadow:
+            'hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px',
+    }),
 }));
 
 const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
 const SignInContainer = styled(Stack)(({ theme }) => ({
-  height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
-  minHeight: '100%',
-  padding: theme.spacing(2),
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(4),
-  },
-  '&::before': {
-    content: '""',
-    display: 'block',
-    position: 'absolute',
-    zIndex: -1,
-    inset: 0,
-    backgroundImage:
-      'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
-    backgroundRepeat: 'no-repeat',
-    ...theme.applyStyles('dark', {
-      backgroundImage:
-        'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
-    }),
-  },
+    height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
+    minHeight: '100%',
+    padding: theme.spacing(2),
+    [theme.breakpoints.up('sm')]: {
+        padding: theme.spacing(4),
+    },
+    '&::before': {
+        content: '""',
+        display: 'block',
+        position: 'absolute',
+        zIndex: -1,
+        inset: 0,
+        backgroundImage:
+            'radial-gradient(ellipse at 50% 50%, hsl(210, 100%, 97%), hsl(0, 0%, 100%))',
+        backgroundRepeat: 'no-repeat',
+        ...theme.applyStyles('dark', {
+            backgroundImage:
+                'radial-gradient(at 50% 50%, hsla(210, 100%, 16%, 0.5), hsl(220, 30%, 5%))',
+        }),
+    },
 }));
 
 const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
-  const navigate = useNavigate();
-  const [navigateToGrid, setNavigateToGrid] = React.useState(false);
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
-  const [open, setOpen] = React.useState(false);
-  const [dialogMessage, setDialogMessage] = React.useState('');
+    const navigate = useNavigate();
+    const [navigateToGrid, setNavigateToGrid] = React.useState(false);
+    const [emailError, setEmailError] = React.useState(false);
+    const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
+    const [open, setOpen] = React.useState(false);
+    const [dialogMessage, setDialogMessage] = React.useState('');
 
-  React.useEffect(() => {
-    const root = document.getElementById('root');
-    if (root) {
-      root.setAttribute('aria-hidden', 'false');
-    }
-    return () => {
-      if (root) {
-        root.removeAttribute('aria-hidden');
-      }
+    React.useEffect(() => {
+        const root = document.getElementById('root');
+        if (root) {
+            root.setAttribute('aria-hidden', 'false');
+        }
+        return () => {
+            if (root) {
+                root.removeAttribute('aria-hidden');
+            }
+        };
+    }, [open]);
+
+    const handleClose = () => {
+        setOpen(false);
     };
-  }, [open]);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (!validateInputs()) {
+            return;
+        }
+        const data = new FormData(event.currentTarget);
+        const email = data.get('email');
+        console.log('Form Data:', { email });
+        console.log(apiUrl);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!validateInputs()) {
-      return;
-    }
-    const data = new FormData(event.currentTarget);
-    const email = data.get('email');
-    console.log('Form Data:', { email });
-    console.log(apiUrl);
+        try {
+            const response = await fetch(`${apiUrl}/vos/oog/v1/users`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email }),
+            });
 
-    try {
-      const response = await fetch(`${apiUrl}/vos/oog/v1/usr`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email }),
-      });
+            const result = await response.json();
+            console.log('서버 응답:', result);
+            if ('S' === result.code) {
+                setNavigateToGrid(true);
+                setDialogMessage('로그인 성공');
+                setOpen(true);
+                navigate('/mainPage');
+            } else if ('V' === result.code || 'N' === result.code) {
+                setDialogMessage('메일 인증을 완료해 주세요.');
+                setOpen(true);
+            } else if ('E' === result.code) {
+                setDialogMessage('서버 에러 입니다.');
+                setOpen(true);
+            }
+        } catch (error) {
+            console.error('오류 발생:', error);
+            setDialogMessage('오류가 발생했습니다. 다시 시도해주세요.');
+            setOpen(true);
+        }
+    };
 
-      const result = await response.json();
-      console.log('서버 응답:', result);
-      if ('S' === result.code) {
-        setNavigateToGrid(true);
-        setDialogMessage('로그인 성공');
-        setOpen(true);
-        navigate('/mainPage');
-      } else if ('V' === result.code || 'N' === result.code) {
-        setDialogMessage('메일 인증을 완료해 주세요.');
-        setOpen(true);
-      } else if ('E' === result.code) {
-        setDialogMessage('서버 에러 입니다.');
-        setOpen(true);
-      }
-    } catch (error) {
-      console.error('오류 발생:', error);
-      setDialogMessage('오류가 발생했습니다. 다시 시도해주세요.');
-      setOpen(true);
-    }
-  };
+    const validateInputs = () => {
+        const email = document.getElementById('email') as HTMLInputElement;
+        let isValid = true;
 
-  const validateInputs = () => {
-    const email = document.getElementById('email') as HTMLInputElement;
-    let isValid = true;
+        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+            setEmailError(true);
+            setEmailErrorMessage('Please enter a valid email address.');
+            isValid = false;
+        } else {
+            setEmailError(false);
+            setEmailErrorMessage('');
+        }
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
-    }
+        return isValid;
+    };
 
-    return isValid;
-  };
-
-  return (
-    <AppTheme {...props}>
-      <CssBaseline enableColorScheme />
-      <SignInContainer direction="column" justifyContent="space-between">
-        <Card variant="outlined">
-          <object
-            data="https://www.valueonsys.com/logo.html?size=24&amp;option=1&amp;anim=yes&amp;bw=b&amp;t=1738630981328"
-            type="text/html"
-            width="230"
-            height="35"
-          ></object>
-          <Typography component="h1" variant="h4" sx={{ width: '100%', textAlign: 'center' }}>
-            Out of Gauge System
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              gap: 2,
-            }}
-          >
-            <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
-              <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
-                id="email"
-                type="email"
-                name="email"
-                placeholder="your@email.com"
-                autoComplete="email"
-                autoFocus
-                required
-                fullWidth
-                variant="outlined"
-                color={emailError ? 'error' : 'primary'}
-              />
-            </FormControl>
-            <Button type="submit" fullWidth variant="contained">
-              Submit
-            </Button>
-          </Box>
-        </Card>
-      </SignInContainer>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="dialog-title"
-        aria-describedby="dialog-description"
-      >
-        <DialogTitle id="dialog-title">알림</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="dialog-description">
-            {dialogMessage}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            닫기
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </AppTheme>
-  );
+    return (
+        <AppTheme {...props}>
+            <CssBaseline enableColorScheme />
+            <SignInContainer direction="column" justifyContent="space-between">
+                <Card variant="outlined">
+                    <object
+                        data="https://www.valueonsys.com/logo.html?size=24&amp;option=1&amp;anim=yes&amp;bw=b&amp;t=1738630981328"
+                        type="text/html"
+                        width="230"
+                        height="35"
+                    ></object>
+                    <Typography
+                        component="h1"
+                        variant="h4"
+                        sx={{ width: '100%', textAlign: 'center' }}
+                    >
+                        Out of Gauge System
+                    </Typography>
+                    <Box
+                        component="form"
+                        onSubmit={handleSubmit}
+                        noValidate
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            width: '100%',
+                            gap: 2,
+                        }}
+                    >
+                        <FormControl>
+                            <FormLabel htmlFor="email">Email</FormLabel>
+                            <TextField
+                                error={emailError}
+                                helperText={emailErrorMessage}
+                                id="email"
+                                type="email"
+                                name="email"
+                                placeholder="your@email.com"
+                                autoComplete="email"
+                                autoFocus
+                                required
+                                fullWidth
+                                variant="outlined"
+                                color={emailError ? 'error' : 'primary'}
+                            />
+                        </FormControl>
+                        <Button type="submit" fullWidth variant="contained">
+                            Submit
+                        </Button>
+                    </Box>
+                </Card>
+            </SignInContainer>
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="dialog-title"
+                aria-describedby="dialog-description"
+            >
+                <DialogTitle id="dialog-title">알림</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="dialog-description">
+                        {dialogMessage}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary">
+                        닫기
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </AppTheme>
+    );
 };
 
 export default withAuth(SignIn);

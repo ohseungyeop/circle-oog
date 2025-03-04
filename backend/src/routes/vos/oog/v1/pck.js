@@ -168,24 +168,23 @@ async function uploadPckDtl(fastify, options) {
 }
 
 async function deleteOogFile(fastify, options) {
-    fastify.post(
+    fastify.delete(
         '/',
         replyHelper(async (request) => {
-            const { data } = request.body;
-
-            console.log('📩 Received request body for deletion:', data);
+            const { pckOrdSeq } = request.params;
+            console.log('📦 Packing order sequence for deletion:', pckOrdSeq);
 
             // `VOS_OOG_UPLD_MST` 테이블에서 삭제
             await fastify
                 .knex('VOS_OOG_UPLD_MST')
-                .whereIn('PCK_ORD_SEQ', data)
+                .whereIn('PCK_ORD_SEQ', pckOrdSeq)
                 .del();
 
             // `VOS_OOG_UPLD_DTL` 테이블에서 삭제
-            await fastify
-                .knex('VOS_OOG_UPLD_DTL')
-                .whereIn('PCK_ORD_SEQ', data)
-                .del();
+            // await fastify
+            //     .knex('VOS_OOG_UPLD_DTL')
+            //     .whereIn('PCK_ORD_SEQ', pckOrdSeq)
+            //     .del();
 
             return { message: 'Rows deleted successfully' };
         }),
@@ -246,13 +245,13 @@ async function insertPckRoute(fastify, options) {
 }
 
 async function selectOogFile(fastify, options) {
-    fastify.post(
+    fastify.get(
         '/',
         replyHelper(async (request, reply) => {
             try {
-                console.log('📩 Received request body:', request.body);
+                console.log('📩 Received request query:', request.query);
 
-                const { email } = request.body;
+                const { email } = request.query;
                 if (!email) {
                     console.error('❌ Missing email in request');
                     throw new Error('Email is required'); // 🚨 `reply.send()` 없이 예외 던지기
@@ -272,6 +271,35 @@ async function selectOogFile(fastify, options) {
         }),
     );
 }
+
+async function selectPckDtl(fastify, options) {
+    fastify.get(
+        '/',
+        replyHelper(async (request, reply) => {
+            try {
+                console.log('📩 Received request query:', request.query);
+
+                const { pckOrdSeq } = request.query;
+                if (!pckOrdSeq) {
+                    console.error('❌ Missing pckOrdSeq in request');
+                    throw new Error('pckOrdSeq is required'); // 🚨 `reply.send()` 없이 예외 던지기
+                }
+
+                const upDateDtl = await fastify
+                    .knex('VOS_OOG_UPLD_DTL')
+                    .where({ PCK_ORD_SEQ: pckOrdSeq })
+                    .select('*');
+
+                console.log('📂 update PckDtl:', upDateDtl);
+                return upDateDtl; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
+            } catch (error) {
+                console.error('❌ Error fetching PckDtl:', error);
+                throw error; // 🚨 `replyHelper`가 오류 처리하도록 예외 던지기
+            }
+        }),
+    );
+}
+
 module.exports = {
     getPckRoutes,
     uploadOogFile,
@@ -280,4 +308,5 @@ module.exports = {
     uploadPckDtl,
     deleteOogFile,
     downloadTemplate,
+    selectPckDtl,
 };
