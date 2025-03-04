@@ -2,12 +2,11 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { StyledEngineProvider } from '@mui/material/styles';
-import SignIn from './SignIn.tsx';
-// import GridIndex from './grid.tsx';
-import withAuth from './withAuth.tsx';
-import FileListGrid  from './fileList.tsx';
-const ProtectedGridIndex = withAuth(FileListGrid);
-//const ProtectedExportGrid = withAuth(GridIndex);
+import SignIn from './pages/SignIn.tsx';
+import withAuth from './components/withAuth.tsx';
+import FileListPage from './pages/FileListPage.tsx';
+
+const ProtectedFileListPage = withAuth(FileListPage);
 const root = ReactDOM.createRoot(document.querySelector("#root")!);
 
 root.render(
@@ -16,7 +15,7 @@ root.render(
       <Router>
         <Routes>
           <Route path="/" element={<SignIn />} />
-          <Route path="/mainPage" element={<ProtectedGridIndex />} />
+          <Route path="/mainPage" element={<ProtectedFileListPage />} />
         </Routes>
       </Router>
     </StyledEngineProvider>

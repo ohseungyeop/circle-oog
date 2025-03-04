@@ -9,14 +9,14 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
-import AppTheme from './theme/AppTheme.tsx';
+import AppTheme from '../theme/AppTheme';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useNavigate } from 'react-router-dom';
-import withAuth from './withAuth';
+import withAuth from '../components/withAuth';
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',
@@ -62,14 +62,13 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default withAuth(function SignIn(props: { disableCustomTheme?: boolean }) {
+const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
   const navigate = useNavigate();
   const [navigateToGrid, setNavigateToGrid] = React.useState(false);
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [dialogMessage, setDialogMessage] = React.useState('');
-  // const [cookies] = useCookies(['authToken']);
 
   React.useEffect(() => {
     const root = document.getElementById('root');
@@ -82,14 +81,9 @@ export default withAuth(function SignIn(props: { disableCustomTheme?: boolean })
       }
     };
   }, [open]);
-  // React.useEffect(() => {
-  //   if (!open && navigateToGrid) {
-  //     navigate('/mainPage'); 
-  //   }
-  // }, [open, navigateToGrid]);
-  
+
   const handleClose = () => {
-    setOpen(false); // 상태 변경 후 useEffect가 실행됨
+    setOpen(false);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -217,4 +211,6 @@ export default withAuth(function SignIn(props: { disableCustomTheme?: boolean })
       </Dialog>
     </AppTheme>
   );
-});
+};
+
+export default withAuth(SignIn);
