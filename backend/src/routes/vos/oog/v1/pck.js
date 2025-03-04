@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const authMiddleware = require('utils/authMiddleware');
 
-async function getPckRoutes(fastify, options) {
+async function getPackageList(fastify, options) {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
@@ -17,10 +17,7 @@ async function getPckRoutes(fastify, options) {
 async function downloadTemplate(fastify, options) {
     fastify.get('/', async (req, reply) => {
         try {
-            const templatePath = path.join(
-                process.env.TEMPLATE_PATH,
-                'PackingList.xlsx',
-            );
+            const templatePath = path.join(process.env.TEMPLATE_PATH, 'PackingList.xlsx');
 
             // 파일 존재 여부 확인
             await fs.access(templatePath);
@@ -29,14 +26,8 @@ async function downloadTemplate(fastify, options) {
             const fileBuffer = await fs.readFile(templatePath);
 
             // 파일을 클라이언트로 전송
-            reply.header(
-                'Content-Disposition',
-                'attachment; filename=PackingList.xlsx',
-            );
-            reply.header(
-                'Content-Type',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            );
+            reply.header('Content-Disposition', 'attachment; filename=PackingList.xlsx');
+            reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             reply.send(fileBuffer); // 파일의 내용을 Buffer로 전송
         } catch (error) {
             console.error('❌ 템플릿 파일을 찾을 수 없습니다:', error);
@@ -45,7 +36,7 @@ async function downloadTemplate(fastify, options) {
     });
 }
 
-async function uploadOogFile(fastify, options) {
+async function uploadFile(fastify, options) {
     // 파일 업로드 엔드포인트
     fastify.post(
         '/',
@@ -66,9 +57,7 @@ async function uploadOogFile(fastify, options) {
                 const data = await req.file(); // ✅ 단일 파일 받기
 
                 if (!data) {
-                    return reply
-                        .status(400)
-                        .send({ error: 'No file uploaded' });
+                    return reply.status(400).send({ error: 'No file uploaded' });
                 }
 
                 // 저장할 경로 생성 (이메일 기준)
@@ -86,9 +75,7 @@ async function uploadOogFile(fastify, options) {
 
                 // Timestamp
                 //const fileUUID = uuidv4();
-                const timestamp = new Date(
-                    new Date().getTime() + 9 * 60 * 60 * 1000,
-                ) // UTC+9 보정
+                const timestamp = new Date(new Date().getTime() + 9 * 60 * 60 * 1000) // UTC+9 보정
                     .toISOString()
                     .replace('T', ' ')
                     .split('.')[0];
@@ -111,9 +98,7 @@ async function uploadOogFile(fastify, options) {
                     EMAIL: req.email, // 이메일
                 });
 
-                const result = await fastify.knex.raw(
-                    'SELECT LAST_INSERT_ID() AS PCK_ORD_SEQ',
-                );
+                const result = await fastify.knex.raw('SELECT LAST_INSERT_ID() AS PCK_ORD_SEQ');
                 console.log('DB 쿼리 결과:', result); // 쿼리 결과를 콘솔로 확인
 
                 // 결과 형식이 배열인지 확인
@@ -139,7 +124,7 @@ async function uploadOogFile(fastify, options) {
     );
 }
 
-async function uploadPckDtl(fastify, options) {
+async function uploadDetail(fastify, options) {
     fastify.post(
         '/',
         replyHelper(async (request) => {
@@ -167,7 +152,7 @@ async function uploadPckDtl(fastify, options) {
     );
 }
 
-async function deleteOogFile(fastify, options) {
+async function deleteFileList(fastify, options) {
     fastify.delete(
         '/',
         replyHelper(async (request) => {
@@ -175,10 +160,7 @@ async function deleteOogFile(fastify, options) {
             console.log('📦 Packing order sequence for deletion:', pckOrdSeq);
 
             // `VOS_OOG_UPLD_MST` 테이블에서 삭제
-            await fastify
-                .knex('VOS_OOG_UPLD_MST')
-                .whereIn('PCK_ORD_SEQ', pckOrdSeq)
-                .del();
+            await fastify.knex('VOS_OOG_UPLD_MST').whereIn('PCK_ORD_SEQ', pckOrdSeq).del();
 
             // `VOS_OOG_UPLD_DTL` 테이블에서 삭제
             // await fastify
@@ -191,7 +173,7 @@ async function deleteOogFile(fastify, options) {
     );
 }
 
-async function insertPckRoute(fastify, options) {
+async function insertPackage(fastify, options) {
     fastify.post(
         '/',
         replyHelper(async (request) => {
@@ -237,14 +219,12 @@ async function insertPckRoute(fastify, options) {
                 CRE_USR_NM,
             });
 
-            return reply
-                .code(201)
-                .send({ message: 'Packing record inserted successfully' });
+            return reply.code(201).send({ message: 'Packing record inserted successfully' });
         }),
     );
 }
 
-async function selectOogFile(fastify, options) {
+async function selectFileList(fastify, options) {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
@@ -257,10 +237,7 @@ async function selectOogFile(fastify, options) {
                     throw new Error('Email is required'); // 🚨 `reply.send()` 없이 예외 던지기
                 }
 
-                const fileList = await fastify
-                    .knex('VOS_OOG_UPLD_MST')
-                    .where({ EMAIL: email })
-                    .select('*');
+                const fileList = await fastify.knex('VOS_OOG_UPLD_MST').where({ EMAIL: email }).select('*');
 
                 console.log('📂 update file list:', fileList);
                 return fileList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
@@ -272,7 +249,7 @@ async function selectOogFile(fastify, options) {
     );
 }
 
-async function selectPckDtl(fastify, options) {
+async function selectDetails(fastify, options) {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
@@ -285,10 +262,7 @@ async function selectPckDtl(fastify, options) {
                     throw new Error('pckOrdSeq is required'); // 🚨 `reply.send()` 없이 예외 던지기
                 }
 
-                const upDateDtl = await fastify
-                    .knex('VOS_OOG_UPLD_DTL')
-                    .where({ PCK_ORD_SEQ: pckOrdSeq })
-                    .select('*');
+                const upDateDtl = await fastify.knex('VOS_OOG_UPLD_DTL').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
 
                 console.log('📂 update PckDtl:', upDateDtl);
                 return upDateDtl; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
@@ -301,12 +275,12 @@ async function selectPckDtl(fastify, options) {
 }
 
 module.exports = {
-    getPckRoutes,
-    uploadOogFile,
-    insertPckRoute,
-    selectOogFile,
-    uploadPckDtl,
-    deleteOogFile,
+    getPackageList,
+    uploadFile,
+    insertPackage,
+    selectFileList,
+    uploadDetail,
+    deleteFileList,
     downloadTemplate,
-    selectPckDtl,
+    selectDetails,
 };

@@ -1,16 +1,13 @@
 const { replyHelper } = require('utils/replyHelper');
 
-async function calcOog(fastify, options) {
+async function calculate(fastify, options) {
     fastify.post(
         '/',
         replyHelper(async (request, reply) => {
             try {
                 const { pckOrdSeq } = request.params;
                 console.log('📦 Packing order sequence:', pckOrdSeq);
-                const itemList = await fastify
-                    .knex('VOS_OOG_UPLD_DTL')
-                    .where({ PCK_ORD_SEQ: pckOrdSeq })
-                    .select('*');
+                const itemList = await fastify.knex('VOS_OOG_UPLD_DTL').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
 
                 console.log('📂 select item list:', itemList);
                 return itemList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
@@ -22,5 +19,5 @@ async function calcOog(fastify, options) {
     );
 }
 module.exports = {
-    calcOog,
+    calculate,
 };

@@ -1,17 +1,14 @@
 const jwt = require('jsonwebtoken');
 const { setAuthToken } = require('utils/cookieHelper');
 
-async function registerOogUser(fastify, options) {
+async function registerUser(fastify, options) {
     fastify.post('/', async (request, reply) => {
         const { email } = request.body;
         console.log('📧 이메일 요청:', email);
 
         try {
             // 1️⃣ 이메일로 사용자 조회
-            const existingUser = await fastify
-                .knex('vos_oog_usr')
-                .where({ USR_EML: email })
-                .first();
+            const existingUser = await fastify.knex('vos_oog_usr').where({ USR_EML: email }).first();
 
             // 2️⃣ 검증 토큰 생성 (24시간 유효) - 이메일 검증용
             const emailToken = jwt.sign(
@@ -26,10 +23,7 @@ async function registerOogUser(fastify, options) {
 
             if (existingUser) {
                 // 3️⃣ 기존 사용자 상태 체크
-                if (
-                    'A' === existingUser.USR_STS &&
-                    'Y' === existingUser.EML_VRF_YN
-                ) {
+                if ('A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
                     // ✅ 기존 쿠키 확인
                     const existingAuthToken = request.cookies.authToken;
 
@@ -48,15 +42,11 @@ async function registerOogUser(fastify, options) {
                         status: 'Success',
                         message: 'User already exists',
                     });
-                } else if (
-                    'I' === existingUser.USR_STS &&
-                    'N' === existingUser.EML_VRF_YN
-                ) {
+                } else if ('I' === existingUser.USR_STS && 'N' === existingUser.EML_VRF_YN) {
                     return reply.send({
                         code: 'V',
                         status: 'Verify',
-                        message:
-                            'Email exists, but not verified. Please verify your email.',
+                        message: 'Email exists, but not verified. Please verify your email.',
                     });
                 }
             } else {
@@ -84,10 +74,7 @@ async function registerOogUser(fastify, options) {
                 });
             }
         } catch (error) {
-            console.error(
-                'Error during user registration or email sending:',
-                error,
-            );
+            console.error('Error during user registration or email sending:', error);
             return reply.status(500).send({
                 code: 'E',
                 status: 'Error',
@@ -114,7 +101,7 @@ const sendEmail = async (fastify, to, subject, text) => {
 };
 
 // 토큰 검증 함수
-const verifyToken = (token) => {
+const verifyJwtToken = (token) => {
     return new Promise((resolve, reject) => {
         jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
             if (err) {
@@ -127,11 +114,11 @@ const verifyToken = (token) => {
 };
 
 // 토큰 검증을 위한 엔드포인트
-async function verifyTokenRoute(fastify, options) {
+async function verifyToken(fastify, options) {
     fastify.post('/', async (request, reply) => {
         const token = request.headers['authorization']?.split(' ')[1]; // "Bearer <token>"에서 <token>만 추출
         try {
-            const decoded = await verifyToken(token);
+            const decoded = await verifyJwtToken(token);
             // 토큰이 유효한 경우(decoded가 반환되면)
             return reply.send({
                 code: 'S',
@@ -143,16 +130,9 @@ async function verifyTokenRoute(fastify, options) {
             // 토큰이 유효하지 않은 경우, 사용자 이메일 확인 후 새로운 토큰 발급
             if (error.message === 'Invalid or expired token') {
                 const tokenEmail = request.cookies.email;
-                const existingUser = await fastify
-                    .knex('vos_oog_usr')
-                    .where({ USR_EML: tokenEmail })
-                    .first();
+                const existingUser = await fastify.knex('vos_oog_usr').where({ USR_EML: tokenEmail }).first();
 
-                if (
-                    existingUser &&
-                    'A' === existingUser.USR_STS &&
-                    'Y' === existingUser.EML_VRF_YN
-                ) {
+                if (existingUser && 'A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
                     // 유효한 사용자가 존재하면 새 토큰 발급
                     setAuthToken(reply, tokenEmail); // 쿠키에 새 토큰 저장
                     return reply.send({
@@ -165,20 +145,17 @@ async function verifyTokenRoute(fastify, options) {
                     return reply.status(400).send({
                         code: 'E',
                         status: 'Error',
-                        message:
-                            'Invalid or expired token, user does not exist or is inactive',
+                        message: 'Invalid or expired token, user does not exist or is inactive',
                     });
                 }
             }
-            return reply
-                .status(400)
-                .send({ code: 'E', status: 'Error', message: error.message });
+            return reply.status(400).send({ code: 'E', status: 'Error', message: error.message });
         }
     });
 }
 
 module.exports = {
-    registerOogUser,
+    registerUser,
     sendEmail,
-    verifyTokenRoute,
+    verifyToken,
 };

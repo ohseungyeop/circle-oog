@@ -19,17 +19,14 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
     console.log('Fetching data for email:', email);
 
     try {
-        const response = await fetch(
-            `${apiUrl}/vos/oog/v1/packages/files?email=${email}`,
-            {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${cookies.authToken}`,
-                    'Content-Type': 'application/json',
-                },
-                // body: JSON.stringify({ email }),
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files?email=${email}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${cookies.authToken}`,
+                'Content-Type': 'application/json',
             },
-        );
+            // body: JSON.stringify({ email }),
+        });
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
 
@@ -61,19 +58,11 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
 
 export const handleTemplateDownload = (apiUrl) => {
     const link = document.createElement('a');
-    link.href = `${apiUrl}/vos/oog/v1/packages/files/template`;
+    link.href = `${apiUrl}/vos/oog/v1/files/template`;
     link.click();
 };
 
-export const handleFileUpload = async (
-    event,
-    cookies,
-    apiUrl,
-    setSnackbar,
-    setExcelRows,
-    fetchData,
-    setRows,
-) => {
+export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -123,16 +112,14 @@ export const handleFileUpload = async (
                     id: index + 1,
                     pckNo: Number(excelRowObject['No번호']) || 0,
                     itmNm: String(excelRowObject['Item Name품목']) || '',
-                    pckLen:
-                        Number(excelRowObject['Package Dimension(㎜)']) || 0,
+                    pckLen: Number(excelRowObject['Package Dimension(㎜)']) || 0,
                     pckWdt: Number(excelRowObject['__EMPTY']) || 0,
                     pckHgt: Number(excelRowObject['__EMPTY_1']) || 0,
                     pckQty: Number(excelRowObject["Q'ty수량"]) || 0,
                     pckWgt: Number(excelRowObject['G/W중량(㎏)']) || 0,
                     pckCbm: Number(excelRowObject['CBM입방미터']) || 0,
                     pckRmk:
-                        excelRowObject['RMKS비고'] !== undefined &&
-                        excelRowObject['RMKS비고'] !== null
+                        excelRowObject['RMKS비고'] !== undefined && excelRowObject['RMKS비고'] !== null
                             ? String(excelRowObject['RMKS비고']).trim()
                             : '',
                 };
@@ -141,12 +128,7 @@ export const handleFileUpload = async (
             setExcelRows(formattedData);
             console.log('Formatted Data:', formattedData);
 
-            const pckOrdSeq = await importExcel(
-                file,
-                cookies,
-                apiUrl,
-                setSnackbar,
-            );
+            const pckOrdSeq = await importExcel(file, cookies, apiUrl, setSnackbar);
             console.log('pckOrdSeq', pckOrdSeq);
 
             if (!pckOrdSeq) {
@@ -218,7 +200,7 @@ const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
     formData.append('email', email);
 
     try {
-        const response = await fetch(`${apiUrl}/vos/oog/v1/packages/files`, {
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
@@ -256,17 +238,14 @@ const insertExcelData = async (data, apiUrl, cookies, setSnackbar) => {
     }
 
     try {
-        const response = await fetch(
-            `${apiUrl}/vos/oog/v1/packages/files/details`,
-            {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${cookies.authToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ data }),
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files/details`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${cookies.authToken}`,
+                'Content-Type': 'application/json',
             },
-        );
+            body: JSON.stringify({ data }),
+        });
 
         if (!response.ok) throw new Error('데이터 저장 실패');
         console.log('데이터 삽입 성공!');
@@ -298,13 +277,7 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
-            await handleExcelChk(
-                selectedRow.pckOrdSeq,
-                setExcelRows,
-                fetchExcelData,
-                apiUrl,
-                cookies,
-            );
+            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, fetchExcelData, apiUrl, cookies);
         }
     } else {
         setExcelRows([]);
@@ -313,13 +286,7 @@ export const handleSelectionChange = async (
     setSelectionModel(newSelection);
 };
 
-const handleExcelChk = async (
-    pckOrdSeq,
-    setExcelRows,
-    fetchExcelData,
-    apiUrl,
-    cookies,
-) => {
+const handleExcelChk = async (pckOrdSeq, setExcelRows, fetchExcelData, apiUrl, cookies) => {
     if (!pckOrdSeq) return;
 
     console.log('📌 선택된 pckOrdSeq:', pckOrdSeq);
@@ -332,19 +299,16 @@ const handleExcelChk = async (
 
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     try {
-        const response = await fetch(
-            `${apiUrl}/vos/oog/v1/packages/details?pckOrdSeq=${pckOrdSeq}`,
-            {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${cookies.authToken}`,
-                    'Content-Type': 'application/json',
-                },
-                // body: JSON.stringify({
-                //     pckOrdSeq: pckOrdSeq,
-                // }),
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files/details?pckOrdSeq=${pckOrdSeq}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${cookies.authToken}`,
+                'Content-Type': 'application/json',
             },
-        );
+            // body: JSON.stringify({
+            //     pckOrdSeq: pckOrdSeq,
+            // }),
+        });
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
 
@@ -376,18 +340,8 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     }
 };
 
-export const handleDeleteRows = async (
-    apiUrl,
-    cookies,
-    selectionModel,
-    rows,
-    setSnackbar,
-    fetchData,
-    setRows,
-) => {
-    let selectedRows = rows
-        .filter((row) => selectionModel.includes(row.id))
-        .map((row) => row.pckOrdSeq);
+export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows) => {
+    let selectedRows = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
 
     if (selectedRows.length === 0) {
         setSnackbar({
