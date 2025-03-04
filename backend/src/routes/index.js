@@ -6,6 +6,7 @@ const {
     uploadPckDtl,
     deleteOogFile,
     downloadTemplate,
+    selectPckDtl,
 } = require('./vos/oog/v1/pck');
 const { registerOogUser, verifyTokenRoute } = require('./vos/oog/v1/usr');
 const { sendEmail, verifyEmail } = require('utils/emailHelper');
