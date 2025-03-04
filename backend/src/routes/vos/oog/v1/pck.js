@@ -1,8 +1,8 @@
-const { replyHelper } = require('helpers/replyHelper');
+const { replyHelper } = require('utils/replyHelper');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs').promises;
-const authMiddleware = require('middlewares/authMiddleware');
+const authMiddleware = require('utils/authMiddleware');
 
 async function getPckRoutes(fastify, options) {
     fastify.get(
@@ -152,7 +152,7 @@ async function uploadPckDtl(fastify, options) {
                     PCK_ORD_SEQ: item.pckOrdSeq,
                     PCK_NO: item.pckNo,
                     ITM_NM: item.itmNm,
-                    PCK_LEN: item.pckLen,
+                    PCK_LEN: item.pckLeg,
                     PCK_WDT: item.pckWdt,
                     PCK_HGT: item.pckHgt,
                     PCK_QTY: item.pckQty,
@@ -161,34 +161,8 @@ async function uploadPckDtl(fastify, options) {
                     PCK_RMK: item.pckRmk,
                 })),
             );
-        }),
-    );
-}
 
-async function selectPckDtl(fastify, options) {
-    fastify.post(
-        '/',
-        replyHelper(async (request, reply) => {
-            try {
-                console.log('📩 Received request body:', request.body);
-
-                const { pckOrdSeq } = request.body;
-                if (!pckOrdSeq) {
-                    console.error('❌ Missing email in request');
-                    throw new Error('Email is required'); // 🚨 `reply.send()` 없이 예외 던지기
-                }
-
-                const upDateDtl = await fastify
-                    .knex('VOS_OOG_UPLD_DTL')
-                    .where({ PCK_ORD_SEQ: pckOrdSeq })
-                    .select('*');
-
-                console.log('📂 update PckDtl:', upDateDtl);
-                return upDateDtl; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
-            } catch (error) {
-                console.error('❌ Error fetching PckDtl:', error);
-                throw error; // 🚨 `replyHelper`가 오류 처리하도록 예외 던지기
-            }
+            return { message: 'Packing dtl inserted successfully' };
         }),
     );
 }
@@ -306,5 +280,4 @@ module.exports = {
     uploadPckDtl,
     deleteOogFile,
     downloadTemplate,
-    selectPckDtl,
 };

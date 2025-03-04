@@ -9,7 +9,7 @@ const {
     selectPckDtl,
 } = require('./vos/oog/v1/pck');
 const { registerOogUser, verifyTokenRoute } = require('./vos/oog/v1/usr');
-const { sendEmail, verifyEmail } = require('helpers/emailHelper');
+const { sendEmail, verifyEmail } = require('utils/emailHelper');
 
 async function routes(fastify, options) {
     fastify.get('/', async (request, reply) => {
@@ -20,7 +20,6 @@ async function routes(fastify, options) {
     fastify.register(uploadPckDtl, { prefix: '/vos/oog/v1/pck/uploadDtl' });
     fastify.register(insertPckRoute, { prefix: '/vos/oog/v1/pck' });
     fastify.register(selectOogFile, { prefix: '/vos/oog/v1/pck/select' });
-    fastify.register(selectPckDtl, { prefix: '/vos/oog/v1/pck/selectPckDtl' });
     fastify.register(deleteOogFile, { prefix: '/vos/oog/v1/pck/delete' });
     fastify.register(downloadTemplate, {
         prefix: '/vos/oog/v1/pck/download/template',

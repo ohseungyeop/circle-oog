@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS VOS_OOG_USR;
+DROP TABLE IF EXISTS vos_oog_usr;
 
-CREATE TABLE VOS_OOG_USR (
+CREATE TABLE vos_oog_usr (
     USR_SEQ INT AUTO_INCREMENT NOT NULL COMMENT '(PK) User Sequence',
 -- ----------------S: user-defined
     USR_EML VARCHAR(255) NOT NULL COMMENT 'User Email',

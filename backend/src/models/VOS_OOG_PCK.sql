@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS VOS_OOG_PCK;
+DROP TABLE IF EXISTS vos_oog_pck;
 
-CREATE TABLE VOS_OOG_PCK (
+CREATE TABLE vos_oog_pck (
     PCK_ITM_SEQ INT(10) NOT NULL COMMENT '(PK) Upload Item Sequence',
     PCK_ORD_SEQ INT(10) NOT NULL COMMENT 'Upload Sequence(Upload 차수)',
 -- ----------------S: user-defined
