@@ -1,14 +1,15 @@
 const fastify = require('fastify')({
-  logger: {
-    level: process.env.LOG_LEVEL || 'info',
-    transport: process.env.NODE_ENV === 'prd'
-      ? undefined
-      : {
-          target: 'pino-pretty',
-          options: { colorize: true, translateTime: 'HH:MM:ss Z' },
-        },
-  },
-  bodyLimit: 10485760, // 10MB로 설정
+    logger: {
+        level: process.env.LOG_LEVEL || 'info',
+        transport:
+            process.env.NODE_ENV === 'prd'
+                ? undefined
+                : {
+                      target: 'pino-pretty',
+                      options: { colorize: true, translateTime: 'HH:MM:ss Z' },
+                  },
+    },
+    bodyLimit: 10485760, // 10MB로 설정
 });
 
 // 환경별 `.env` 파일 불러오기
@@ -26,56 +27,58 @@ const cookie = require('@fastify/cookie');
 fastify.register(require('@fastify/multipart'));
 
 // 플러그인 & 라우트 등록
-fastify.register(require('./plugins/cors'));     // ✅ CORS 추가
-fastify.register(require('./plugins/db'));       // ✅ DB 플러그인
-fastify.register(require('./plugins/mailer'));   // ✅ 메일러 플러그인 등록 (라우트보다 먼저)
-fastify.register(require('./routes'));           // ✅ 기존 라우트
+fastify.register(require('./config/cors')); // ✅ CORS 추가
+fastify.register(require('./config/db')); // ✅ DB 플러그인
+fastify.register(require('./config/mailer')); // ✅ 메일러 플러그인 등록 (라우트보다 먼저)
+fastify.register(require('./routes')); // ✅ 기존 라우트
 fastify.register(cookie, {
-  // secret: process.env.COOKIE_SECRET, // 선택적 (서명된 쿠키에 사용)
-  parseOptions: {} // 쿠키 옵션 설정 가능
+    // secret: process.env.COOKIE_SECRET, // 선택적 (서명된 쿠키에 사용)
+    parseOptions: {}, // 쿠키 옵션 설정 가능
 });
 
 // 요청 로그 미들웨어
 fastify.addHook('onRequest', (request, reply, done) => {
-  console.log(`[${new Date().toISOString()}] Request: ${request.method} ${request.url}`);
-  done();
+    console.log(
+        `[${new Date().toISOString()}] Request: ${request.method} ${
+            request.url
+        }`,
+    );
+    done();
 });
 
 // 서버 실행
 const start = async () => {
-  try {
+    try {
+        //로컬 서버
+        // if ('local'===process.env.NODE_ENV) {
+        await fastify.listen({
+            port: process.env.BACKEND_PORT,
+            host: '0.0.0.0',
+        });
+        console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
 
-    //로컬 서버
-    // if ('local'===process.env.NODE_ENV) {
-      await fastify.listen({
-        port: process.env.BACKEND_PORT,
-        host: '0.0.0.0'
-      });
-      console.log(`🚀 Server running at ${process.env.BACKEND_URL}`);
+        //운영 서버
+        // } else if ('prd'===process.env.NODE_ENV) {
+        //   const fs = require('fs');
+        //   const https = require('https');
+        //   const options = {
+        //     key: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/privkey.pem'),
+        //     cert: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/fullchain.pem'),
+        //     minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
+        //   };
 
-    //운영 서버
-    // } else if ('prd'===process.env.NODE_ENV) {
-    //   const fs = require('fs');
-    //   const https = require('https');
-    //   const options = {
-    //     key: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/privkey.pem'),
-    //     cert: fs.readFileSync('/etc/letsencrypt/live/valueonsys.com/fullchain.pem'),
-    //     minVersion: 'TLSv1.2'  // 최소 TLS 버전 설정 (예: TLS 1.2)
-    //   };
-
-    //   https.createServer(options, fastify.handler).listen(8443, '0.0.0.0', (err) => {
-    //     if (err) {
-    //       console.error(err);
-    //       process.exit(1);
-    //     }
-    //     console.log('Fastify HTTPS server running on http://172.20.12.6');
-    //   });
-    // }
-
-  } catch (err) {
-    fastify.log.error(err);
-    process.exit(1);
-  }
+        //   https.createServer(options, fastify.handler).listen(8443, '0.0.0.0', (err) => {
+        //     if (err) {
+        //       console.error(err);
+        //       process.exit(1);
+        //     }
+        //     console.log('Fastify HTTPS server running on http://172.20.12.6');
+        //   });
+        // }
+    } catch (err) {
+        fastify.log.error(err);
+        process.exit(1);
+    }
 };
 
 start();
