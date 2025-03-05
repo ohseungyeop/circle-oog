@@ -45,6 +45,7 @@ async function uploadFile(fastify, options) {
                 authMiddleware,
                 async (req, reply) => {
                     const email = req.user?.email;
+                    console.log(email);
                     if (!email) {
                         return reply.status(400).send('Email is required');
                     }
