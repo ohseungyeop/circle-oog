@@ -23,9 +23,7 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
-                'Content-Type': 'application/json',
             },
-            // body: JSON.stringify({ email }),
         });
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
@@ -299,15 +297,11 @@ const handleExcelChk = async (pckOrdSeq, setExcelRows, fetchExcelData, apiUrl, c
 
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     try {
-        const response = await fetch(`${apiUrl}/vos/oog/v1/files/details?pckOrdSeq=${pckOrdSeq}`, {
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files/details/${pckOrdSeq}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
-                'Content-Type': 'application/json',
             },
-            // body: JSON.stringify({
-            //     pckOrdSeq: pckOrdSeq,
-            // }),
         });
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
@@ -341,9 +335,9 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
 };
 
 export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows) => {
-    let selectedRows = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
+    let selectedRow = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
 
-    if (selectedRows.length === 0) {
+    if (selectedRow.length === 0) {
         setSnackbar({
             open: true,
             message: '선택된 로우가 없습니다!',
@@ -353,13 +347,11 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
     }
 
     try {
-        const response = await fetch(`${apiUrl}/vos/oog/v1/pck/files`, {
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files/${selectedRow}`, {
             method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
-                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ data: selectedRows }),
         });
 
         if (!response.ok) throw new Error('리스트 삭제 실패');

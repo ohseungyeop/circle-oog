@@ -1,40 +1,7 @@
 const { replyHelper } = require('utils/replyHelper');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs').promises;
 const authMiddleware = require('utils/authMiddleware');
-
-async function getPackageList(fastify, options) {
-    fastify.get(
-        '/',
-        replyHelper(async (request, reply) => {
-            const pckList = await fastify.knex('vos_oog_pck').select('*');
-            return pckList;
-        }),
-    );
-}
-
-async function downloadTemplate(fastify, options) {
-    fastify.get('/', async (req, reply) => {
-        try {
-            const templatePath = path.join(process.env.TEMPLATE_PATH, 'PackingList.xlsx');
-
-            // 파일 존재 여부 확인
-            await fs.access(templatePath);
-
-            // 파일을 전체 읽기
-            const fileBuffer = await fs.readFile(templatePath);
-
-            // 파일을 클라이언트로 전송
-            reply.header('Content-Disposition', 'attachment; filename=PackingList.xlsx');
-            reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            reply.send(fileBuffer); // 파일의 내용을 Buffer로 전송
-        } catch (error) {
-            console.error('❌ 템플릿 파일을 찾을 수 없습니다:', error);
-            reply.status(404).send({ error: '템플릿 파일을 찾을 수 없습니다' });
-        }
-    });
-}
 
 async function uploadFile(fastify, options) {
     // 파일 업로드 엔드포인트
@@ -153,78 +120,6 @@ async function uploadDetail(fastify, options) {
     );
 }
 
-async function deleteFileList(fastify, options) {
-    fastify.delete(
-        '/',
-        replyHelper(async (request) => {
-            const { pckOrdSeq } = request.params;
-            console.log('📦 Packing order sequence for deletion:', pckOrdSeq);
-
-            // `VOS_OOG_UPLD_MST` 테이블에서 삭제
-            await fastify.knex('VOS_OOG_UPLD_MST').whereIn('PCK_ORD_SEQ', pckOrdSeq).del();
-
-            // `VOS_OOG_UPLD_DTL` 테이블에서 삭제
-            // await fastify
-            //     .knex('VOS_OOG_UPLD_DTL')
-            //     .whereIn('PCK_ORD_SEQ', pckOrdSeq)
-            //     .del();
-
-            return { message: 'Rows deleted successfully' };
-        }),
-    );
-}
-
-async function insertPackage(fastify, options) {
-    fastify.post(
-        '/',
-        replyHelper(async (request) => {
-            console.log('📩 Received request body:', request.body); // 요청 본문 확인
-            const {
-                PCK_ORD_NO,
-                PCK_NO,
-                ITM_NM,
-                PCK_LEN,
-                PCK_WDT,
-                PCK_HGT,
-                PCK_QTY,
-                PCK_WGT,
-                PCK_RMK,
-                ESTM_PCK_LEN,
-                ESTM_PCK_WDT,
-                ESTM_PCK_HGT,
-                PCK_CBM,
-                PCK_TP_CD,
-                PCK_GRS_WGT,
-                UPD_USR_NM,
-                CRE_USR_NM,
-            } = request.body;
-
-            // 데이터 삽입
-            await fastify.knex('vos_oog_pck').insert({
-                PCK_ORD_NO,
-                PCK_NO,
-                ITM_NM,
-                PCK_LEN,
-                PCK_WDT,
-                PCK_HGT,
-                PCK_QTY,
-                PCK_WGT,
-                PCK_RMK,
-                ESTM_PCK_LEN,
-                ESTM_PCK_WDT,
-                ESTM_PCK_HGT,
-                PCK_CBM,
-                PCK_TP_CD,
-                PCK_GRS_WGT,
-                UPD_USR_NM,
-                CRE_USR_NM,
-            });
-
-            return reply.code(201).send({ message: 'Packing record inserted successfully' });
-        }),
-    );
-}
-
 async function selectFileList(fastify, options) {
     fastify.get(
         '/',
@@ -255,9 +150,9 @@ async function selectDetails(fastify, options) {
         '/',
         replyHelper(async (request, reply) => {
             try {
-                console.log('📩 Received request query:', request.query);
+                const { pckOrdSeq } = request.params;
+                console.log('📩 Received request params:', request.params);
 
-                const { pckOrdSeq } = request.query;
                 if (!pckOrdSeq) {
                     console.error('❌ Missing pckOrdSeq in request');
                     throw new Error('pckOrdSeq is required'); // 🚨 `reply.send()` 없이 예외 던지기
@@ -275,13 +170,49 @@ async function selectDetails(fastify, options) {
     );
 }
 
+async function deleteFile(fastify, options) {
+    fastify.delete(
+        '/',
+        replyHelper(async (request) => {
+            const { pckOrdSeq } = request.params;
+            console.log('📦 Packing order sequence for deletion:', pckOrdSeq);
+
+            // `VOS_OOG_UPLD_MST` 테이블에서 삭제
+            // `VOS_OOG_UPLD_DTL` 테이블은 trigger되어있음(자동 삭제됨)
+            await fastify.knex('VOS_OOG_UPLD_MST').where('PCK_ORD_SEQ', pckOrdSeq).del();
+
+            return { message: 'Rows deleted successfully' };
+        }),
+    );
+}
+
+async function downloadTemplate(fastify, options) {
+    fastify.get('/', async (req, reply) => {
+        try {
+            const templatePath = path.join(process.env.TEMPLATE_PATH, 'PackingList.xlsx');
+
+            // 파일 존재 여부 확인
+            await fs.access(templatePath);
+
+            // 파일을 전체 읽기
+            const fileBuffer = await fs.readFile(templatePath);
+
+            // 파일을 클라이언트로 전송
+            reply.header('Content-Disposition', 'attachment; filename=PackingList.xlsx');
+            reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            reply.send(fileBuffer); // 파일의 내용을 Buffer로 전송
+        } catch (error) {
+            console.error('❌ 템플릿 파일을 찾을 수 없습니다:', error);
+            reply.status(404).send({ error: '템플릿 파일을 찾을 수 없습니다' });
+        }
+    });
+}
+
 module.exports = {
-    getPackageList,
     uploadFile,
-    insertPackage,
-    selectFileList,
     uploadDetail,
-    deleteFileList,
-    downloadTemplate,
+    selectFileList,
     selectDetails,
+    deleteFile,
+    downloadTemplate,
 };

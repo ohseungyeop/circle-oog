@@ -19,6 +19,7 @@
     "@fastify/formbody": "^8.0.2",
     "@fastify/multipart": "^9.0.3",
     "cross-env": "^7.0.3",
+    "ejs": "^3.1.10",
     "fastify": "^5.2.1",
     "fastify-env": "^2.2.0",
     "fastify-jwt": "^4.2.0",
