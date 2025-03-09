@@ -1,6 +1,6 @@
-const { replyHelper } = require('utils/replyHelper');
+import replyHelper from '../utils/replyHelper.js';
 
-async function insertPackage(fastify, options) {
+const insertPackage = async (fastify, options) => {
     fastify.post(
         '/',
         replyHelper(async (request) => {
@@ -49,9 +49,9 @@ async function insertPackage(fastify, options) {
             return reply.code(201).send({ message: 'Packing record inserted successfully' });
         }),
     );
-}
+};
 
-async function getPackageList(fastify, options) {
+const getPackageList = async (fastify, options) => {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
@@ -59,9 +59,6 @@ async function getPackageList(fastify, options) {
             return pckList;
         }),
     );
-}
-
-module.exports = {
-    insertPackage,
-    getPackageList,
 };
+
+export { insertPackage, getPackageList };

@@ -1,9 +1,9 @@
-const { replyHelper } = require('utils/replyHelper');
-const path = require('path');
-const fs = require('fs').promises;
-const authMiddleware = require('utils/authMiddleware');
+import path from 'path';
+import fs from 'fs/promises';
+import replyHelper from '../utils/replyHelper.js';
+import authMiddleware from '../utils/authMiddleware.js';
 
-async function uploadFile(fastify, options) {
+const uploadFile = async (fastify, options) => {
     // 파일 업로드 엔드포인트
     fastify.post(
         '/',
@@ -90,9 +90,9 @@ async function uploadFile(fastify, options) {
             }
         },
     );
-}
+};
 
-async function uploadDetail(fastify, options) {
+const uploadDetail = async (fastify, options) => {
     fastify.post(
         '/',
         replyHelper(async (request) => {
@@ -118,9 +118,9 @@ async function uploadDetail(fastify, options) {
             return { message: 'Packing dtl inserted successfully' };
         }),
     );
-}
+};
 
-async function selectFileList(fastify, options) {
+const selectFileList = async (fastify, options) => {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
@@ -143,9 +143,9 @@ async function selectFileList(fastify, options) {
             }
         }),
     );
-}
+};
 
-async function selectDetails(fastify, options) {
+const selectDetails = async (fastify, options) => {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
@@ -168,9 +168,9 @@ async function selectDetails(fastify, options) {
             }
         }),
     );
-}
+};
 
-async function deleteFile(fastify, options) {
+const deleteFile = async (fastify, options) => {
     fastify.delete(
         '/',
         replyHelper(async (request) => {
@@ -184,9 +184,9 @@ async function deleteFile(fastify, options) {
             return { message: 'Rows deleted successfully' };
         }),
     );
-}
+};
 
-async function downloadTemplate(fastify, options) {
+const downloadTemplate = async (fastify, options) => {
     fastify.get('/', async (req, reply) => {
         try {
             const templatePath = path.join(process.env.TEMPLATE_PATH, 'PackingList.xlsx');
@@ -206,13 +206,6 @@ async function downloadTemplate(fastify, options) {
             reply.status(404).send({ error: '템플릿 파일을 찾을 수 없습니다' });
         }
     });
-}
-
-module.exports = {
-    uploadFile,
-    uploadDetail,
-    selectFileList,
-    selectDetails,
-    deleteFile,
-    downloadTemplate,
 };
+
+export { uploadFile, uploadDetail, selectFileList, selectDetails, deleteFile, downloadTemplate };

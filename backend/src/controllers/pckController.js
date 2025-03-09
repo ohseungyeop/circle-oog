@@ -1,7 +1,8 @@
 // controllers/pckController.js
-const pckService = require('../services/pckService');
+import fp from 'fastify-plugin';
+import pckService from '../services/pckService.js';
 
-exports.uploadAndProcessPck = async (req, res) => {
+const uploadAndProcessPck = async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).send('No file uploaded.');
@@ -17,3 +18,5 @@ exports.uploadAndProcessPck = async (req, res) => {
         res.status(500).send('Error processing Pck data');
     }
 };
+
+export default fp(uploadAndProcessPck);

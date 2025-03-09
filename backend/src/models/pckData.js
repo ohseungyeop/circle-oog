@@ -37,7 +37,7 @@
  * @param {object} data
  * @returns {PckRaw}
  */
-function getDb2Raw(data) {
+const getDb2Raw = (data) => {
     return {
         pckOrdSeq: data.PCK_ORD_SEQ ? parseFloat(data.PCK_ORD_SEQ) : 0,
         pckItmSeq: data.PCK_ITM_SEQ ? parseFloat(data.PCK_ITM_SEQ) : 0,
@@ -51,19 +51,19 @@ function getDb2Raw(data) {
         pckCbm: data.PCK_CBM ? parseFloat(data.PCK_CBM) : 0,
         pckRmk: data.PCK_RMK || '',
     };
-}
+};
 
 /**
  * 추가 가공을 수행하는 함수 (예: 분류 추가)
  * @param {PckRaw} data
  * @returns {PckStep1}
  */
-function getRaw2Step1(data) {
+const getRaw2Step1 = (data) => {
     return {
         ...data,
         category1: data.pckWgt > 2000 ? 'Heavy' : 'Light',
         category2: data.pckHgt > 1000 ? 'Tall' : 'Short',
     };
-}
+};
 
-module.exports = { getDb2Raw, getRaw2Step1 };
+export { getDb2Raw, getRaw2Step1 };

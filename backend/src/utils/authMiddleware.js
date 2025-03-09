@@ -1,20 +1,20 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 async function authMiddleware(request, reply) {
-  const authHeader = request.headers.authorization;
+    const authHeader = request.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return reply.status(401).send({ code: 'E', status: 'Error', message: 'Missing or invalid token' });
-  }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return reply.status(401).send({ code: 'E', status: 'Error', message: 'Missing or invalid token' });
+    }
 
-  const token = authHeader.split(' ')[1];
+    const token = authHeader.split(' ')[1];
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-    request.user = {email:decoded.email};  // ✅ 검증된 사용자 정보 저장
-  } catch (error) {
-    return reply.status(401).send({ code: 'E', status: 'Error', message: 'Invalid or expired token' });
-  }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        request.user = { email: decoded.email }; // ✅ 검증된 사용자 정보 저장
+    } catch (error) {
+        return reply.status(401).send({ code: 'E', status: 'Error', message: 'Invalid or expired token' });
+    }
 }
 
-module.exports = authMiddleware;
+export default authMiddleware;

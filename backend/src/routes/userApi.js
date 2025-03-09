@@ -1,15 +1,38 @@
-const jwt = require('jsonwebtoken');
-const ejs = require('ejs');
-const fs = require('fs');
-const path = require('path');
-const { fileURLToPath } = require('url');
-const { setAuthToken } = require('utils/cookieHelper');
-const { sendEmail } = require('utils/emailHelper');
+import jwt from 'jsonwebtoken';
+import ejs from 'ejs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { setAuthToken } from '../utils/cookieHelper.js';
+import sendEmail from '../utils/emailHelper.js';
 
-async function registerUser(fastify, options) {
+const verifyJwtToken = (token) => {
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
+            if (err) {
+                reject(new Error('Invalid or expired token'));
+            } else {
+                resolve(decoded);
+            }
+        });
+    });
+};
+
+const registerUser = async (fastify, options) => {
     fastify.post('/', async (request, reply) => {
         const { email } = request.body;
         console.log('📧 이메일 요청:', email);
+        console.log('🔍 fastify.knex 확인:', fastify.knex);
+
+        // fastify.knex가 정상적으로 등록되었는지 확인
+        if (!fastify.knex) {
+            fastify.log.error('❌ Knex is undefined in registerUser route!');
+            return reply.status(500).send({
+                code: 'E',
+                status: 'Error',
+                message: 'Database connection is not available. Please check the server logs.',
+            });
+        }
 
         try {
             // 1️⃣ 이메일로 사용자 조회
@@ -87,10 +110,9 @@ async function registerUser(fastify, options) {
             });
         }
     });
-}
+};
 
-// 토큰 검증을 위한 엔드포인트
-async function verifyToken(fastify, options) {
+const verifyToken = async (fastify, options) => {
     fastify.post('/', async (request, reply) => {
         const token = request.headers['authorization']?.split(' ')[1]; // "Bearer <token>"에서 <token>만 추출
         try {
@@ -128,51 +150,18 @@ async function verifyToken(fastify, options) {
             return reply.status(400).send({ code: 'E', status: 'Error', message: error.message });
         }
     });
-}
+};
 
-async function verifyEmail(fastify, options) {
-    const redirectUrl = `${process.env.FRONTEND_URL}`;
-
+const verifyEmail = async (fastify, options) => {
     fastify.get('/', async (request, reply) => {
         const emailToken = request.query.token;
-
-        // if (!emailToken) {
-        //     console.log(__dirname);
-        //     console.log(process.cwd());
-
-        //     const __filename = fileURLToPath(import.meta.url);
-        //     const __dirname = path.dirname(__filename);
-
-        //     console.log(__filename);
-        //     console.log(__dirname);
-
-        //     const filePath = path.join(__dirname, 'views', 'token-missing.ejs');
-        //     const html = ejs.render(fs.readFileSync(filePath, 'utf8'), { redirectUrl: `${redirectUrl}` });
-
-        //     return reply.status(400).type('text/html').send(html);
-        // }
+        const redirectUrl = `${process.env.FRONTEND_URL}`;
+        const viewPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'views');
 
         if (!emailToken) {
-            return reply.status(400).type('text/html').send(`
-            <html>
-                <head>
-                    <meta charset="utf-8">
-                    <title>❌ Verification Failed</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; background-color: #f9f9f9; text-align: center; padding: 50px; }
-                        .container { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
-                        a { text-decoration: none; color: #007BFF; font-weight: bold; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>❌ Token is missing</h1>
-                        <p>유효한 토큰이 필요합니다.</p>
-                        <a href="${redirectUrl}">🏠 홈으로 가기</a>
-                    </div>
-                </body>
-            </html>
-            `);
+            const filePath = path.join(viewPath, 'token-missing.ejs');
+            const html = ejs.render(fs.readFileSync(filePath, 'utf8'), { redirectUrl: `${redirectUrl}` });
+            return reply.status(400).type('text/html').send(html);
         }
 
         try {
@@ -191,96 +180,26 @@ async function verifyEmail(fastify, options) {
                 });
 
             if (updatedRows === 0) {
-                return reply.status(404).type('text/html').send(`
-                  <html>
-                    <head>
-                      <meta charset="utf-8">
-                      <title>❌ User Not Found</title>
-                      <style>
-                        body { font-family: Arial, sans-serif; background-color: #f9f9f9; text-align: center; padding: 50px; }
-                        .container { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
-                        a { text-decoration: none; color: #007BFF; font-weight: bold; }
-                      </style>
-                    </head>
-                    <body>
-                      <div class="container">
-                        <h1>❌ 사용자 정보를 찾을 수 없습니다.</h1>
-                        <p>이메일 주소가 잘못되었거나 이미 검증된 계정입니다.</p>
-                        <a href="${redirectUrl}">🏠 홈으로 가기</a>
-                      </div>
-                    </body>
-                  </html>
-              `);
+                const filePath = path.join(viewPath, 'user-missing.ejs');
+                const html = ejs.render(fs.readFileSync(filePath, 'utf8'), { redirectUrl: `${redirectUrl}` });
+                return reply.status(400).type('text/html').send(html);
             }
 
             // ✅ **쿠키에 토큰 저장**
             setAuthToken(reply, email);
 
             // ✅ **클라이언트로 리다이렉트**
-            return reply.type('text/html').send(`
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <title>✅ 이메일 검증 완료</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; background-color: #f0f8ff; text-align: center; padding: 50px; }
-                    .container { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); display: inline-block; }
-                    h1 { color: #28a745; }
-                    p { font-size: 18px; }
-                    a { display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px; transition: background-color 0.3s; }
-                    a:hover { background-color: #0056b3; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <h1>✅ 이메일이 성공적으로 검증되었습니다!</h1>
-                    <p>이제 모든 서비스를 자유롭게 이용하실 수 있습니다.</p>
-                    <a href="${redirectUrl}/mainPage">🏠 홈으로 가기</a>
-                  </div>
-                </body>
-              </html>
-            `);
+            const filePath = path.join(viewPath, 'verify-success.ejs');
+            const html = ejs.render(fs.readFileSync(filePath, 'utf8'), { redirectUrl: `${redirectUrl}/mainPage` });
+            return reply.type('text/html').send(html);
         } catch (error) {
             fastify.log.error(`❌ Email verification failed: ${error.message}`);
-            return reply.status(400).type('text/html').send(`
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <title>❌ Verification Failed</title>
-                  <style>
-                    body { font-family: Arial, sans-serif; background-color: #f9f9f9; text-align: center; padding: 50px; }
-                    .container { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
-                    a { text-decoration: none; color: #007BFF; font-weight: bold; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <h1>❌ 이메일 검증에 실패했습니다</h1>
-                    <p>토큰이 만료되었거나 잘못되었습니다.</p>
-                    <a href="${redirectUrl}">🏠 홈으로 가기</a>
-                  </div>
-                </body>
-              </html>
-          `);
+
+            const filePath = path.join(viewPath, 'verify-failure.ejs');
+            const html = ejs.render(fs.readFileSync(filePath, 'utf8'), { redirectUrl: `${redirectUrl}` });
+            return reply.status(400).type('text/html').send(html);
         }
     });
-}
-
-// 토큰 검증 함수
-const verifyJwtToken = (token) => {
-    return new Promise((resolve, reject) => {
-        jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-            if (err) {
-                reject(new Error('Invalid or expired token'));
-            } else {
-                resolve(decoded);
-            }
-        });
-    });
 };
 
-module.exports = {
-    registerUser,
-    verifyToken,
-    verifyEmail,
-};
+export { registerUser, verifyToken, verifyEmail };

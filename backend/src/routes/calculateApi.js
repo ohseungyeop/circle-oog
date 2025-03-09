@@ -1,6 +1,6 @@
-const { replyHelper } = require('utils/replyHelper');
+import replyHelper from '../utils/replyHelper.js';
 
-async function calculate(fastify, options) {
+const calculate = async (fastify, options) => {
     fastify.post(
         '/',
         replyHelper(async (request, reply) => {
@@ -17,7 +17,5 @@ async function calculate(fastify, options) {
             }
         }),
     );
-}
-module.exports = {
-    calculate,
 };
+export default calculate;
