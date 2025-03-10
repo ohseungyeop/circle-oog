@@ -22,17 +22,6 @@ const registerUser = async (fastify, options) => {
     fastify.post('/', async (request, reply) => {
         const { email } = request.body;
         console.log('📧 이메일 요청:', email);
-        console.log('🔍 fastify.knex 확인:', fastify.knex);
-
-        // fastify.knex가 정상적으로 등록되었는지 확인
-        if (!fastify.knex) {
-            fastify.log.error('❌ Knex is undefined in registerUser route!');
-            return reply.status(500).send({
-                code: 'E',
-                status: 'Error',
-                message: 'Database connection is not available. Please check the server logs.',
-            });
-        }
 
         try {
             // 1️⃣ 이메일로 사용자 조회
