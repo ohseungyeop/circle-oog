@@ -9,6 +9,7 @@ const replyHelper = (fn) => {
                 success: true,
                 message: result ? 'Request processed successfully' : 'No data found',
                 timestamp,
+                size: result && Array.isArray(result) ? result.length : undefined,
                 data: result || null,
             };
         } catch (error) {
