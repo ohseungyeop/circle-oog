@@ -39,10 +39,11 @@ const registerUser = async (fastify, options) => {
             );
 
             if (existingUser) {
+                const existingAuthToken = request.cookies.authToken;
+
                 // 3️⃣ 기존 사용자 상태 체크
                 if ('A' === existingUser.USR_STS && 'Y' === existingUser.EML_VRF_YN) {
                     // ✅ 기존 쿠키 확인
-                    const existingAuthToken = request.cookies.authToken;
 
                     if (!existingAuthToken) {
                         // 쿠키가 없는 경우 새로운 토큰 발급
@@ -60,11 +61,29 @@ const registerUser = async (fastify, options) => {
                         message: 'User already exists',
                     });
                 } else if ('I' === existingUser.USR_STS && 'N' === existingUser.EML_VRF_YN) {
-                    return reply.send({
-                        code: 'V',
-                        status: 'Verify',
-                        message: 'Email exists, but not verified. Please verify your email.',
-                    });
+                    //미검증 사용자인데 쿠키가 지워진 경우
+                    if (!existingAuthToken) {
+                        // 5️⃣ 이메일 검증 링크 생성
+                        const verificationLink = `${process.env.BACKEND_URL}/vos/oog/v1/emails/verify?token=${emailToken}`;
+
+                        // 6️⃣ 이메일 전송
+                        const subject = '[VOS OOG System] Email Verification';
+                        const text = `Hello,\n\nPlease verify your email by clicking the link below:\n\n${verificationLink}\n\nThank you!`;
+
+                        await sendEmail(fastify, email, subject, text);
+                        console.log('📨 이메일 검증 요청 전송 완료:', email);
+                        return reply.send({
+                            code: 'R',
+                            status: 'Resend',
+                            message: 'User verification email sent.',
+                        });
+                    } else {
+                        return reply.send({
+                            code: 'V',
+                            status: 'Verify',
+                            message: 'Email exists, but not verified. Please verify your email.',
+                        });
+                    }
                 }
             } else {
                 // 4️⃣ 새로운 사용자 등록
