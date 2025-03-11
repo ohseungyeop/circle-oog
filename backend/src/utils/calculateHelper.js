@@ -14,7 +14,7 @@
 // };
 
 const calculateCBM = (length, width, height) => {
-    return (length * width * height) / 1000000;
+    return (length * width * height) / 1000000000;
 };
 
 /**
