@@ -1,6 +1,13 @@
 import replyHelper from '../utils/replyHelper.js';
 import { getDb2Raw, getRaw2Step1 } from '../models/pckData.js';
-import { filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight } from '../utils/calulateHelper.js';
+import {
+    estimateBoxSize,
+    calculateCBM,
+    filterListByWeight,
+    filterListByLength,
+    filterListByWidth,
+    filterListByHeight,
+} from '../utils/calculateHelper.js';
 
 const BASE_WGT_1 = 40000; //40t
 const BASE_WGT_2 = 60000; //60t
@@ -59,24 +66,34 @@ const calculate = async (fastify, options) => {
                 // 6️⃣ 장축(OW) 화물 추출 (2.438M 초과)
                 const step7List = filterListByWidth(step6Tail, BASE_WDT_1); //2.438m 초과(✅OW)
 
-                // 7️⃣ 장고(OH) 화물 추출 (1.955M/40FR, 2.233M/20FR)
+                // 7️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)
                 const step8List = filterListByHeight(step6Tail, BASE_HGT_1); //2.233m 초과(✅OH)
+                const step9List = filterListByHeight(step6Tail, BASE_HGT_2); //1.955m 초과(✅OH)
 
-                // 1차 필터본 저장
-                // await fastify.knex('VOS_OOG_STEP1').insert(
-                //     data.map((item) => ({
-                //         PCK_ORD_SEQ: item.pckOrdSeq,
-                //         PCK_NO: item.pckNo,
-                //         ITM_NM: item.itmNm,
-                //         PCK_LEN: item.pckLen,
-                //         PCK_WDT: item.pckWdt,
-                //         PCK_HGT: item.pckHgt,
-                //         PCK_QTY: item.pckQty,
-                //         PCK_WGT: item.pckWgt,
-                //         PCK_CBM: item.pckCbm,
-                //         PCK_RMK: item.pckRmk,
-                //     })),
-                // );
+                // 8️⃣ 결과 데이터 추가
+                const calcItems = await Promise.all(
+                    allList.map(async (item) => {
+                        const estmBoxLen = await estimateBoxSize(fastify, 'L', item.PCK_LEN);
+                        const estmBoxWdt = await estimateBoxSize(fastify, 'L', item.PCK_WDT);
+                        const estmBoxHgt = await estimateBoxSize(fastify, 'L', item.PCK_HGT);
+                        return {
+                            ...item,
+                            OVER_40T_YN: step1List.includes(item) ? 'Y' : 'N',
+                            OVER_60T_YN: step2List.includes(item) ? 'Y' : 'N',
+                            OVER_25T_YN: step6List.includes(item) ? 'Y' : 'N',
+                            OVER_WDT_YN: step3List.includes(item) ? 'Y' : 'N',
+                            OVER_LEN_YN: step4List.includes(item) || step7List.includes(item) ? 'Y' : 'N',
+                            OVER_HGT4_YN: step8List.includes(item) ? 'Y' : 'N',
+                            OVER_HGT2_YN: step9List.includes(item) ? 'Y' : 'N',
+                            ESTM_BOX_LEN: estmBoxLen,
+                            ESTM_BOX_WDT: estmBoxWdt,
+                            ESTM_BOX_HGT: estmBoxHgt,
+                            CALC_CBM: calculateCBM(item.PCK_LEN, item.PCK_WDT, item.PCK_HGT),
+                        };
+                    }),
+                );
+
+                await fastify.knex('vos_oog_calc_step1').insert(calcItems);
 
                 // 18️⃣ OOG 화물로 적재 최적화 계산(40FR 기준)
                 // 19️⃣ 잔여 OOG

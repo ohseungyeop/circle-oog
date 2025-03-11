@@ -1,10 +1,16 @@
-const estimateBoxSize = async (lwhTpCd, lwhValue) => {
+const estimateBoxSize = async (fastify, lwhTpCd, lwhValue) => {
     const estmBxSz = await fastify
         .knex('VOS_OOG_ESTM_BX_SZ')
         .where({ LEN_WDT_TY_CD: lwhTpCd })
-        .whereBetween(lwhValue, ['PCK_FM_NUM', 'PCK_TO_NUM'])
-        .select('PCK_BX_NUM');
-    return estmBxSz;
+        .andWhere('PCK_FM_NUM', '<=', lwhValue)
+        .andWhere('PCK_TO_NUM', '>=', lwhValue)
+        .select('PCK_BX_NUM')
+        .limit(1);
+    if (estmBxSz.length > 0) {
+        return estmBxSz[0].PCK_BX_NUM;
+    } else {
+        return null;
+    }
 };
 
 const calculateCBM = (length, width, height) => {
@@ -51,4 +57,4 @@ const filterListByHeight = (itemList, threshold) => {
     return itemList.filter((item) => parseFloat(item.PCK_HGT) > threshold);
 };
 
-export { calculateCBM, filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight };
+export { estimateBoxSize, calculateCBM, filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight };
