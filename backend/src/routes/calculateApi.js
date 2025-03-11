@@ -1,7 +1,6 @@
 import replyHelper from '../utils/replyHelper.js';
 import { getDb2Raw, getRaw2Step1 } from '../models/pckData.js';
 import {
-    estimateBoxSize,
     calculateCBM,
     filterListByWeight,
     filterListByLength,
@@ -29,9 +28,9 @@ const calculate = async (fastify, options) => {
                 const sourceList = await fastify.knex('VOS_OOG_UPLD_DTL').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
                 // 1️⃣ QTY만큼 해당 item복제
                 const allList = sourceList.flatMap((row) =>
-                    Array(row.PCK_QTY)
+                    Array(row.ITM_QTY)
                         .fill()
-                        .map(() => ({ ...row, PCK_QTY: 1 })),
+                        .map(() => ({ ...row, ITM_QTY: 1 })),
                 );
 
                 console.log('전체 item size:', allList.length);
@@ -73,9 +72,6 @@ const calculate = async (fastify, options) => {
                 // 8️⃣ 결과 데이터 추가
                 const calcItems = await Promise.all(
                     allList.map(async (item) => {
-                        const estmBoxLen = await estimateBoxSize(fastify, 'L', item.PCK_LEN);
-                        const estmBoxWdt = await estimateBoxSize(fastify, 'L', item.PCK_WDT);
-                        const estmBoxHgt = await estimateBoxSize(fastify, 'L', item.PCK_HGT);
                         return {
                             ...item,
                             OVER_40T_YN: step1List.includes(item) ? 'Y' : 'N',
@@ -85,10 +81,7 @@ const calculate = async (fastify, options) => {
                             OVER_LEN_YN: step4List.includes(item) || step7List.includes(item) ? 'Y' : 'N',
                             OVER_HGT4_YN: step8List.includes(item) ? 'Y' : 'N',
                             OVER_HGT2_YN: step9List.includes(item) ? 'Y' : 'N',
-                            ESTM_BOX_LEN: estmBoxLen,
-                            ESTM_BOX_WDT: estmBoxWdt,
-                            ESTM_BOX_HGT: estmBoxHgt,
-                            CALC_CBM: calculateCBM(item.PCK_LEN, item.PCK_WDT, item.PCK_HGT),
+                            CALC_CBM: calculateCBM(item.BOX_LEN, item.BOX_WDT, item.BOX_HGT),
                         };
                     }),
                 );

@@ -28,6 +28,17 @@ const uploadFile = async (fastify, options) => {
                     return reply.status(400).send({ error: 'No file uploaded' });
                 }
 
+                // Authorization 헤더에서 'Bearer ' 뒤의 토큰을 추출
+                const authHeader = req.headers['authorization'];
+                if (!authHeader) {
+                    return reply.status(401).send('Authorization header is required');
+                }
+
+                const authToken = authHeader.split(' ')[1]; // Bearer 뒤의 토큰을 추출
+                if (!authToken) {
+                    return reply.status(401).send('Token is missing');
+                }
+
                 // 저장할 경로 생성 (이메일 기준)
                 const filePath = path.join(process.env.ATTACH_PATH, req.email);
 
@@ -64,6 +75,7 @@ const uploadFile = async (fastify, options) => {
                     FILE_PATH: saveToPath, // 저장된 파일 경로
                     ORGN_FILE_NM: data.filename, // 원본 파일명
                     EMAIL: req.email, // 이메일
+                    ACCESS_TOKEN: authToken, //access token
                 });
 
                 const result = await fastify.knex.raw('SELECT LAST_INSERT_ID() AS PCK_ORD_SEQ');
@@ -105,13 +117,18 @@ const uploadDetail = async (fastify, options) => {
                     PCK_ORD_SEQ: item.pckOrdSeq,
                     PCK_NO: item.pckNo,
                     ITM_NM: item.itmNm,
-                    PCK_LEN: item.pckLen,
-                    PCK_WDT: item.pckWdt,
-                    PCK_HGT: item.pckHgt,
-                    PCK_QTY: item.pckQty,
-                    PCK_WGT: item.pckWgt,
-                    PCK_CBM: item.pckCbm,
-                    PCK_RMK: item.pckRmk,
+                    ITM_LEN: item.itmLen,
+                    ITM_WDT: item.itmWdt,
+                    ITM_HGT: item.itmHgt,
+                    BOX_LEN: item.boxLen,
+                    BOX_WDT: item.boxWdt,
+                    BOX_HGT: item.boxHgt,
+                    ITM_QTY: item.itmQty,
+                    ITM_CBM: item.itmCbm,
+                    ITM_TP_NM: item.itmTpNm,
+                    NET_WGT: item.netWgt,
+                    GRS_WGT: item.grsWgt,
+                    RMKS: item.rmks,
                 })),
             );
 

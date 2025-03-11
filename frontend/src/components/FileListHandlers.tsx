@@ -94,6 +94,23 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
                 return;
             }
 
+            const columnMapping: { [key: string]: string } = {
+                No번호: 'pckNo',
+                'Item Name품목': 'itmNm',
+                'Package Dimension(㎜)': 'itmLen',
+                __EMPTY: 'itmWdt',
+                __EMPTY_1: 'itmHgt',
+                'Box Dimension(㎜)': 'boxLen',
+                __EMPTY_2: 'boxWdt',
+                __EMPTY_3: 'boxHgt',
+                "Q'ty수량": 'itmQty',
+                CBM입방미터: 'itmCbm',
+                'Item Type일반/진공': 'itmTpNm',
+                'Net Weight중량(㎏)': 'netWgt',
+                'Gross Weight중량(㎏)': 'grsWgt',
+                Remarks비고: 'rmks',
+            };
+
             const formattedData = jsonData.slice(1).map((row, index) => {
                 const excelRow = Object.entries(row).map(([key, value]) => {
                     const cleanedKey = key.replace(/[\r\n↵]+/g, '').trim();
@@ -106,21 +123,24 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                return {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
-                    pckNo: Number(excelRowObject['No번호']) || 0,
-                    itmNm: String(excelRowObject['Item Name품목']) || '',
-                    pckLen: Number(excelRowObject['Package Dimension(㎜)']) || 0,
-                    pckWdt: Number(excelRowObject['__EMPTY']) || 0,
-                    pckHgt: Number(excelRowObject['__EMPTY_1']) || 0,
-                    pckQty: Number(excelRowObject["Q'ty수량"]) || 0,
-                    pckWgt: Number(excelRowObject['G/W중량(㎏)']) || 0,
-                    pckCbm: Number(excelRowObject['CBM입방미터']) || 0,
-                    pckRmk:
-                        excelRowObject['RMKS비고'] !== undefined && excelRowObject['RMKS비고'] !== null
-                            ? String(excelRowObject['RMKS비고']).trim()
-                            : '',
                 };
+
+                // Map each column based on columnMapping
+                Object.keys(columnMapping).forEach((excelColumn) => {
+                    const mappedKey: string = columnMapping[excelColumn];
+                    const excelValue = excelRowObject[excelColumn];
+                    if (mappedKey === 'rmks') {
+                        result[mappedKey] = excelValue !== undefined && excelValue !== null ? String(excelValue).trim() : '';
+                    } else if (typeof excelValue === 'string') {
+                        result[mappedKey] = String(excelValue).trim() || 0;
+                    } else {
+                        result[mappedKey] = Number(excelValue) || 0;
+                    }
+                });
+
+                return result;
             });
 
             setExcelRows(formattedData);
@@ -318,13 +338,18 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
             id: index + 1,
             pckNo: item.PCK_NO,
             itmNm: item.ITM_NM,
-            pckLen: item.PCK_LEN,
-            pckWdt: item.PCK_WDT,
-            pckHgt: item.PCK_HGT,
-            pckQty: item.PCK_QTY,
-            pckWgt: item.PCK_WGT,
-            pckCbm: item.PCK_CBM,
-            pckRmk: item.PCK_RMK,
+            itmLen: Number(item.ITM_LEN).toFixed(2),
+            itmWdt: Number(item.ITM_WDT).toFixed(2),
+            itmHgt: Number(item.ITM_HGT).toFixed(2),
+            boxLen: Number(item.BOX_LEN).toFixed(2),
+            boxWdt: Number(item.BOX_WDT).toFixed(2),
+            boxHgt: Number(item.BOX_HGT).toFixed(2),
+            itmQty: Number(item.ITM_QTY),
+            itmCbm: Number(item.ITM_CBM).toFixed(4),
+            itmTpNm: item.ITM_TP_NM,
+            netWgt: Number(item.NET_WGT).toFixed(2),
+            grsWgt: Number(item.GRS_WGT).toFixed(2),
+            rmks: item.RMKS,
         }));
 
         return formattedData;
