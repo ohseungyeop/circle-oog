@@ -6,7 +6,7 @@ const corsPlugin = async (fastify, options) => {
     console.log('🔗 허용 Origin:', process.env.FRONTEND_URL);
 
     fastify.register(fastifyCors, {
-        credentials: include, // 자격 증명 허용
+        credentials: true, // 자격 증명 허용
         origin: [process.env.FRONTEND_URL],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 허용할 HTTP 메서드
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],

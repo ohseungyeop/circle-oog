@@ -45,6 +45,17 @@ const init = async () => {
             parseOptions: {}, // 쿠키 옵션 설정 가능
         });
 
+        // React 앱 정적 파일 서빙
+        await fastifyInstance.register(fastifyStatic, {
+            root: path.join(__dirname, 'build'), // React 빌드 디렉토리
+            prefix: '/', // 기본 경로
+        });
+
+        // React 라우팅을 위한 index.html 서빙
+        fastifyInstance.get('*', (req, reply) => {
+            reply.sendFile('index.html'); // React의 index.html로 리디렉션
+        });
+
         // 요청 로그 미들웨어
         fastifyInstance.addHook('onRequest', (request, reply, done) => {
             console.log(`[${new Date().toISOString()}] Request: ${request.method} ${request.url}`);
