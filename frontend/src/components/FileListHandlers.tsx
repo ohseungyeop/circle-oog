@@ -407,7 +407,6 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies) => {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
-                'Content-Type': 'application/json',
             },
         });
 
