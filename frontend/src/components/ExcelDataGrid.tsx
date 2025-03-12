@@ -30,20 +30,17 @@ const excelColumns: GridColDef[] = [
 
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq }) => {
 
-    console.log('ExcelDataGrid', rows);
 
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
-    const [excelRows, setExcelRows] = React.useState([]);
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
-    const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
 
-    console.log('ExcelDataGrid', rows);
 
     return (
         <Box sx={{ height: 400, width: '100%' }}>
@@ -55,10 +52,9 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq }) => {
                     margin: '10px',
                 }}
             >
-                debugger;
                 <h3>🧮 Out of Gauge System</h3>
                 <button
-                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies)}
+                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar)}
                     style={{
                         padding: '10px 20px',
                         backgroundColor: '#0E4491',

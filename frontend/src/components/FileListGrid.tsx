@@ -7,6 +7,10 @@ import FileList from './FileList';
 import ExcelDataGrid from './ExcelDataGrid';
 import { fetchData, handleFileUpload, handleTemplateDownload, handleExportToExcel, handleDeleteRows, handleSelectionChange, fetchExcelData } from './FileListHandlers';
 
+interface ExcelRow {
+  pckOrdSeq: string;
+}
+
 const columns = [
   { field: 'id', headerName: 'No', width: 90 },
   { field: 'fileName', headerName: 'File name', width: 600, editable: true },
@@ -15,9 +19,7 @@ const columns = [
 
 const FileListGrid = () => {
   const [rows, setRows] = React.useState([]);
-  interface ExcelRow {
-    pckOrdSeq: string;
-  }
+  const [pckOrdSeq, setPckOrdSeq] = React.useState<string>('N/A');
 
   const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
   const [cookies] = useCookies(['authToken']);
@@ -35,6 +37,12 @@ const FileListGrid = () => {
       fetchData(cookies, apiUrl, setRows);
     }
   }, [cookies.authToken]);
+
+  React.useEffect(() => {
+    if (excelRows.length > 0 && excelRows[0]?.pckOrdSeq) {
+      setPckOrdSeq(excelRows[0].pckOrdSeq);
+    }
+  }, [excelRows]);
 
   return (
     <Box sx={{ height: 400, width: '100%' }}>
@@ -121,7 +129,7 @@ const FileListGrid = () => {
 
       <ExcelDataGrid
         rows={excelRows}
-        pckOrdSeq={excelRows.length > 0 ? excelRows[0].pckOrdSeq : ''}
+        pckOrdSeq={pckOrdSeq}
       />
 
       <Snackbar

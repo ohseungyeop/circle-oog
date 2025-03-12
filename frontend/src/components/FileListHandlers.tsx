@@ -400,7 +400,7 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
     }
 };
 
-export const handleCalculator = async (apiUrl, pckOrdSeq, cookies) => {
+export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar) => {
 
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
@@ -417,12 +417,12 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies) => {
 
         const data = await response.json(); // 응답 데이터 가져오기
 
-        // // ✅ 성공 메시지 출력
-        // setSnackbar({
-        //     open: true,
-        //     message: '계산이 완료되었습니다!',
-        //     severity: 'success',
-        // });
+        // ✅ 성공 메시지 출력
+        setSnackbar({
+            open: true,
+            message: '계산이 완료되었습니다!',
+            severity: 'success',
+        });
 
         // ✅ 필요하면 데이터 저장 (이전에 있던 코드)
         // setCalculatorData(data); 
@@ -430,13 +430,12 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies) => {
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
         // fetchData(cookies, apiUrl);
     } catch (error) {
-        console.error('계산 오류:', error);
 
-        // setSnackbar({
-        //     open: true,
-        //     message: `계산에 실패했습니다: ${error.message}`,
-        //     severity: 'error',
-        // });
+        setSnackbar({
+            open: true,
+            message: `계산에 실패했습니다 `,
+            severity: 'error',
+        });
     }
 };
 
