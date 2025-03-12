@@ -15,7 +15,11 @@ const columns = [
 
 const FileListGrid = () => {
   const [rows, setRows] = React.useState([]);
-  const [excelRows, setExcelRows] = React.useState([]);
+  interface ExcelRow {
+    pckOrdSeq: string;
+  }
+
+  const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
   const [cookies] = useCookies(['authToken']);
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
@@ -117,6 +121,7 @@ const FileListGrid = () => {
 
       <ExcelDataGrid
         rows={excelRows}
+        pckOrdSeq={excelRows.length > 0 ? excelRows[0].pckOrdSeq : ''}
       />
 
       <Snackbar

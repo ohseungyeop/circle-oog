@@ -1,9 +1,13 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import { useCookies } from 'react-cookie';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-
+import { handleCalculator } from './FileListHandlers';
 interface ExcelDataGridProps {
     rows: any[];
+    pckOrdSeq: string;
 }
 
 const excelColumns: GridColDef[] = [
@@ -24,10 +28,22 @@ const excelColumns: GridColDef[] = [
     { field: 'rmks', headerName: 'Remarks', width: 200 },
 ];
 
-const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows }) => {
+const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq }) => {
+
+    console.log('ExcelDataGrid', rows);
+
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
+    const [excelRows, setExcelRows] = React.useState([]);
+    const apiUrl = import.meta.env.VITE_BACKEND_URL;
+    const [cookies] = useCookies(['authToken']);
+    const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
+    const handleCloseSnackbar = () => {
+        setSnackbar({ ...snackbar, open: false });
+    };
+
+    console.log('ExcelDataGrid', rows);
 
     return (
         <Box sx={{ height: 400, width: '100%' }}>
@@ -39,8 +55,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows }) => {
                     margin: '10px',
                 }}
             >
+                debugger;
                 <h3>🧮 Out of Gauge System</h3>
                 <button
+                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies)}
                     style={{
                         padding: '10px 20px',
                         backgroundColor: '#0E4491',
@@ -66,6 +84,21 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows }) => {
                 disableRowSelectionOnClick
                 pagination
             />
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+
         </Box>
     );
 };

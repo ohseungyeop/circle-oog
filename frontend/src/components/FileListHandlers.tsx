@@ -123,7 +123,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -336,6 +336,7 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
 
         const formattedData = data.data.map((item: any, index: number) => ({
             id: index + 1,
+            pckOrdSeq: item.PCK_ORD_SEQ,
             pckNo: item.PCK_NO,
             itmNm: item.ITM_NM,
             itmLen: Number(item.ITM_LEN).toFixed(2),
@@ -398,3 +399,45 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
         });
     }
 };
+
+export const handleCalculator = async (apiUrl, pckOrdSeq, cookies) => {
+
+    try {
+        const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${cookies.authToken}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // ✅ 응답이 정상인지 체크
+        if (!response.ok) {
+            throw new Error(`계산 실패: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json(); // 응답 데이터 가져오기
+
+        // // ✅ 성공 메시지 출력
+        // setSnackbar({
+        //     open: true,
+        //     message: '계산이 완료되었습니다!',
+        //     severity: 'success',
+        // });
+
+        // ✅ 필요하면 데이터 저장 (이전에 있던 코드)
+        // setCalculatorData(data); 
+
+        // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
+        // fetchData(cookies, apiUrl);
+    } catch (error) {
+        console.error('계산 오류:', error);
+
+        // setSnackbar({
+        //     open: true,
+        //     message: `계산에 실패했습니다: ${error.message}`,
+        //     severity: 'error',
+        // });
+    }
+};
+
