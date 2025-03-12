@@ -25,6 +25,7 @@ const withAuth = (WrappedComponent: ComponentType) => {
             console.log('location.pathname:', location.pathname);
 
             fetch(`${apiUrl}/vos/oog/v1/users/verify`, {
+                credentials: 'include',  // 쿠키 포함 요청
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
