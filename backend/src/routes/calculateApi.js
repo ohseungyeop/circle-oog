@@ -9,14 +9,17 @@ import {
     filterListByHeight,
 } from '../utils/calculateHelper.js';
 
-const BASE_WGT_1 = 40000; //40t
-const BASE_WGT_2 = 60000; //60t
-const BASE_WDT_1 = 2438; //2.438m
-const BASE_LEN_1 = 11300; //11.3m
-const BASE_PCTG = 0.85; //85%
-const BASE_WGT_3 = 25000; //25t
-const BASE_HGT_1 = 2233; //2.233m
-const BASE_HGT_2 = 1955; //1.955m
+const CRR_CD = 'VOS';
+const REF_CNTR_TPSZ = ['D2', 'D4'];
+
+const HARD_WGT_40 = 40000; //(kg) → 40t
+const HARD_WGT_60 = 60000; //(kg) → 60t
+const HARD_WGT_25 = 25000; //(kg) → 25t
+let REF_LEN = 0;
+let REF_WDT = 0;
+let REF_HGT_40 = 0;
+let REF_HGT_20 = 0;
+let REF_LEN_PCTG = 0;
 
 const calculate = async (fastify, options) => {
     fastify.post(
@@ -30,54 +33,95 @@ const calculate = async (fastify, options) => {
                     const { pckOrdSeq } = request.params;
                     console.log('📦 Packing order sequence:', pckOrdSeq);
 
-                    // 0️⃣ VOS_OOG_UPLD_DTL 조회
+                    // 0️⃣ 컨테이너 기준(Dry) 정보 조회
+                    console.log('------------------------------');
+                    console.log('0️⃣ 컨테이너 기준(Dry) 정보 조회');
+                    const cntrInfo = await fastify
+                        .knex('VOS_OOG_CNTR_MST')
+                        .where({ CRR_CD: CRR_CD })
+                        .whereIn('CNTR_TPSZ_CD', REF_CNTR_TPSZ)
+                        .select('*');
+
+                    const d2Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[0]);
+                    const d4Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[1]);
+
+                    REF_LEN = d4Row.CNTR_LEN ?? 11300; //11.3m
+                    REF_WDT = d4Row.CNTR_WDT ?? 2438; //2.438m
+                    REF_HGT_40 = d4Row.CNTR_HGT ?? 1955; //1.955m
+                    REF_HGT_20 = d2Row.CNTR_HGT ?? 2233; //2.233m
+                    REF_LEN_PCTG = d4Row.CNTR_LEN_PCTG / 100 ?? 0.85; //85%
+                    console.log('--길이 기준:', REF_LEN);
+                    console.log('--폭 기준:', REF_WDT);
+                    console.log('--40높이 기준:', REF_HGT_40);
+                    console.log('--20높이 기준:', REF_HGT_20);
+                    console.log('--길이 퍼센티지 기준:', REF_LEN_PCTG);
+
+                    // 1️⃣ VOS_OOG_UPLD_DTL 조회
+                    console.log('------------------------------');
+                    console.log('1️⃣ VOS_OOG_UPLD_DTL 조회');
                     const sourceList = await fastify.knex('VOS_OOG_UPLD_DTL').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
-                    // 1️⃣ QTY만큼 해당 item복제
-                    const allList = sourceList.flatMap((row) =>
+                    console.log('소스 item size:', sourceList.length);
+
+                    // 2️⃣ QTY만큼 해당 item 복제
+                    console.log('------------------------------');
+                    console.log('2️⃣ QTY만큼 해당 item 복제');
+                    const targetList = sourceList.flatMap((row) =>
                         Array(row.ITM_QTY)
                             .fill()
                             .map(() => ({ ...row, ITM_QTY: 1 })),
                     );
+                    console.log('대상 item size:', targetList.length);
 
-                    console.log('전체 item size:', allList.length);
-
-                    // 2️⃣ G/W 체크
-                    const step1List = filterListByWeight(allList, BASE_WGT_1); //40t 초과
-                    const step1Tail = allList.filter((item) => !step1List.includes(item)); //allList - step1List(Length 체크 대상)
-                    const step2List = filterListByWeight(step1List, BASE_WGT_2); //60t 초과
+                    // 3️⃣ G/W 체크
+                    console.log('------------------------------');
+                    console.log('3️⃣ G/W 체크');
+                    const step1List = filterListByWeight(targetList, HARD_WGT_40); //40t 초과
+                    const step1Tail = targetList.filter((item) => !step1List.includes(item)); //allList - step1List(Length 체크 대상)
+                    const step2List = filterListByWeight(step1List, HARD_WGT_60); //60t 초과
                     const step2Tail = step1List.filter((item) => !step2List.includes(item)); //step1List - step2List(✅40FR 2대)
-                    console.log('Wgt:40t 초과 List:', step1List.length);
-                    console.log('Wgt:60t 초과 List:', step2List.length);
+                    console.log('무게 40t 초과 item size:', step1List.length);
+                    console.log('무게 60t 초과 item size:', step2List.length);
 
-                    // 3️⃣ Width 2.438M 초과 체크
-                    const step3List = filterListByWidth(step2List, BASE_WDT_1); //2.438m 초과(✅Width / 2.438m = 40FR갯수)
+                    // 4️⃣ Width 2.438M 초과 체크
+                    console.log('------------------------------');
+                    console.log('4️⃣ Width 2.438M 초과 체크');
+                    const step3List = filterListByWidth(step2List, REF_WDT); //2.438m 초과(✅Width / 2.438m = 40FR갯수)
                     const step3Tail = step2List.filter((item) => !step3List.includes(item)); //step2List - step3List(✅40FR 2대)
-                    console.log('Wdt:2.438m 초과 List:', step3List.length);
-                    console.log('Wgt:60t and Wdt:2.438m 초과 List:', step3Tail.length);
+                    console.log('폭 2.438m 초과 item size:', step3List.length);
+                    console.log('무게 60t, 폭 2.438m 초과 item size:', step3Tail.length);
 
-                    // 4️⃣ Length 체크
-                    console.log('Length 체크 대상 List:', step1Tail.length);
-
-                    const step4List = filterListByLength(step1Tail, BASE_LEN_1); //11.3m 초과(✅Length / 2.438m = 40FR갯수)
+                    // 5️⃣ Length 체크
+                    console.log('------------------------------');
+                    console.log('5️⃣ Length 체크');
+                    console.log('Length 체크 대상 item size:', step1Tail.length);
+                    const step4List = filterListByLength(step1Tail, REF_LEN); //11.3m 초과(✅Length / 2.438m = 40FR갯수)
                     const step4Tail = step1Tail.filter((item) => !step4List.includes(item)); //step1Tail - step4List
 
-                    const step5List = filterListByLength(step1Tail, BASE_LEN_1 * BASE_PCTG); //11.3m * 85% 초과(✅40FR 1대)
+                    const step5List = filterListByLength(step1Tail, REF_LEN * REF_LEN_PCTG); //11.3m * 85% 초과(✅40FR 1대)
                     const step5Tail = step4Tail.filter((item) => !step5List.includes(item)); //step4Tail - step5List(G/W 체크 대상)
 
-                    // 5️⃣ 두번째 G/W 체크
-                    const step6List = filterListByWeight(step5Tail, BASE_WGT_3); //25t 초과(✅40FR 1대)
+                    // 6️⃣ 두번째 G/W 체크
+                    console.log('------------------------------');
+                    console.log('6️⃣ 두번째 G/W 체크');
+                    const step6List = filterListByWeight(step5Tail, HARD_WGT_25); //25t 초과(✅40FR 1대)
                     const step6Tail = step5Tail.filter((item) => !step6List.includes(item)); //step5Tail - step6List(OW 체크 대상)
 
-                    // 6️⃣ 장축(OW) 화물 추출 (2.438M 초과)
-                    const step7List = filterListByWidth(step6Tail, BASE_WDT_1); //2.438m 초과(✅OW)
+                    // 7️⃣ 장축(OW) 화물 추출 (2.438M 초과)
+                    console.log('------------------------------');
+                    console.log('7️⃣ 장축(OW) 화물 추출 (2.438M 초과)');
+                    const step7List = filterListByWidth(step6Tail, REF_WDT); //2.438m 초과(✅OW)
 
-                    // 7️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)
-                    const step8List = filterListByHeight(step6Tail, BASE_HGT_1); //2.233m 초과(✅OH)
-                    const step9List = filterListByHeight(step6Tail, BASE_HGT_2); //1.955m 초과(✅OH)
+                    // 8️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)
+                    console.log('------------------------------');
+                    console.log('8️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)');
+                    const step8List = filterListByHeight(step6Tail, REF_HGT_40); //2.233m 초과(✅OH)
+                    const step9List = filterListByHeight(step6Tail, REF_HGT_20); //1.955m 초과(✅OH)
 
-                    // 8️⃣ 결과 데이터 추가
+                    // 9️⃣ STEP1 결과 컬럼 데이터 추가
+                    console.log('------------------------------');
+                    console.log('9️⃣ STEP1 결과 컬럼 데이터 추가');
                     const calcItems = await Promise.all(
-                        allList.map(async (item) => {
+                        targetList.map(async (item) => {
                             return {
                                 ...item,
                                 OVER_40T_YN: step1List.includes(item) ? 'Y' : 'N',
@@ -87,6 +131,25 @@ const calculate = async (fastify, options) => {
                                 OVER_LEN_YN: step4List.includes(item) || step7List.includes(item) ? 'Y' : 'N',
                                 OVER_HGT4_YN: step8List.includes(item) ? 'Y' : 'N',
                                 OVER_HGT2_YN: step9List.includes(item) ? 'Y' : 'N',
+                                FR4_YN:
+                                    step2Tail.includes(item) ||
+                                    step3Tail.includes(item) ||
+                                    step3List.includes(item) ||
+                                    step4List.includes(item) ||
+                                    step5List.includes(item) ||
+                                    step6List.includes(item)
+                                        ? 'Y'
+                                        : 'N',
+                                FR4_CNT:
+                                    step2Tail.includes(item) || step3Tail.includes(item)
+                                        ? 2
+                                        : step3List.includes(item)
+                                        ? Math.floor(item.BOX_WDT / REF_WDT)
+                                        : step4List.includes(item)
+                                        ? Math.floor(item.BOX_LEN / REF_WDT)
+                                        : step5List.includes(item) || step6List.includes(item)
+                                        ? 1
+                                        : 0,
                                 CALC_CBM: calculateCBM(item.BOX_LEN, item.BOX_WDT, item.BOX_HGT),
                             };
                         }),
@@ -108,8 +171,8 @@ const calculate = async (fastify, options) => {
                     // 25️⃣ 최종 OOG 데이터(VOS_OOG_PKG) 결과 저장
                     // await database.saveFinalOOGData(finalOOGData);
 
-                    console.log('📂 select item list:', allList);
-                    return allList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
+                    console.log('📂 select item list:', targetList);
+                    return targetList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
                 });
             } catch (error) {
                 console.error('❌ Error fetching item list:', error);
