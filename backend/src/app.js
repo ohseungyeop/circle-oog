@@ -26,7 +26,7 @@ const fastifyInstance = await fastify({
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const app = fastify();
+
 // 환경별 `.env` 파일 불러오기
 const envFile = `.env.${process.env.NODE_ENV || 'local'}`;
 dotenv.config({ path: envFile });
@@ -57,15 +57,15 @@ const init = async () => {
             done();
         });
 
-        // 정적 파일 서빙 (React 빌드 폴더)
-        app.register(fastifyStatic, {
-            root: path.join(__dirname, 'frontend'), // React 빌드 결과 폴더
-            prefix: '/frontend/', // 모든 요청을 정적 파일에서 찾도록 설정
+        // ✅ 정적 파일 서빙 (React 빌드 폴더)
+        fastifyInstance.register(fastifyStatic, {
+            root: path.join(__dirname, 'frontend'), // frontend 폴더를 정적 파일 루트로 설정
+            prefix: '/', // 정적 파일 경로 프리픽스 (루트 경로로 설정)
         });
 
-        // 새로고침 시 index.html 반환 (404 방지)
-        app.setNotFoundHandler((req, reply) => {
-            reply.sendFile('index.html', path.join(__dirname, 'frontend')); // React 빌드된 index.html 반환
+        // ✅ React Router 새로고침 시 index.html 반환 (404 방지)
+        fastifyInstance.setNotFoundHandler((req, reply) => {
+            reply.sendFile('index.html'); // React 빌드된 index.html 반환
         });
 
         // 서버 실행
