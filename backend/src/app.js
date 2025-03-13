@@ -34,6 +34,12 @@ dotenv.config({ path: envFile });
 console.log(`✅ Loaded environment: ${process.env.NODE_ENV}`);
 console.log(`✅ Using DB: ${process.env.DB_NAME}`);
 
+// 🔥 환경에 따라 정적 파일 경로 설정
+const frontendPath =
+    process.env.NODE_ENV === 'prd'
+        ? '/home/nodeapp/vos-oog/frontend' // ✅ 운영 서버
+        : path.join(__dirname, '../../frontend/dist'); // ✅ 로컬 환
+
 const init = async () => {
     // Fastify 플러그인 등록 순서 보장
     try {
@@ -59,15 +65,15 @@ const init = async () => {
 
         // ✅ 정적 파일 서빙 (React 빌드 폴더)
         fastifyInstance.register(fastifyStatic, {
-            root: path.join(__dirname, '../../frontend/src'),
-            prefix: '/frontend/', // 정적 파일 경로 프리픽스 (루트 경로로 설정)
+            root: frontendPath,
+            prefix: '/', // 정적 파일 경로 프리픽스 (루트 경로로 설정)
         });
-        console.log(path.join(__dirname, '../../frontend/src'));
+        console.log(frontendPath);
 
         // ✅ React Router 새로고침 시 index.html 반환 (404 방지)
         fastifyInstance.setNotFoundHandler((req, reply) => {
             console.log(`🚨 404 발생: ${req.url}, index.html로 리다이렉트`);
-            reply.header('Content-Type', 'text/html').sendFile('index.html', path.join(__dirname, '../../frontend/src')); // React 빌드된 index.html 반환
+            reply.sendFile('index.html'); // React 빌드된 index.html 반환
         });
 
         // 서버 실행
