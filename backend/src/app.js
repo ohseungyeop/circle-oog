@@ -65,7 +65,7 @@ const init = async () => {
 
         // 새로고침 시 index.html 반환 (404 방지)
         app.setNotFoundHandler((req, reply) => {
-            reply.sendFile('index.html'); // React 빌드된 index.html 반환
+            reply.sendFile('index.html', path.join(__dirname, 'frontend')); // React 빌드된 index.html 반환
         });
 
         // 서버 실행
