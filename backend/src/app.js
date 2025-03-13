@@ -59,14 +59,15 @@ const init = async () => {
 
         // ✅ 정적 파일 서빙 (React 빌드 폴더)
         fastifyInstance.register(fastifyStatic, {
-            root: path.join(__dirname, 'frontend'), // frontend 폴더를 정적 파일 루트로 설정
-            prefix: '/', // 정적 파일 경로 프리픽스 (루트 경로로 설정)
+            root: path.join(__dirname, '../../frontend/src'),
+            prefix: '/frontend/', // 정적 파일 경로 프리픽스 (루트 경로로 설정)
         });
+        console.log(path.join(__dirname, '../../frontend/src'));
 
         // ✅ React Router 새로고침 시 index.html 반환 (404 방지)
         fastifyInstance.setNotFoundHandler((req, reply) => {
             console.log(`🚨 404 발생: ${req.url}, index.html로 리다이렉트`);
-            reply.header('Content-Type', 'text/html').sendFile('index.html'); // React 빌드된 index.html 반환
+            reply.header('Content-Type', 'text/html').sendFile('index.html', path.join(__dirname, '../../frontend/src')); // React 빌드된 index.html 반환
         });
 
         // 서버 실행
