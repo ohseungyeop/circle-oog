@@ -73,7 +73,7 @@ const init = async () => {
         // ✅ React Router 새로고침 시 index.html 반환 (404 방지)
         fastifyInstance.setNotFoundHandler((req, reply) => {
             console.log(`🚨 404 발생: ${req.url}, index.html로 리다이렉트`);
-            reply.sendFile('index.html'); // React 빌드된 index.html 반환
+            reply.sendFile('index.html', frontendPath); // React 빌드된 index.html 반환
         });
 
         // 서버 실행
