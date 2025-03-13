@@ -70,10 +70,10 @@ const init = async () => {
         });
         console.log(frontendPath);
 
-        // ✅ React Router 새로고침 시 index.html 반환 (404 방지)
         fastifyInstance.setNotFoundHandler((req, reply) => {
-            console.log(`🚨 404 발생: ${req.url}, index.html로 리다이렉트`);
-            reply.sendFile('index.html', frontendPath); // React 빌드된 index.html 반환
+            console.log(` 404 발생: ${req.url}, index.html로 리다이렉트`);
+            console.log(`index.html 파일 경로: ${path.join(frontendPath, 'index.html')}`); // 추가된 로그
+            reply.sendFile(path.join(frontendPath, 'index.html'));
         });
 
         // 서버 실행
