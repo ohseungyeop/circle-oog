@@ -59,7 +59,7 @@ const init = async () => {
 
         // 정적 파일 서빙 (React 빌드 폴더)
         app.register(fastifyStatic, {
-            root: path.join(__dirname, 'dist'), // React 빌드 결과 폴더
+            root: path.join(__dirname, 'dist', 'frontend'), // React 빌드 결과 폴더
             prefix: '/', // 모든 요청을 정적 파일에서 찾도록 설정
         });
 
