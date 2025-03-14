@@ -68,8 +68,8 @@ CREATE TABLE vos_oog_calc_step1 (
     OVER_LEN_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Length 11.3m 초과 여부',
     OVER_HGT4_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT '40fr Height 2.233m 초과 여부',
     OVER_HGT2_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT '20fr Height 1.955m 초과 여부',
-    FR4_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT '40fr 여부',
     FR4_CNT INT(10) DEFAULT 0 COMMENT '40fr Count',
+    FR2_CNT INT(10) DEFAULT 0 COMMENT '20fr Count',
     -- -------------------------------------------------------------
     CALC_CBM DECIMAL(12,4) DEFAULT NULL COMMENT '(CALC)Box Volume (CBM)',
     -- -------------------------------------------------------------
