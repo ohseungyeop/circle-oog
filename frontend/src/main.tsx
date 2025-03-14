@@ -12,7 +12,7 @@ const root = ReactDOM.createRoot(document.querySelector("#root")!);
 root.render(
   <React.StrictMode>
     <StyledEngineProvider injectFirst>
-      <Router basename="/">
+      <Router>
         <Routes>
           <Route path="/" element={<SignIn />} />
           <Route path="/mainPage" element={<ProtectedFileListPage />} />
