@@ -1,4 +1,5 @@
 import fastify from 'fastify';
+import fastifyStatic from '@fastify/static';
 import dotenv from 'dotenv';
 import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
@@ -6,6 +7,8 @@ import corsPlugin from './config/cors.js';
 import dbConnector from './config/db.js';
 import mailer from './config/mailer.js';
 import routes from './routes/index.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const fastifyInstance = await fastify({
     logger: {
@@ -21,12 +24,21 @@ const fastifyInstance = await fastify({
     bodyLimit: 10485760, // 10MB로 설정
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // 환경별 `.env` 파일 불러오기
 const envFile = `.env.${process.env.NODE_ENV || 'local'}`;
 dotenv.config({ path: envFile });
 
 console.log(`✅ Loaded environment: ${process.env.NODE_ENV}`);
 console.log(`✅ Using DB: ${process.env.DB_NAME}`);
+
+// // 🔥 환경에 따라 정적 파일 경로 설정
+// const frontendPath =
+//     process.env.NODE_ENV === 'prd'
+//         ? '/home/nodeapp/vos-oog/frontend' // ✅ 운영 서버
+//         : path.join(__dirname, '../../frontend/dist'); // ✅ 로컬 환
 
 const init = async () => {
     // Fastify 플러그인 등록 순서 보장
@@ -45,22 +57,24 @@ const init = async () => {
             parseOptions: {}, // 쿠키 옵션 설정 가능
         });
 
-        // // React 앱 정적 파일 서빙
-        // await fastifyInstance.register(fastifyStatic, {
-        //     root: path.join(__dirname, 'build'), // React 빌드 디렉토리
-        //     prefix: '/', // 기본 경로
-        // });
-
-        // // React 라우팅을 위한 index.html 서빙
-        // fastifyInstance.get('*', (req, reply) => {
-        //     reply.sendFile('index.html'); // React의 index.html로 리디렉션
-        // });
-
         // 요청 로그 미들웨어
         fastifyInstance.addHook('onRequest', (request, reply, done) => {
             console.log(`[${new Date().toISOString()}] Request: ${request.method} ${request.url}`);
             done();
         });
+
+        // // ✅ 정적 파일 서빙 (React 빌드 폴더)
+        // fastifyInstance.register(fastifyStatic, {
+        //     root: frontendPath,
+        //     prefix: '/', // 정적 파일 경로 프리픽스 (루트 경로로 설정)
+        // });
+        // console.log(frontendPath);
+
+        // fastifyInstance.setNotFoundHandler((req, reply) => {
+        //     console.log(` 404 발생: ${req.url}, index.html로 리다이렉트`);
+        //     console.log(`index.html 파일 경로: ${path.join(frontendPath, 'index.html')}`); // 추가된 로그
+        //     reply.sendFile(path.join(frontendPath, 'index.html'));
+        // });
 
         // 서버 실행
 
