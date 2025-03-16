@@ -37,8 +37,8 @@ export default defineConfig(({ mode }) => {
             'process.env': {}, // 빈 객체로 정의하여 process 관련 오류 방지
         },
         build: {
-            outDir: path.resolve(__dirname, './'), // 빌드 결과물을 프로젝트 루트 디렉토리에 생성
-            emptyOutDir: false, // 기존 파일 삭제 방지
+            outDir: path.resolve(__dirname, 'dist'), // 'dist' 폴더에 빌드 결과물 저장
+            emptyOutDir: true, // 빌드 전에 기존 파일 삭제
             // 프로덕션 환경에서 빌드 최적화 추가
             minify: isProduction ? 'esbuild' : false,
             sourcemap: !isProduction, // 프로덕션에서는 소스맵 비활성화
