@@ -1,5 +1,5 @@
 import fastify from 'fastify';
-import fastifyStatic from '@fastify/static';
+// import fastifyStatic from '@fastify/static';
 import dotenv from 'dotenv';
 import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
