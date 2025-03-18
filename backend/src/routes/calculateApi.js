@@ -183,9 +183,9 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     const step6Set = new Set(step6List);
     const target2List = targetList.filter((item) => !step2Set.has(item) && !step6Set.has(item));
 
-    console.log(traget2List.length);
+    console.log(target2List.length);
 
-    // const traget2List = [...new Map(targetList.map((item) => [item.PCK_CALC_SEQ, item])).values()];
+    // const target2List = [...new Map(targetList.map((item) => [item.PCK_CALC_SEQ, item])).values()];
 
     // targetList - (step2Tail + step3List + step6List);
 
