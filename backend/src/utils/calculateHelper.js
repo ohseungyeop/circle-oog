@@ -57,4 +57,60 @@ const filterListByHeight = (itemList, threshold) => {
     return itemList.filter((item) => parseFloat(item.BOX_HGT) > threshold);
 };
 
-export { calculateCBM, filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight };
+/**
+ * 길이로 내림차순 정렬하고 기준길이에 넘지 않게 그룹핑 한다.
+ * "First-Fit Decreasing(FFD)" 또는 "Best-Fit" 알고리즘
+ * @param {Array} target2List - 무게와 길이 초과건을 제외한 대상 아이템
+ * @param {number} REF_LEN - 기준 길이
+ * @returns
+ */
+const groupItemListByLength = (target2List, REF_LEN) => {
+    // 1. BOX_LEN 기준 내림차순 정렬
+    const groups = []; // 최종 그룹 리스트
+
+    target2List.forEach((item) => {
+        if ('진공' != item.ITM_TP_NM) item.ITM_TP_NM = '일반';
+    });
+
+    // 2. 그룹핑 시작
+    for (const item of target2List) {
+        let added = false;
+
+        // 3. 기존 그룹에 추가할 수 있는지 확인
+        for (const group of groups) {
+            const sum = group.reduce((acc, i) => acc + Number(i.BOX_LEN), 0);
+            if (sum + Number(item.BOX_LEN) <= REF_LEN && group[0].ITM_TP_NM === item.ITM_TP_NM) {
+                group.push(item);
+                added = true;
+                break;
+            }
+        }
+
+        // 4. 기존 그룹에 넣을 수 없으면 새 그룹 생성
+        if (!added) {
+            groups.push([item]);
+        }
+    }
+
+    // 5. 결과 출력
+    console.log(`기준 길이: ${REF_LEN}`);
+    console.log(`총 그룹 개수: ${groups.length}`);
+    groups.forEach((group, index) => {
+        console.log(
+            `그룹 ${index + 1}: `,
+            group.map(
+                (i) =>
+                    '[' +
+                    i.PCK_NO +
+                    ']' +
+                    Number(i.BOX_LEN) +
+                    (Number(i.FR4_CNT) > 0 ? '(FR4:' + i.FR4_CNT + ')' : '') +
+                    (Number(i.FR2_CNT) > 0 ? '(FR2:' + i.FR2_CNT + ')' : ''),
+            ),
+        );
+    });
+
+    return groups;
+};
+
+export { calculateCBM, filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight, groupItemListByLength };

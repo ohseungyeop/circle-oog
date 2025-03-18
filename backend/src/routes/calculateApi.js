@@ -7,6 +7,7 @@ import {
     filterListByLength,
     filterListByWidth,
     filterListByHeight,
+    groupItemListByLength,
 } from '../utils/calculateHelper.js';
 
 const CRR_CD = 'VOS';
@@ -48,7 +49,7 @@ const calculate = async (fastify, options) => {
                     // 25️⃣ 최종 OOG 데이터(VOS_OOG_PKG) 결과 저장
                     // await database.saveFinalOOGData(finalOOGData);
 
-                    console.log('📂 select item list:', targetList);
+                    // console.log('📂 select item list:', targetList);
                     return targetList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
                 });
             } catch (error) {
@@ -179,11 +180,17 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     );
 
     // 무게로 인한 fr 대상 제외
-    const step2Set = new Set(step2List);
-    const step6Set = new Set(step6List);
-    const target2List = targetList.filter((item) => !step2Set.has(item) && !step6Set.has(item));
+    const step2Set = new Set(step2List); //무게 60t 초과 건
+    const step6Set = new Set(step6List); //무게 25t 초과 건
+    const step4Set = new Set(step4List); //길이 기준 초과 건
+
+    const target2List = calcItems
+        .filter((item) => !step2Set.has(item) && !step6Set.has(item) && !step4Set.has(item))
+        .sort((a, b) => b.BOX_LEN - a.BOX_LEN);
 
     console.log(target2List.length);
+
+    const groupItemList = groupItemListByLength(target2List, REF_LEN);
 
     // const target2List = [...new Map(targetList.map((item) => [item.PCK_CALC_SEQ, item])).values()];
 
