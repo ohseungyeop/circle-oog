@@ -3,11 +3,12 @@ import Box from '@mui/material/Box';
 import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator } from './FileListHandlers';
 interface ExcelDataGridProps {
     rows: any[];
     pckOrdSeq: string;
+    selectionModel: GridRowSelectionModel;
 }
 
 const excelColumns: GridColDef[] = [
@@ -28,7 +29,8 @@ const excelColumns: GridColDef[] = [
     { field: 'rmks', headerName: 'Remarks', width: 200 },
 ];
 
-const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq }) => {
+const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
+
 
 
     if (!rows || rows.length === 0) {
@@ -54,7 +56,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq }) => {
             >
                 <h3>🧮 Out of Gauge System</h3>
                 <button
-                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar)}
+                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel)}
                     style={{
                         padding: '10px 20px',
                         backgroundColor: '#0E4491',
@@ -79,6 +81,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq }) => {
                 pageSize={5}
                 disableRowSelectionOnClick
                 pagination
+                selectionModel={selectionModel}
+            //onSelectionModelChange={handleSelectionChange}
             />
 
             <Snackbar

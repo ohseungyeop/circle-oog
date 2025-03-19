@@ -130,6 +130,8 @@ const FileListGrid = () => {
       <ExcelDataGrid
         rows={excelRows}
         pckOrdSeq={pckOrdSeq}
+        selectionModel={selectionModel}
+
       />
 
       <Snackbar

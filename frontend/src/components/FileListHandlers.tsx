@@ -400,8 +400,17 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
     }
 };
 
-export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar) => {
+export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel) => {
 
+
+    if (!selectionModel || selectionModel.length === 0) {
+        setSnackbar({
+            open: true,
+            message: '계산할 로우를 선택해주세요!',
+            severity: 'error',
+        });
+        return;
+    }
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
             method: 'POST',
