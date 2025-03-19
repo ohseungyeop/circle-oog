@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Box from '@mui/material/Box';
+import { Box, AppBar, Tabs, Tab, Typography } from '@mui/material';
 import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -29,9 +29,16 @@ const excelColumns: GridColDef[] = [
     { field: 'rmks', headerName: 'Remarks', width: 200 },
 ];
 
+const TabPanel = ({ children, value, index }: any) => {
+    return (
+        <div role="tabpanel" hidden={value !== index}>
+            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        </div>
+    );
+};
+
+
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
-
-
 
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
@@ -39,22 +46,54 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
+    const [tabValue, setTabValue] = React.useState(0);
+
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
 
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setTabValue(newValue); // 탭 변경 시 상태 업데이트
+    };
+
 
     return (
-        <Box sx={{ height: 400, width: '100%' }}>
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    margin: '10px',
-                }}
-            >
-                <h3>🧮 Out of Gauge System</h3>
+
+        <Box sx={{ width: '100%' }}>
+            <h3>🧮 Out of Gauge System</h3>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px' }}>
+                <AppBar position="static"
+                    sx={{
+                        backgroundColor: 'transparent',
+                        width: '70%',
+                        border: 'none',
+                        borderRadius: '5px',
+                        boxShadow: 'none',
+
+                    }}>
+                    <Tabs value={tabValue}
+                        onChange={handleTabChange}
+                        indicatorColor="primary"
+                        textColor="inherit"
+                        variant="standard"
+                        sx={{
+                            '& .MuiTab-root': {
+                                fontFamily: 'sans-serif',
+                                fontSize: '15px',
+                                textTransform: 'none',
+                                color: '#0E4491',
+                                fontWeight: 'bold',
+                            },
+                            '& .Mui-selected': {
+                                color: '#0E4491',  // 선택된 탭 텍스트 색상
+                                borderBottom: '2px solid blue' // 선택된 탭 밑줄 파란색으로 변경
+                            },
+                        }}>
+
+                        <Tab label="OOG Import Data" />
+                        <Tab label="OOG System Data" />
+                    </Tabs>
+                </AppBar>
                 <button
                     onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel)}
                     style={{
@@ -70,20 +109,27 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                 >
                     Calculator
                 </button>
-            </div>
+            </Box>
 
-            <DataGrid
-                rows={rows}
-                getRowId={(row) => row.pckNo} // 고유 id 지정
-                rowCount={rows.length}
-                columns={excelColumns}
-                paginationMode="server"
-                pageSize={5}
-                disableRowSelectionOnClick
-                pagination
-                selectionModel={selectionModel}
-            //onSelectionModelChange={handleSelectionChange}
-            />
+            <TabPanel value={tabValue} index={0}>
+                <DataGrid
+                    rows={rows}
+                    getRowId={(row) => row.pckNo} // 고유 id 지정
+                    rowCount={rows.length}
+                    columns={excelColumns}
+                    paginationMode="server"
+                    pageSize={5}
+                    disableRowSelectionOnClick
+                    pagination
+                    selectionModel={selectionModel}
+                />
+            </TabPanel>
+
+            {/* TabPanel: 두 번째 탭 (File List) */}
+            <TabPanel value={tabValue} index={1}>
+                <Typography>File List Content Goes Here</Typography>
+                {/* 여기에 파일 리스트 콘텐츠를 넣으세요 */}
+            </TabPanel>
 
             <Snackbar
                 open={snackbar.open}
@@ -98,7 +144,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-
         </Box>
     );
 };
