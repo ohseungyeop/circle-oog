@@ -213,6 +213,74 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
     await trx('vos_oog_calc_step2').insert(sortedItemList);
 
+    await trx.raw(`
+        INSERT INTO VOS_OOG_CLP(
+              PCK_ORD_SEQ
+            , CLP_NO
+            , BOX_NO
+            , ITEM
+            , MC_LEN
+            , MC_WDT
+            , MC_HGT
+            , BOX_LEN
+            , BOX_WDT
+            , BOX_HGT
+            , QTY
+            , CBM
+            , TYPE
+            , NW
+            , GW
+            , REMARKS
+            , TPSZ)
+        SELECT ${pckOrdSeq} as pck_ord_seq,
+               pck_grp_no as clp_no,
+               pck_no as box_no,
+               itm_nm as item,
+               itm_len as mc_len,
+               itm_wdt as mc_wdt,
+               itm_hgt as mc_hgt,
+               box_len,
+               box_wdt,
+               box_hgt,
+               itm_qty as qty,
+               calc_cbm as cbm,
+               itm_tp_nm as type,
+               net_wgt as nw,
+               grs_wgt as gw,
+               rmks as remarks,
+               CASE 
+                 WHEN '40FR' = cntr_tp_cd THEN '40''FR'
+                 WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
+                 WHEN '20DR' = cntr_tp_cd THEN '20''DR'
+               END as tpsz
+        FROM vos_oog_calc_step2
+        WHERE pck_ord_seq = ${pckOrdSeq}
+  
+        UNION ALL
+  
+        SELECT ${pckOrdSeq} as pck_ord_seq,
+               pck_grp_no, 
+               NULL,
+               'SUM' as itm_nm,
+               NULL, NULL, NULL,
+               SUM(box_len) as box_len,
+               MAX(box_wdt) as box_wdt,
+               MAX(box_hgt) as box_hgt,
+               SUM(itm_qty) as itm_qty,
+               SUM(calc_cbm) as calc_cbm,
+               NULL,
+               SUM(net_wgt) as net_wgt,
+               SUM(grs_wgt) as grs_wgt,
+               NULL,
+               NULL
+        FROM vos_oog_calc_step2
+        WHERE pck_ord_seq = ${pckOrdSeq}
+        GROUP BY pck_grp_no
+  
+        ORDER BY clp_no, 
+                 CASE WHEN item = 'SUM' THEN 1 ELSE 0 END;
+      `);
+
     return targetList;
 };
 
