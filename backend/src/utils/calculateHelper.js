@@ -61,39 +61,28 @@ const filterListByHeight = (itemList, threshold) => {
  * 길이로 내림차순 정렬하고 기준길이에 넘지 않게 그룹핑 한다.
  * "First-Fit Decreasing(FFD)" 또는 "Best-Fit" 알고리즘
  * @param {Array} target2List - 무게와 길이 초과건을 제외한 대상 아이템
- * @param {number} REF_LEN - 기준 길이
+ * @param {number} REF_LEN_40 - 40FT 기준 길이
+ * @param {number} REF_LEN_20 - 20FT 기준 길이
  * @returns
  */
-const groupItemListByLength = (target2List, REF_LEN) => {
-    // 1. target2List - BOX_LEN 기준 내림차순 정렬
+const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
     const groupItemList = []; // 최종 그룹 리스트
 
-    // 2. ITM_TP_NM 별로만 그룹핑을 위함(진공이 아니면 일반으로 취급)
-    target2List.forEach((item) => {
-        if ('진공' != item.ITM_TP_NM) item.ITM_TP_NM = '일반';
-    });
-
-    // 3. 그룹핑 시작
+    // 1. 그룹핑 시작
     let pckGrpNo = 1;
     for (const item of target2List) {
+        // ITM_TP_NM이 '진공'이 아니면 '일반'으로 설정
+        item.ITM_TP_NM = item.ITM_TP_NM === '진공' ? '진공' : '일반';
+
         let added = false;
+        const itemBoxLen = Number(item.BOX_LEN);
 
-        // '진공/일반'을 구분해야 하는지 판단
-        const shouldSeparate = item.FR4_CNT > 0 || item.FR2_CNT > 0;
-
-        // 4. 기존 그룹에 추가할 수 있는지 확인
+        // 2. 기존 그룹에 추가할 수 있는지 확인
         for (const group of groupItemList) {
-            // 현재 그룹에 포함된 아이템들의 BOX_LEN 합계를 계산
             const sum = group.reduce((acc, i) => acc + Number(i.BOX_LEN), 0);
-
-            // 그룹 내 첫 번째 아이템 가져오기
             const firstItem = group[0];
 
-            // 기존 그룹과 합칠 수 있는 조건 확인
-            const sameType = shouldSeparate ? firstItem.ITM_TP_NM === item.ITM_TP_NM : true;
-
-            if (sum + Number(item.BOX_LEN) <= REF_LEN) {
-                //} && sameType) {
+            if (sum + itemBoxLen <= REF_LEN_40) {
                 item.PCK_GRP_NO = firstItem.PCK_GRP_NO; // 기존 그룹의 번호 사용
                 group.push(item);
                 added = true;
@@ -101,27 +90,37 @@ const groupItemListByLength = (target2List, REF_LEN) => {
             }
         }
 
-        // 5. 기존 그룹에 넣을 수 없으면 새 그룹 생성
+        // 3. 기존 그룹에 넣을 수 없으면 새 그룹 생성
         if (!added) {
             item.PCK_GRP_NO = pckGrpNo++; // 새로운 그룹 번호 할당
             groupItemList.push([item]);
         }
     }
 
-    // 6. 그룹별 CNTR_TP_CD 설정
-    groupItemList.forEach((group, index) => {
-        // 그룹 내에서 FR4_CNT가 0보다 큰 항목이 있는지 확인
+    // 4. 그룹별 CNTR_TP_CD 설정 (그룹당 하나의 CNTR_TP_CD)
+    groupItemList.forEach((group, groupIndex) => {
         const hasFR4 = group.some((item) => Number(item.FR4_CNT) > 0);
+        const defaultCNTR_TP_CD = hasFR4 ? '40FR' : '40HQ';
 
-        // CNTR_TP_CD 값을 설정
+        // 마지막 그룹인지 확인
+        const isLastGroup = groupIndex === groupItemList.length - 1;
+
         group.forEach((item) => {
-            // item.PCK_GRP_NO = index + 1; // 그룹 번호 설정
-            item.CNTR_TP_CD = hasFR4 ? '40FR' : '40DR'; // 조건에 따라 설정
+            item.CNTR_TP_CD = defaultCNTR_TP_CD;
         });
+
+        // 마지막 그룹인 경우 REF_LEN_20 기준으로 마지막 아이템만 변경
+        if (isLastGroup) {
+            const lastItem = group[group.length - 1];
+            if (Number(lastItem.BOX_LEN) <= REF_LEN_20) {
+                lastItem.CNTR_TP_CD = '20DR';
+            }
+        }
     });
 
-    // 7. 확인 - 결과 출력
-    console.log(`기준 길이: ${REF_LEN}`);
+    // 6. 결과 확인
+    /*
+    console.log(`기준 길이: ${REF_LEN_40}`);
     console.log(`총 그룹 개수: ${groupItemList.length}`);
     groupItemList.forEach((group, index) => {
         console.log(
@@ -140,8 +139,51 @@ const groupItemListByLength = (target2List, REF_LEN) => {
             ),
         );
     });
+    */
 
     return groupItemList;
 };
 
-export { calculateCBM, filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight, groupItemListByLength };
+const regroupItems = (items) => {
+    // Step 1: CNTR_TP_CD 기준 정렬 (40FR → 40HQ → 20DR)
+    items.sort((a, b) => {
+        const order = { '40FR': 1, '40HQ': 2, '20DR': 3 };
+        return order[a.CNTR_TP_CD] - order[b.CNTR_TP_CD];
+    });
+
+    // Step 2: PCK_GRP_NO를 순차적으로 재할당
+    let newGroupNo = 1;
+    let lastType = null;
+    let groupMapping = {};
+
+    items.forEach((item, index) => {
+        // if (lastType !== item.CNTR_TP_CD) {
+        //     // 컨테이너 타입이 변경될 때마다 새로운 그룹 번호 시작
+        //     newGroupNo++;
+        // }
+
+        // 기존 그룹이 새 그룹 번호를 유지하도록 매핑
+        if (!(item.PCK_GRP_NO in groupMapping)) {
+            groupMapping[item.PCK_GRP_NO] = newGroupNo;
+            newGroupNo++;
+        }
+
+        // 재할당된 그룹 번호 적용
+        item.PCK_GRP_NO = groupMapping[item.PCK_GRP_NO];
+
+        // 현재 컨테이너 타입 저장
+        lastType = item.CNTR_TP_CD;
+    });
+
+    return items;
+};
+
+export {
+    calculateCBM,
+    filterListByWeight,
+    filterListByLength,
+    filterListByWidth,
+    filterListByHeight,
+    groupItemListByLength,
+    regroupItems,
+};

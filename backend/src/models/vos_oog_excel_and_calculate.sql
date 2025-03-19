@@ -89,8 +89,8 @@ CREATE TABLE vos_oog_calc_step2 (
     PCK_ITM_SEQ INT(11) NOT NULL COMMENT 'Upload Item Sequence',
     -- -------------------------------------------------------------
     PCK_GRP_NO INT(10) DEFAULT NULL COMMENT 'Packing Group No',
-    PCK_NO INT(10) DEFAULT NULL COMMENT 'Packing Order No(display)',
     CNTR_TP_CD VARCHAR(4) DEFAULT '40DR' COMMENT 'Dry40(40DR), Flatrack(40FR), Dry20(20DR)',
+    PCK_NO INT(10) DEFAULT NULL COMMENT 'Packing Order No(display)',
     ITM_NM VARCHAR(255) DEFAULT NULL COMMENT 'Item Name',
     ITM_LEN DECIMAL(10,2) DEFAULT NULL COMMENT 'Item Length',
     ITM_WDT DECIMAL(10,2) DEFAULT NULL COMMENT 'Item Width',

@@ -8,6 +8,7 @@ import {
     filterListByWidth,
     filterListByHeight,
     groupItemListByLength,
+    regroupItems,
 } from '../utils/calculateHelper.js';
 
 const CRR_CD = 'VOS';
@@ -15,11 +16,13 @@ const REF_CNTR_TPSZ = ['D2', '4H'];
 const HARD_WGT_40 = 40000; //(kg) → 40t
 const HARD_WGT_60 = 60000; //(kg) → 60t
 const HARD_WGT_25 = 25000; //(kg) → 25t
-let REF_LEN = 0;
-let REF_WDT = 0;
+let REF_LEN_40 = 0;
+let REF_LEN_20 = 0;
+let REF_WDT_40 = 0;
 let REF_HGT_40 = 0;
 let REF_HGT_20 = 0;
-let REF_LEN_PCTG = 0;
+let REF_LEN_40_PCTG = 0;
+let REF_LEN_20_PCTG = 0;
 
 const calculate = async (fastify, options) => {
     fastify.post(
@@ -73,16 +76,18 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     const d2Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[0]);
     const d4Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[1]);
 
-    REF_LEN = d4Row.CNTR_LEN ?? 11300; //11.3m
-    REF_WDT = d4Row.CNTR_WDT ?? 2438; //2.438m
+    REF_LEN_40 = d4Row.CNTR_LEN ?? 11300; //11.3m
+    REF_LEN_20 = d2Row.CNTR_LEN ?? 5898; //5.898m
+    REF_WDT_40 = d4Row.CNTR_WDT ?? 2438; //2.438m
     REF_HGT_40 = d4Row.CNTR_HGT ?? 1955; //1.955m
     REF_HGT_20 = d2Row.CNTR_HGT ?? 2233; //2.233m
-    REF_LEN_PCTG = d4Row.CNTR_LEN_PCTG / 100 ?? 0.85; //85%
-    console.log('--길이 기준:', REF_LEN);
-    console.log('--폭 기준:', REF_WDT);
+    REF_LEN_40_PCTG = d4Row.CNTR_LEN_PCTG / 100 ?? 0.95; //95%
+    REF_LEN_20_PCTG = d2Row.CNTR_LEN_PCTG / 100 ?? 0.85; //85%
+    console.log('--길이 기준:', REF_LEN_40);
+    console.log('--폭 기준:', REF_WDT_40);
     console.log('--40높이 기준:', REF_HGT_40);
     console.log('--20높이 기준:', REF_HGT_20);
-    console.log('--길이 퍼센티지 기준:', REF_LEN_PCTG);
+    console.log('--길이 퍼센티지 기준:', REF_LEN_40_PCTG);
 
     // 1️⃣ VOS_OOG_UPLD_DTL 조회
     console.log('------------------------------');
@@ -113,7 +118,7 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     // 4️⃣ Width 2.438M 초과 체크
     console.log('------------------------------');
     console.log('4️⃣ Width 2.438M 초과 체크');
-    const step3List = filterListByWidth(step2List, REF_WDT); //2.438m 초과(✅Width / 2.438m = 40FR갯수)
+    const step3List = filterListByWidth(step2List, REF_WDT_40); //2.438m 초과(✅Width / 2.438m = 40FR갯수)
     const step3Tail = step2List.filter((item) => !step3List.includes(item)); //step2List - step3List(✅40FR 2대)
     console.log('폭 2.438m 초과 item size:', step3List.length);
     console.log('무게 60t, 폭 2.438m 초과 item size:', step3Tail.length);
@@ -122,10 +127,10 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     console.log('------------------------------');
     console.log('5️⃣ Length 체크');
     console.log('Length 체크 대상 item size:', step1Tail.length);
-    const step4List = filterListByLength(step1Tail, REF_LEN); //11.3m 초과(✅Length / 2.438m = 40FR갯수)
+    const step4List = filterListByLength(step1Tail, REF_LEN_40); //11.3m 초과(✅Length / 2.438m = 40FR갯수)
     const step4Tail = step1Tail.filter((item) => !step4List.includes(item)); //step1Tail - step4List
 
-    const step5List = filterListByLength(step1Tail, REF_LEN * REF_LEN_PCTG); //11.3m * 85% 초과(✅40FR 1대)
+    const step5List = filterListByLength(step1Tail, REF_LEN_40 * REF_LEN_40_PCTG); //11.3m * 85% 초과(✅40FR 1대)
     const step5Tail = step4Tail.filter((item) => !step5List.includes(item)); //step4Tail - step5List(G/W 체크 대상)
 
     // 6️⃣ 두번째 G/W 체크
@@ -137,7 +142,7 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     // 7️⃣ 장축(OW) 화물 추출 (2.438M 초과)
     console.log('------------------------------');
     console.log('7️⃣ 장축(OW) 화물 추출 (2.438M 초과)');
-    const step7List = filterListByWidth(step6Tail, REF_WDT); //2.438m 초과(✅OW)
+    const step7List = filterListByWidth(step6Tail, REF_WDT_40); //2.438m 초과(✅OW)
 
     // 8️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)
     console.log('------------------------------');
@@ -164,9 +169,9 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
                     step2Tail.includes(item) || step3Tail.includes(item)
                         ? 2
                         : step3List.includes(item)
-                        ? Math.floor(item.BOX_WDT / REF_WDT)
+                        ? Math.floor(item.BOX_WDT / REF_WDT_40)
                         : step4List.includes(item)
-                        ? Math.floor(item.BOX_LEN / REF_WDT)
+                        ? Math.floor(item.BOX_LEN / REF_WDT_40)
                         : step5List.includes(item) ||
                           step6List.includes(item) ||
                           step7List.includes(item) ||
@@ -196,15 +201,17 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
 
     console.log(target2List.length);
 
-    // 1️⃣3️⃣ 길이로 그룹핑
-    const groupItemList = groupItemListByLength(target2List, REF_LEN * REF_LEN_PCTG);
-    console.log(groupItemList);
-    // 그룹된 데이터를 단일 배열로 변환
-    const flattenedGroupItemList = groupItemList.flat();
+    // 4. 그룹핑된 데이터를 단일 배열로 변환
+    const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG, REF_LEN_20 * REF_LEN_20_PCTG);
+    const flattenedGroupItemList = groupItemList.flat(); // 그룹 리스트를 하나의 배열로 변환
 
-    // 1️⃣4️⃣ 기존 데이터 삭제 후 step2 저장
+    // 5. CNTR_TP_CD 기준으로 40FR이 먼저 나오게 정렬
+    // 6. 그룹 번호 재지정
+    const sortedItemList = regroupItems(flattenedGroupItemList);
+
+    // 1️⃣7️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
-    await trx('vos_oog_calc_step2').insert(flattenedGroupItemList);
+    await trx('vos_oog_calc_step2').insert(sortedItemList);
 
     return targetList;
 };
