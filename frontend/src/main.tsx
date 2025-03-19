@@ -10,14 +10,14 @@ const ProtectedFileListPage = withAuth(FileListPage);
 const root = ReactDOM.createRoot(document.querySelector("#root")!);
 
 root.render(
-  <React.StrictMode>
-    <StyledEngineProvider injectFirst>
-      <Router>
-        <Routes>
-          <Route path="/" element={<SignIn />} />
-          <Route path="/mainPage" element={<ProtectedFileListPage />} />
-        </Routes>
-      </Router>
-    </StyledEngineProvider>
-  </React.StrictMode>
+  //<React.StrictMode>
+  <StyledEngineProvider injectFirst>
+    <Router>
+      <Routes>
+        <Route path="/" element={<SignIn />} />
+        <Route path="/mainPage" element={<ProtectedFileListPage />} />
+      </Routes>
+    </Router>
+  </StyledEngineProvider>
+  // </React.StrictMode>
 );
