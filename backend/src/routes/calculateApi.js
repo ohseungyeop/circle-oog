@@ -47,11 +47,11 @@ const calculate = async (fastify, options) => {
             preHandler: [authMiddleware],
         },
         replyHelper(async (request, reply) => {
+            const { pckOrdSeq } = request.params;
+            let step1ItemList;
+            let step2ItemList;
             try {
-                let step1ItemList;
-                let step2ItemList;
                 await fastify.knex.transaction(async (trx) => {
-                    const { pckOrdSeq } = request.params;
                     console.log('📦 Packing order sequence:', pckOrdSeq);
 
                     // 1️⃣ 무게와 부피로 Flatrack 판별
