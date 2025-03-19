@@ -23,6 +23,22 @@ let REF_HGT_40 = 0;
 let REF_HGT_20 = 0;
 let REF_LEN_40_PCTG = 0;
 let REF_LEN_20_PCTG = 0;
+let step1List;
+let step1Tail;
+let step2List;
+let step2Tail;
+let step3List;
+let step3Tail;
+let step4List;
+let step4Tail;
+let step5List;
+let step5Tail;
+let step6List;
+let step6Tail;
+let step7List;
+let step8List;
+let step8Tail;
+let step9List;
 
 const calculate = async (fastify, options) => {
     fastify.post(
@@ -36,24 +52,84 @@ const calculate = async (fastify, options) => {
                     const { pckOrdSeq } = request.params;
                     console.log('📦 Packing order sequence:', pckOrdSeq);
 
-                    // 0️⃣ 무게와 부피로 Flatrack 판별
-                    const targetList = await processStep1(fastify, pckOrdSeq, trx);
+                    // 1️⃣ 무게와 부피로 Flatrack 판별
+                    const step1ItemList = await processStep1(fastify, pckOrdSeq, trx);
 
-                    //length: 무게에 의한 FR은 제외하고 나머지 FR을 대상 - 으로 length 로 내림차순 정렬해서 4H Length 와 비교해서 그룹핑해준다.
-                    // 1️⃣ Length 확인 (무게에 의한 FR 제외)
+                    // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외)
+                    const step2ItemList = await processStep2(step1ItemList, trx, pckOrdSeq);
 
-                    // 18️⃣ OOG 화물로 적재 최적화 계산(40FR 기준)
-                    // 19️⃣ 잔여 OOG
-                    // 20️⃣ OOG/Dry 혼적 최적화 (40FR 기준)
-                    // 21️⃣ Dry 화물로 적재 최적화 계산 (40HC 기준)
-                    // 22️⃣ 잔여 OOG
-                    // 23️⃣ Dry 화물 적재 최적화 (D2 기준)
-                    // 24️⃣ Summary (최종 결과)
-                    // 25️⃣ 최종 OOG 데이터(VOS_OOG_PKG) 결과 저장
-                    // await database.saveFinalOOGData(finalOOGData);
+                    // 3️⃣ 최종 OOG 데이터(VOS_OOG_CLP) 결과 저장
+                    await trx('vos_oog_clp').where('PCK_ORD_SEQ', pckOrdSeq).del();
+                    await trx.raw(`
+                        INSERT INTO VOS_OOG_CLP(
+                            PCK_ORD_SEQ
+                            , CLP_NO
+                            , BOX_NO
+                            , ITEM
+                            , MC_LEN
+                            , MC_WDT
+                            , MC_HGT
+                            , BOX_LEN
+                            , BOX_WDT
+                            , BOX_HGT
+                            , QTY
+                            , CBM
+                            , TYPE
+                            , NW
+                            , GW
+                            , REMARKS
+                            , TPSZ)
+                        SELECT ${pckOrdSeq} as pck_ord_seq
+                            , pck_grp_no as clp_no
+                            , pck_no as box_no
+                            , itm_nm as item
+                            , itm_len as mc_len
+                            , itm_wdt as mc_wdt
+                            , itm_hgt as mc_hgt
+                            , box_len
+                            , box_wdt
+                            , box_hgt
+                            , itm_qty as qty
+                            , calc_cbm as cbm
+                            , itm_tp_nm as type
+                            , net_wgt as nw
+                            , grs_wgt as gw
+                            , rmks as remarks
+                            , CASE
+                                WHEN '40FR' = cntr_tp_cd THEN '40''FR'
+                                WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
+                                WHEN '20DR' = cntr_tp_cd THEN '20''DR'
+                            END as tpsz
+                        FROM vos_oog_calc_step2
+                        WHERE pck_ord_seq = ${pckOrdSeq}
 
-                    // console.log('📂 select item list:', targetList);
-                    return targetList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
+                        UNION ALL
+
+                        SELECT ${pckOrdSeq} as pck_ord_seq
+                            , pck_grp_no
+                            , NULL
+                            , 'SUM' as itm_nm
+                            , NULL, NULL, NULL
+                            , SUM(box_len) as box_len
+                            , MAX(box_wdt) as box_wdt
+                            , MAX(box_hgt) as box_hgt
+                            , SUM(itm_qty) as itm_qty
+                            , SUM(calc_cbm) as calc_cbm
+                            , NULL
+                            , SUM(net_wgt) as net_wgt
+                            , SUM(grs_wgt) as grs_wgt
+                            , NULL, NULL
+                        FROM vos_oog_calc_step2
+                        WHERE pck_ord_seq = ${pckOrdSeq}
+                        GROUP BY pck_grp_no
+
+                        ORDER BY clp_no, 
+                            CASE WHEN item = 'SUM' THEN 1 ELSE 0 END;
+                    `);
+
+                    const clpList = await fastify.knex('VOS_OOG_CLP').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
+
+                    return clpList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
                 });
             } catch (error) {
                 console.error('❌ Error fetching item list:', error);
@@ -108,18 +184,18 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     // 3️⃣ G/W 체크
     console.log('------------------------------');
     console.log('3️⃣ G/W 체크');
-    const step1List = filterListByWeight(targetList, HARD_WGT_40); //40t 초과
-    const step1Tail = targetList.filter((item) => !step1List.includes(item)); //allList - step1List(Length 체크 대상)
-    const step2List = filterListByWeight(step1List, HARD_WGT_60); //60t 초과
-    const step2Tail = step1List.filter((item) => !step2List.includes(item)); //step1List - step2List(✅40FR 2대)
+    step1List = filterListByWeight(targetList, HARD_WGT_40); //40t 초과
+    step1Tail = targetList.filter((item) => !step1List.includes(item)); //allList - step1List(Length 체크 대상)
+    step2List = filterListByWeight(step1List, HARD_WGT_60); //60t 초과
+    step2Tail = step1List.filter((item) => !step2List.includes(item)); //step1List - step2List(✅40FR 2대)
     console.log('무게 40t 초과 item size:', step1List.length);
     console.log('무게 60t 초과 item size:', step2List.length);
 
     // 4️⃣ Width 2.438M 초과 체크
     console.log('------------------------------');
     console.log('4️⃣ Width 2.438M 초과 체크');
-    const step3List = filterListByWidth(step2List, REF_WDT_40); //2.438m 초과(✅Width / 2.438m = 40FR갯수)
-    const step3Tail = step2List.filter((item) => !step3List.includes(item)); //step2List - step3List(✅40FR 2대)
+    step3List = filterListByWidth(step2List, REF_WDT_40); //2.438m 초과(✅Width / 2.438m = 40FR갯수)
+    step3Tail = step2List.filter((item) => !step3List.includes(item)); //step2List - step3List(✅40FR 2대)
     console.log('폭 2.438m 초과 item size:', step3List.length);
     console.log('무게 60t, 폭 2.438m 초과 item size:', step3Tail.length);
 
@@ -127,34 +203,33 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     console.log('------------------------------');
     console.log('5️⃣ Length 체크');
     console.log('Length 체크 대상 item size:', step1Tail.length);
-    const step4List = filterListByLength(step1Tail, REF_LEN_40); //11.3m 초과(✅Length / 2.438m = 40FR갯수)
-    const step4Tail = step1Tail.filter((item) => !step4List.includes(item)); //step1Tail - step4List
-
-    const step5List = filterListByLength(step1Tail, REF_LEN_40 * REF_LEN_40_PCTG); //11.3m * 85% 초과(✅40FR 1대)
-    const step5Tail = step4Tail.filter((item) => !step5List.includes(item)); //step4Tail - step5List(G/W 체크 대상)
+    step4List = filterListByLength(step1Tail, REF_LEN_40); //11.3m 초과(✅Length / 2.438m = 40FR갯수)
+    step4Tail = step1Tail.filter((item) => !step4List.includes(item)); //step1Tail - step4List
+    step5List = filterListByLength(step1Tail, REF_LEN_40 * REF_LEN_40_PCTG); //11.3m * 85% 초과(✅40FR 1대)
+    step5Tail = step4Tail.filter((item) => !step5List.includes(item)); //step4Tail - step5List(G/W 체크 대상)
 
     // 6️⃣ 두번째 G/W 체크
     console.log('------------------------------');
     console.log('6️⃣ 두번째 G/W 체크');
-    const step6List = filterListByWeight(step5Tail, HARD_WGT_25); //25t 초과(✅40FR 1대)
-    const step6Tail = step5Tail.filter((item) => !step6List.includes(item)); //step5Tail - step6List(OW 체크 대상)
+    step6List = filterListByWeight(step5Tail, HARD_WGT_25); //25t 초과(✅40FR 1대)
+    step6Tail = step5Tail.filter((item) => !step6List.includes(item)); //step5Tail - step6List(OW 체크 대상)
 
     // 7️⃣ 장축(OW) 화물 추출 (2.438M 초과)
     console.log('------------------------------');
     console.log('7️⃣ 장축(OW) 화물 추출 (2.438M 초과)');
-    const step7List = filterListByWidth(step6Tail, REF_WDT_40); //2.438m 초과(✅OW)
+    step7List = filterListByWidth(step6Tail, REF_WDT_40); //2.438m 초과(✅OW)
 
     // 8️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)
     console.log('------------------------------');
     console.log('8️⃣ 장고(OH) 화물 추출 (1.955M/20FR, 2.233M/40FR)');
-    const step8List = filterListByHeight(step6Tail, REF_HGT_40); //1.955m 초과(✅OH)
-    const step8Tail = step6Tail.filter((item) => !step8List.includes(item)); //step5Tail - step6List(OW 체크 대상)
-    const step9List = filterListByHeight(step8Tail, REF_HGT_20); //2.233m 초과(✅OH)
+    step8List = filterListByHeight(step6Tail, REF_HGT_40); //1.955m 초과(✅OH)
+    step8Tail = step6Tail.filter((item) => !step8List.includes(item)); //step5Tail - step6List(OW 체크 대상)
+    step9List = filterListByHeight(step8Tail, REF_HGT_20); //2.233m 초과(✅OH)
 
     // 9️⃣ STEP1 결과 컬럼 데이터 추가
     console.log('------------------------------');
     console.log('9️⃣ STEP1 결과 컬럼 데이터 추가');
-    const calcItems = await Promise.all(
+    const step1ItemList = await Promise.all(
         targetList.map(async (item) => {
             return {
                 ...item,
@@ -186,102 +261,35 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
 
     // 1️⃣0️⃣ 기존 데이터 삭제 후 step1 저장
     await trx('vos_oog_calc_step1').where('PCK_ORD_SEQ', pckOrdSeq).del();
-    await trx('vos_oog_calc_step1').insert(calcItems);
+    await trx('vos_oog_calc_step1').insert(step1ItemList);
 
-    // 1️⃣1️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외)
-    // 무게로 인한 fr 대상 제외
+    return step1ItemList;
+};
+
+async function processStep2(step1ItemList, trx, pckOrdSeq) {
     const step2Set = new Set(step2List); //무게 60t 초과 건
     const step6Set = new Set(step6List); //무게 25t 초과 건
     const step4Set = new Set(step4List); //길이 기준 초과 건
 
-    // 1️⃣2️⃣ 대상 제외 후 길이로 내림차순 정렬
-    const target2List = calcItems
+    // 1️⃣ 대상 제외 후 길이로 내림차순 정렬
+    const target2List = step1ItemList
         .filter((item) => !step2Set.has(item) && !step6Set.has(item) && !step4Set.has(item))
         .sort((a, b) => b.BOX_LEN - a.BOX_LEN);
 
     console.log(target2List.length);
 
-    // 4. 그룹핑된 데이터를 단일 배열로 변환
+    // 2️⃣ 그룹핑된 데이터를 단일 배열로 변환
     const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG, REF_LEN_20 * REF_LEN_20_PCTG);
     const flattenedGroupItemList = groupItemList.flat(); // 그룹 리스트를 하나의 배열로 변환
 
-    // 5. CNTR_TP_CD 기준으로 40FR이 먼저 나오게 정렬
-    // 6. 그룹 번호 재지정
-    const sortedItemList = regroupItems(flattenedGroupItemList);
+    // 3️⃣ 정렬 및그룹 번호 재지정
+    const step2ItemList = regroupItems(flattenedGroupItemList);
 
-    // 1️⃣7️⃣ 기존 데이터 삭제 후 step2 저장
+    // 4️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
-    await trx('vos_oog_calc_step2').insert(sortedItemList);
+    await trx('vos_oog_calc_step2').insert(step2ItemList);
 
-    await trx.raw(`
-        INSERT INTO VOS_OOG_CLP(
-              PCK_ORD_SEQ
-            , CLP_NO
-            , BOX_NO
-            , ITEM
-            , MC_LEN
-            , MC_WDT
-            , MC_HGT
-            , BOX_LEN
-            , BOX_WDT
-            , BOX_HGT
-            , QTY
-            , CBM
-            , TYPE
-            , NW
-            , GW
-            , REMARKS
-            , TPSZ)
-        SELECT ${pckOrdSeq} as pck_ord_seq,
-               pck_grp_no as clp_no,
-               pck_no as box_no,
-               itm_nm as item,
-               itm_len as mc_len,
-               itm_wdt as mc_wdt,
-               itm_hgt as mc_hgt,
-               box_len,
-               box_wdt,
-               box_hgt,
-               itm_qty as qty,
-               calc_cbm as cbm,
-               itm_tp_nm as type,
-               net_wgt as nw,
-               grs_wgt as gw,
-               rmks as remarks,
-               CASE 
-                 WHEN '40FR' = cntr_tp_cd THEN '40''FR'
-                 WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
-                 WHEN '20DR' = cntr_tp_cd THEN '20''DR'
-               END as tpsz
-        FROM vos_oog_calc_step2
-        WHERE pck_ord_seq = ${pckOrdSeq}
-  
-        UNION ALL
-  
-        SELECT ${pckOrdSeq} as pck_ord_seq,
-               pck_grp_no, 
-               NULL,
-               'SUM' as itm_nm,
-               NULL, NULL, NULL,
-               SUM(box_len) as box_len,
-               MAX(box_wdt) as box_wdt,
-               MAX(box_hgt) as box_hgt,
-               SUM(itm_qty) as itm_qty,
-               SUM(calc_cbm) as calc_cbm,
-               NULL,
-               SUM(net_wgt) as net_wgt,
-               SUM(grs_wgt) as grs_wgt,
-               NULL,
-               NULL
-        FROM vos_oog_calc_step2
-        WHERE pck_ord_seq = ${pckOrdSeq}
-        GROUP BY pck_grp_no
-  
-        ORDER BY clp_no, 
-                 CASE WHEN item = 'SUM' THEN 1 ELSE 0 END;
-      `);
-
-    return targetList;
-};
+    return step2ItemList;
+}
 
 export default calculate;
