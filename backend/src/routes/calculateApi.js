@@ -179,31 +179,33 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
         }),
     );
 
+    // 1️⃣0️⃣ 기존 데이터 삭제 후 step1 저장
+    await trx('vos_oog_calc_step1').where('PCK_ORD_SEQ', pckOrdSeq).del();
+    await trx('vos_oog_calc_step1').insert(calcItems);
+
+    // 1️⃣1️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외)
     // 무게로 인한 fr 대상 제외
     const step2Set = new Set(step2List); //무게 60t 초과 건
     const step6Set = new Set(step6List); //무게 25t 초과 건
     const step4Set = new Set(step4List); //길이 기준 초과 건
 
+    // 1️⃣2️⃣ 대상 제외 후 길이로 내림차순 정렬
     const target2List = calcItems
         .filter((item) => !step2Set.has(item) && !step6Set.has(item) && !step4Set.has(item))
         .sort((a, b) => b.BOX_LEN - a.BOX_LEN);
 
     console.log(target2List.length);
 
+    // 1️⃣3️⃣ 길이로 그룹핑
     const groupItemList = groupItemListByLength(target2List, REF_LEN);
+    console.log(groupItemList);
+    // 그룹된 데이터를 단일 배열로 변환
+    const flattenedGroupItemList = groupItemList.flat();
 
-    // const target2List = [...new Map(targetList.map((item) => [item.PCK_CALC_SEQ, item])).values()];
+    // 1️⃣4️⃣ 기존 데이터 삭제 후 step2 저장
+    await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
+    await trx('vos_oog_calc_step2').insert(flattenedGroupItemList);
 
-    // targetList - (step2Tail + step3List + step6List);
-
-    //length: 무게에 의한 FR은 제외하고 나머지 FR을 대상 - 으로 length 로 내림차순 정렬해서 4H Length 와 비교해서 그룹핑해준다.
-    // 1️⃣ Length 확인 (무게에 의한 FR 제외)
-
-    // 기존 데이터 삭제
-    await trx('vos_oog_calc_step1').where('PCK_ORD_SEQ', pckOrdSeq).del();
-
-    // 새로운 데이터 삽입
-    await trx('vos_oog_calc_step1').insert(calcItems);
     return targetList;
 };
 

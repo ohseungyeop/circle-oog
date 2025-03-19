@@ -65,37 +65,42 @@ const filterListByHeight = (itemList, threshold) => {
  * @returns
  */
 const groupItemListByLength = (target2List, REF_LEN) => {
-    // 1. BOX_LEN 기준 내림차순 정렬
-    const groups = []; // 최종 그룹 리스트
+    // 1. target2List - BOX_LEN 기준 내림차순 정렬
+    const groupItems = []; // 최종 그룹 리스트
 
+    // 2. ITM_TP_NM 별로만 그룹핑을 위함
     target2List.forEach((item) => {
         if ('진공' != item.ITM_TP_NM) item.ITM_TP_NM = '일반';
     });
 
-    // 2. 그룹핑 시작
+    // 3. 그룹핑 시작
+    let pckGrpNo = 1;
     for (const item of target2List) {
         let added = false;
 
-        // 3. 기존 그룹에 추가할 수 있는지 확인
-        for (const group of groups) {
+        // 4. 기존 그룹에 추가할 수 있는지 확인
+        for (const group of groupItems) {
             const sum = group.reduce((acc, i) => acc + Number(i.BOX_LEN), 0);
             if (sum + Number(item.BOX_LEN) <= REF_LEN && group[0].ITM_TP_NM === item.ITM_TP_NM) {
+                item.PCK_GRP_NO = group[0].PCK_GRP_NO; // 기존 그룹의 번호 사용
                 group.push(item);
                 added = true;
                 break;
             }
         }
 
-        // 4. 기존 그룹에 넣을 수 없으면 새 그룹 생성
+        // 5. 기존 그룹에 넣을 수 없으면 새 그룹 생성
         if (!added) {
-            groups.push([item]);
+            item.PCK_GRP_NO = pckGrpNo++; // 새로운 그룹 번호 할당
+            groupItems.push([item]);
         }
     }
 
-    // 5. 결과 출력
+    // 6. 확인 - 결과 출력
+    /*
     console.log(`기준 길이: ${REF_LEN}`);
-    console.log(`총 그룹 개수: ${groups.length}`);
-    groups.forEach((group, index) => {
+    console.log(`총 그룹 개수: ${groupItems.length}`);
+    groupItems.forEach((group, index) => {
         console.log(
             `그룹 ${index + 1}: `,
             group.map(
@@ -109,8 +114,9 @@ const groupItemListByLength = (target2List, REF_LEN) => {
             ),
         );
     });
+    */
 
-    return groups;
+    return groupItems;
 };
 
 export { calculateCBM, filterListByWeight, filterListByLength, filterListByWidth, filterListByHeight, groupItemListByLength };
