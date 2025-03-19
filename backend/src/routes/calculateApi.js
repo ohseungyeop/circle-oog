@@ -48,17 +48,19 @@ const calculate = async (fastify, options) => {
         },
         replyHelper(async (request, reply) => {
             try {
+                let step1ItemList;
+                let step2ItemList;
                 await fastify.knex.transaction(async (trx) => {
                     const { pckOrdSeq } = request.params;
                     console.log('📦 Packing order sequence:', pckOrdSeq);
 
                     // 1️⃣ 무게와 부피로 Flatrack 판별
-                    const step1ItemList = await processStep1(fastify, pckOrdSeq, trx);
+                    step1ItemList = await processStep1(fastify, pckOrdSeq, trx);
                 });
 
                 await fastify.knex.transaction(async (trx) => {
                     // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외)
-                    const step2ItemList = await processStep2(step1ItemList, trx, pckOrdSeq);
+                    step2ItemList = await processStep2(step1ItemList, trx, pckOrdSeq);
                 });
 
                 await fastify.knex.transaction(async (trx) => {
