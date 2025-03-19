@@ -197,7 +197,7 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     console.log(target2List.length);
 
     // 1️⃣3️⃣ 길이로 그룹핑
-    const groupItemList = groupItemListByLength(target2List, REF_LEN);
+    const groupItemList = groupItemListByLength(target2List, REF_LEN * REF_LEN_PCTG);
     console.log(groupItemList);
     // 그룹된 데이터를 단일 배열로 변환
     const flattenedGroupItemList = groupItemList.flat();
