@@ -54,10 +54,14 @@ const calculate = async (fastify, options) => {
 
                     // 1️⃣ 무게와 부피로 Flatrack 판별
                     const step1ItemList = await processStep1(fastify, pckOrdSeq, trx);
+                });
 
+                await fastify.knex.transaction(async (trx) => {
                     // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외)
                     const step2ItemList = await processStep2(step1ItemList, trx, pckOrdSeq);
+                });
 
+                await fastify.knex.transaction(async (trx) => {
                     // 3️⃣ 최종 OOG 데이터(VOS_OOG_CLP) 결과 저장
                     await trx('vos_oog_clp').where('PCK_ORD_SEQ', pckOrdSeq).del();
                     await trx.raw(`
@@ -126,11 +130,11 @@ const calculate = async (fastify, options) => {
                         ORDER BY clp_no, 
                             CASE WHEN item = 'SUM' THEN 1 ELSE 0 END;
                     `);
-
-                    const clpList = await fastify.knex('VOS_OOG_CLP').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
-
-                    return clpList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
                 });
+
+                const clpList = await fastify.knex('VOS_OOG_CLP').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
+
+                return clpList; // ✅ `reply.send()` 호출 X (replyHelper가 처리)
             } catch (error) {
                 console.error('❌ Error fetching item list:', error);
                 throw error; // 🚨 `replyHelper`가 오류 처리하도록 예외 던지기
