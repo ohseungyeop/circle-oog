@@ -24,4 +24,4 @@ CREATE TABLE vos_oog_clp (
     CRE_DT DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT 'Created Time',
     UPD_DT DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT 'Updated Time',
     PRIMARY KEY (PCK_CLP_SEQ)
-) COMMENT = 'OOG Container Loading Plan Result';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='OOG Container Loading Plan Result';
