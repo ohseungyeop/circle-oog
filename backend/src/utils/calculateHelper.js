@@ -157,11 +157,6 @@ const regroupItems = (items) => {
     let groupMapping = {};
 
     items.forEach((item, index) => {
-        // if (lastType !== item.CNTR_TP_CD) {
-        //     // 컨테이너 타입이 변경될 때마다 새로운 그룹 번호 시작
-        //     newGroupNo++;
-        // }
-
         // 기존 그룹이 새 그룹 번호를 유지하도록 매핑
         if (!(item.PCK_GRP_NO in groupMapping)) {
             groupMapping[item.PCK_GRP_NO] = newGroupNo;

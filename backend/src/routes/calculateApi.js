@@ -59,7 +59,7 @@ const calculate = async (fastify, options) => {
                 });
 
                 await fastify.knex.transaction(async (trx) => {
-                    // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외)
+                    // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외 후 그룹핑)
                     step2ItemList = await processStep2(step1ItemList, trx, pckOrdSeq);
                 });
 
@@ -272,14 +272,14 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     return step1ItemList;
 };
 
-async function processStep2(step1ItemList, trx, pckOrdSeq) {
-    const step2Set = new Set(step2List); //무게 60t 초과 건
-    const step6Set = new Set(step6List); //무게 25t 초과 건
-    const step4Set = new Set(step4List); //길이 기준 초과 건
+const processStep2 = async (step1ItemList, trx, pckOrdSeq) => {
+    const step2Set = new Set(step2List.map((item) => item.PCK_NO)); //무게 60t 초과 건
+    const step6Set = new Set(step6List.map((item) => item.PCK_NO)); //무게 25t 초과 건
+    const step4Set = new Set(step4List.map((item) => item.PCK_NO)); //길이 기준 초과 건
 
     // 1️⃣ 대상 제외 후 길이로 내림차순 정렬
     const target2List = step1ItemList
-        .filter((item) => !step2Set.has(item) && !step6Set.has(item) && !step4Set.has(item))
+        .filter((item) => !step2Set.has(item.PCK_NO) && !step6Set.has(item.PCK_NO) && !step4Set.has(item.PCK_NO))
         .sort((a, b) => b.BOX_LEN - a.BOX_LEN);
 
     console.log(target2List.length);
@@ -288,14 +288,22 @@ async function processStep2(step1ItemList, trx, pckOrdSeq) {
     const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG, REF_LEN_20 * REF_LEN_20_PCTG);
     const flattenedGroupItemList = groupItemList.flat(); // 그룹 리스트를 하나의 배열로 변환
 
-    // 3️⃣ 정렬 및그룹 번호 재지정
-    const step2ItemList = regroupItems(flattenedGroupItemList);
+    // 3️⃣ step2, step6, step4 항목들을 다시 합침
+    const step2AndOthers = [
+        ...flattenedGroupItemList,
+        ...step1ItemList.filter((item) => step2Set.has(item.PCK_NO)), // step2Set에 해당하는 항목 추가
+        ...step1ItemList.filter((item) => step6Set.has(item.PCK_NO)), // step6Set에 해당하는 항목 추가
+        ...step1ItemList.filter((item) => step4Set.has(item.PCK_NO)), // step4Set에 해당하는 항목 추가
+    ];
 
-    // 4️⃣ 기존 데이터 삭제 후 step2 저장
+    // 4️⃣ 정렬 및그룹 번호 재지정
+    const step2ItemList = regroupItems(step2AndOthers);
+
+    // 5️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
-    await trx('vos_oog_calc_step2').insert(step2ItemList);
+    await trx('vos_oog_calc_step2').insert(step2AndOthers);
 
     return step2ItemList;
-}
+};
 
 export default calculate;
