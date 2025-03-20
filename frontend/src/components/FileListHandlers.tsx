@@ -360,7 +360,7 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     }
 };
 
-export const fetchOogCaclData = async (pckOrdSeq, apiUrl, cookies) => {
+export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
             method: 'POST',

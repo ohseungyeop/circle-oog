@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { handleCalculator } from './FileListHandlers';
+import { handleCalculator, fetchOogCalcData } from './FileListHandlers';
 interface ExcelDataGridProps {
     rows: any[];
     pckOrdSeq: string;
@@ -32,7 +32,7 @@ const excelColumns: GridColDef[] = [
 const oogColumns: GridColDef[] = [] = [
 
     { field: 'id', headerName: 'Seq', width: 200 },
-    { field: 'clpNo', headerName: 'CLP №', width: 500 },
+    { field: 'clpNo', headerName: 'CLP №', width: 200 },
     { field: 'boxNo', headerName: 'BOXNO.', width: 200 },
     { field: 'Item', headerName: ' ITEM', width: 200 },
     { field: 'mcLen', headerName: 'M/C Length', width: 200 },
@@ -71,14 +71,26 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
-
+    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
+    const [loading, setLoading] = React.useState(false);
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
 
+
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue); // 탭 변경 시 상태 업데이트
+        if (newValue === 1) {
+            fetchOogCalcData(pckOrdSeq, apiUrl, cookies).then(oogData => {
+                // ✅ 상태 업데이트하여 화면에 반영
+                setCalculatorData(oogData);
+            }).catch(error => {
+                console.error('Error fetching OOG data:', error);
+                setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
+            });
+        }
     };
+
 
 
     return (
@@ -145,22 +157,25 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     pageSize={5}
                     disableRowSelectionOnClick
                     pagination
-                    selectionModel={selectionModel}
+                    rowSelectionModel={selectionModel}
                 />
             </TabPanel>
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
+
                 <DataGrid
                     rows={calculatorData}
                     getRowId={(row) => row.id} // 고유 id 지정
                     rowCount={calculatorData.length}
                     columns={oogColumns}
-                    paginationMode="server"
-                    pageSize={5}
+                    paginationMode="client"
+                    pageSizeOptions={[50, 100, 200]} // 50개 단위로 설정
+                    paginationModel={paginationModel} // 🔹 페이지 상태 적용
+                    onPaginationModelChange={setPaginationModel} // 🔹 페이지 변경 시 업데이트
                     disableRowSelectionOnClick
                     pagination
-                    selectionModel={selectionModel}
+                    rowSelectionModel={selectionModel}
                 />
             </TabPanel>
 
