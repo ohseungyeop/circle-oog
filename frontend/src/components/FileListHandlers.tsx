@@ -1,3 +1,4 @@
+import { Snackbar } from '@mui/material';
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
 
@@ -186,6 +187,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
     event.target.value = '';
 };
 
+debugger;
 export const handleExportToExcel = (calculatorData, setSnackbar) => {
     if (calculatorData.length === 0) {
         setSnackbar({
@@ -202,6 +204,8 @@ export const handleExportToExcel = (calculatorData, setSnackbar) => {
 
     XLSX.writeFile(workbook, 'OogList.xlsx');
 };
+
+
 
 const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
     let email = '';
@@ -362,8 +366,8 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
 
 export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
     try {
-        const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
-            method: 'POST',
+        const response = await fetch(`${apiUrl}/vos/oog/v1/packages/${pckOrdSeq}`, {
+            method: 'GET',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
             },
@@ -384,9 +388,9 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             clpNo: item.CLP_NO,
             boxNo: item.BOX_NO,
             Item: item.ITEM,
-            mcLen: Number(item.MC_LEN).toFixed(2),
-            mcWdt: Number(item.MC_WDT).toFixed(2),
-            mcHgt: Number(item.MC_HGT).toFixed(2),
+            mcLen: null !== item.MC_LEN ? Number(item.MC_LEN).toFixed(2) : null,
+            mcWdt: null !== item.MC_WDT ? Number(item.MC_WDT).toFixed(2) : null,
+            mcHgt: null !== item.MC_HGT ? Number(item.MC_HGT).toFixed(2) : null,
             boxLen: Number(item.BOX_LEN).toFixed(2),
             boxWdt: Number(item.BOX_WDT).toFixed(2),
             boxHgt: Number(item.BOX_HGT).toFixed(2),
@@ -399,6 +403,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             tpsz: item.TPSZ,
         }));
         console.log('formattedData', formattedData);
+
         return formattedData;
 
     } catch (error) {

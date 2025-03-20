@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { handleCalculator, fetchOogCalcData } from './FileListHandlers';
+import { handleCalculator, fetchOogCalcData, handleExportToExcel } from './FileListHandlers';
 
 interface ExcelDataGridProps {
     rows: any[];
@@ -13,41 +13,41 @@ interface ExcelDataGridProps {
 }
 
 const excelColumns: GridColDef[] = [
-    { field: 'id', headerName: 'Seq', width: 200 },
-    { field: 'pckNo', headerName: 'Item No', width: 200 },
-    { field: 'itmNm', headerName: 'Item Name', width: 200 },
-    { field: 'itmLen', headerName: 'Package Length', width: 200 },
-    { field: 'itmWdt', headerName: 'Package Width', width: 200 },
-    { field: 'itmHgt', headerName: 'Package Height', width: 200 },
-    { field: 'boxLen', headerName: 'Box Length', width: 200 },
-    { field: 'boxWdt', headerName: 'Box Width', width: 200 },
-    { field: 'boxHgt', headerName: 'Box Height', width: 200 },
-    { field: 'itmQty', headerName: "Q'ty", width: 200 },
-    { field: 'itmCbm', headerName: 'CBM', width: 200 },
-    { field: 'itmTpNm', headerName: 'Item Type', width: 200 },
-    { field: 'netWgt', headerName: 'Net Weight', width: 200 },
-    { field: 'grsWgt', headerName: 'Gross Weight', width: 200 },
-    { field: 'rmks', headerName: 'Remarks', width: 200 },
+    { field: 'id', headerName: 'Seq', width: 100 },
+    { field: 'pckNo', headerName: 'Item No', width: 100 },
+    { field: 'itmNm', headerName: 'Item Name', width: 100 },
+    { field: 'itmLen', headerName: 'Package Length', width: 100 },
+    { field: 'itmWdt', headerName: 'Package Width', width: 100 },
+    { field: 'itmHgt', headerName: 'Package Height', width: 100 },
+    { field: 'boxLen', headerName: 'Box Length', width: 100 },
+    { field: 'boxWdt', headerName: 'Box Width', width: 100 },
+    { field: 'boxHgt', headerName: 'Box Height', width: 100 },
+    { field: 'itmQty', headerName: "Q'ty", width: 100 },
+    { field: 'itmCbm', headerName: 'CBM', width: 100 },
+    { field: 'itmTpNm', headerName: 'Item Type', width: 100 },
+    { field: 'netWgt', headerName: 'Net Weight', width: 100 },
+    { field: 'grsWgt', headerName: 'Gross Weight', width: 100 },
+    { field: 'rmks', headerName: 'Remarks', width: 100 },
 ];
 
 const oogColumns: GridColDef[] = [
-    { field: 'id', headerName: 'Seq', width: 200 },
-    { field: 'clpNo', headerName: 'CLP №', width: 200 },
-    { field: 'boxNo', headerName: 'BOXNO.', width: 200 },
-    { field: 'Item', headerName: ' ITEM', width: 200 },
-    { field: 'mcLen', headerName: 'M/C Length', width: 200 },
-    { field: 'mcWdt', headerName: 'M/C Width', width: 200 },
-    { field: 'mcHgt', headerName: 'M/C Height', width: 200 },
-    { field: 'boxLen', headerName: 'Box Length', width: 200 },
-    { field: 'boxWdt', headerName: 'Box Width', width: 200 },
-    { field: 'boxHgt', headerName: 'Box Height', width: 200 },
-    { field: 'qty', headerName: "Q'ty", width: 200 },
-    { field: 'cbm', headerName: 'CBM', width: 200 },
-    { field: 'type', headerName: 'TYPE', width: 200 },
-    { field: 'nw', headerName: 'N/W', width: 200 },
-    { field: 'gw', headerName: 'G/W', width: 200 },
-    { field: 'rmks', headerName: 'REMARKS', width: 200 },
-    { field: 'tpsz', headerName: 'TPSZ', width: 200 },
+    { field: 'id', headerName: 'Seq', width: 100 },
+    { field: 'clpNo', headerName: 'CLP №', width: 100 },
+    { field: 'boxNo', headerName: 'BOXNO.', width: 100 },
+    { field: 'Item', headerName: ' ITEM', width: 100 },
+    { field: 'mcLen', headerName: 'M/C Length', width: 100 },
+    { field: 'mcWdt', headerName: 'M/C Width', width: 100 },
+    { field: 'mcHgt', headerName: 'M/C Height', width: 100 },
+    { field: 'boxLen', headerName: 'Box Length', width: 100 },
+    { field: 'boxWdt', headerName: 'Box Width', width: 100 },
+    { field: 'boxHgt', headerName: 'Box Height', width: 100 },
+    { field: 'qty', headerName: "Q'ty", width: 100 },
+    { field: 'cbm', headerName: 'CBM', width: 100 },
+    { field: 'type', headerName: 'TYPE', width: 100 },
+    { field: 'nw', headerName: 'N/W', width: 100 },
+    { field: 'gw', headerName: 'G/W', width: 100 },
+    { field: 'rmks', headerName: 'REMARKS', width: 100 },
+    { field: 'tpsz', headerName: 'TPSZ', width: 100 },
 ];
 
 const TabPanel = ({ children, value, index }: any) => {
@@ -84,6 +84,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             });
         }
     };
+
+
 
     return (
         <Box sx={{ width: '100%' }}>
@@ -137,7 +139,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             </Box>
 
             <TabPanel value={tabValue} index={0}>
-                <Box sx={{ height: 400, width: '100%' }}>
+                <Box sx={{ height: 600, width: '100%' }}>
                     <DataGrid
                         rows={rows}
                         getRowId={(row) => row.pckNo} // 고유 id 지정
@@ -159,7 +161,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-                <Box sx={{ height: 400, width: '100%' }}>
+                <Box sx={{ height: 600, width: '100%' }}>
                     <DataGrid
                         rows={calculatorData}
                         getRowId={(row) => row.id} // 고유 id 지정

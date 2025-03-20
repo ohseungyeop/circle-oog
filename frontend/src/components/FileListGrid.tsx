@@ -22,6 +22,7 @@ const FileListGrid = () => {
   const [pckOrdSeq, setPckOrdSeq] = React.useState<string>('N/A');
 
   const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
+  const [calculatorData, setCalculatorData] = React.useState([]);
   const [cookies] = useCookies(['authToken']);
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
@@ -86,7 +87,7 @@ const FileListGrid = () => {
       </button>
 
       <button
-        onClick={() => handleExportToExcel(excelRows, setSnackbar)}
+        onClick={() => handleExportToExcel(calculatorData, setSnackbar)}
         style={{
           marginBottom: '10px',
           margin: '15px',
