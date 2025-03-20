@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -204,8 +204,6 @@ export const handleExportToExcel = (calculatorData, setSnackbar) => {
 
     XLSX.writeFile(workbook, 'OogList.xlsx');
 };
-
-
 
 const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
     let email = '';
@@ -401,16 +399,16 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             gw: Number(item.GW).toFixed(2),
             rmks: item.RMKS,
             tpsz: item.TPSZ,
+            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.jpg' : null,
         }));
         console.log('formattedData', formattedData);
 
         return formattedData;
-
     } catch (error) {
         console.error('Error fetching Oog data:', error);
         return [];
     }
-}
+};
 
 export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows) => {
     let selectedRow = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
@@ -453,7 +451,6 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
 };
 
 export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData) => {
-
     if (!selectionModel || selectionModel.length === 0) {
         setSnackbar({
             open: true,
@@ -485,7 +482,6 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
         // fetchData(cookies, apiUrl);
     } catch (error) {
-
         setSnackbar({
             open: true,
             message: `계산에 실패했습니다 `,
@@ -493,4 +489,3 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
         });
     }
 };
-

@@ -48,6 +48,22 @@ const oogColumns: GridColDef[] = [
     { field: 'gw', headerName: 'G/W', width: 100 },
     { field: 'rmks', headerName: 'REMARKS', width: 100 },
     { field: 'tpsz', headerName: 'TPSZ', width: 100 },
+    {
+        field: 'image',
+        headerName: 'TPSZ',
+        width: 100,
+        renderCell: (params) => {
+            if (!params.value) return null;
+            return (
+                <img
+                    src={params.value}
+                    alt={params.value}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+            );
+        },
+    },
 ];
 
 const TabPanel = ({ children, value, index }: any) => {
@@ -58,6 +74,16 @@ const TabPanel = ({ children, value, index }: any) => {
     );
 };
 
+const imageUrls = ['/images/40fr.jpg', '/images/40hq.jpg', '/images/20dr.jpg'];
+
+// 이미지 미리 로딩
+const preloadImage = (urls: string[]) => {
+    urls.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+    });
+};
+
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
@@ -65,7 +91,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
-    const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = React.useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'error' | 'warning' | 'info';
+    }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
     const [loading, setLoading] = React.useState(false);
     const handleCloseSnackbar = () => {
@@ -75,31 +105,38 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue); // 탭 변경 시 상태 업데이트
         if (newValue === 1) {
-            fetchOogCalcData(pckOrdSeq, apiUrl, cookies).then(oogData => {
-                // ✅ 상태 업데이트하여 화면에 반영
-                setCalculatorData(oogData);
-            }).catch(error => {
-                console.error('Error fetching OOG data:', error);
-                setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
-            });
+            fetchOogCalcData(pckOrdSeq, apiUrl, cookies)
+                .then((oogData) => {
+                    // ✅ 상태 업데이트하여 화면에 반영
+                    setCalculatorData(oogData);
+                })
+                .catch((error) => {
+                    console.error('Error fetching OOG data:', error);
+                    setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
+                });
         }
     };
 
-
+    React.useEffect(() => {
+        rows.forEach(() => preloadImage(imageUrls));
+    }, []);
 
     return (
         <Box sx={{ width: '100%' }}>
             <h3>🧮 Out of Gauge System</h3>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px' }}>
-                <AppBar position="static"
+                <AppBar
+                    position="static"
                     sx={{
                         backgroundColor: 'transparent',
                         width: '70%',
                         border: 'none',
                         borderRadius: '5px',
                         boxShadow: 'none',
-                    }}>
-                    <Tabs value={tabValue}
+                    }}
+                >
+                    <Tabs
+                        value={tabValue}
                         onChange={handleTabChange}
                         indicatorColor="primary"
                         textColor="inherit"
@@ -113,10 +150,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                 fontWeight: 'bold',
                             },
                             '& .Mui-selected': {
-                                color: '#0E4491',  // 선택된 탭 텍스트 색상
-                                borderBottom: '2px solid blue' // 선택된 탭 밑줄 파란색으로 변경
+                                color: '#0E4491', // 선택된 탭 텍스트 색상
+                                borderBottom: '2px solid blue', // 선택된 탭 밑줄 파란색으로 변경
                             },
-                        }}>
+                        }}
+                    >
                         <Tab label="OOG Import Data" />
                         <Tab label="OOG System Data" />
                     </Tabs>
@@ -149,11 +187,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                         loading={loading} // ✅ 로딩 상태 표시
                         paginationMode="client"
                         components={{
-                            Footer: () => (
-                                <Box sx={{ padding: '10px', textAlign: 'right' }}>
-                                    총 줄 수: {rows.length}
-                                </Box>
-                            ),
+                            Footer: () => <Box sx={{ padding: '10px', textAlign: 'right' }}>총 줄 수: {rows.length}</Box>,
                         }}
                     />
                 </Box>
@@ -171,26 +205,14 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                         loading={loading} // ✅ 로딩 상태 표시
                         paginationMode="client"
                         components={{
-                            Footer: () => (
-                                <Box sx={{ padding: '10px', textAlign: 'right' }}>
-                                    총 줄 수: {calculatorData.length}
-                                </Box>
-                            ),
+                            Footer: () => <Box sx={{ padding: '10px', textAlign: 'right' }}>총 줄 수: {calculatorData.length}</Box>,
                         }}
                     />
                 </Box>
             </TabPanel>
 
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    sx={{ width: '100%' }}
-                >
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                     {snackbar.message}
                 </Alert>
             </Snackbar>
