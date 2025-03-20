@@ -379,7 +379,6 @@ export const fetchOogCaclData = async (pckOrdSeq, apiUrl, cookies) => {
             return [];
         }
 
-        debugger;
         const formattedData = data.data.map((item: any, index: number) => ({
             id: index + 1,
             clpNo: item.CLP_NO,
@@ -477,12 +476,6 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
             message: '계산이 완료되었습니다!',
             severity: 'success',
         });
-        debugger;
-        const oogData = await fetchOogCaclData(pckOrdSeq, apiUrl, cookies);
-
-        // ✅ 상태 업데이트하여 화면에 반영
-        setCalculatorData(oogData);
-
 
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
         // fetchData(cookies, apiUrl);
