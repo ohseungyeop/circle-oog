@@ -8,7 +8,7 @@ import {
     filterListByWidth,
     filterListByHeight,
     groupItemListByLength,
-    regroupItems,
+    regroupItemList,
 } from '../utils/calculateHelper.js';
 
 const CRR_CD = 'VOS';
@@ -50,6 +50,7 @@ const calculate = async (fastify, options) => {
             const { pckOrdSeq } = request.params;
             let step1ItemList;
             let step2ItemList;
+            //트랜젝션을 step별로 분리함
             try {
                 await fastify.knex.transaction(async (trx) => {
                     console.log('📦 Packing order sequence:', pckOrdSeq);
@@ -282,26 +283,28 @@ const processStep2 = async (step1ItemList, trx, pckOrdSeq) => {
         .filter((item) => !step2Set.has(item.PCK_NO) && !step6Set.has(item.PCK_NO) && !step4Set.has(item.PCK_NO))
         .sort((a, b) => b.BOX_LEN - a.BOX_LEN);
 
-    console.log(target2List.length);
-
     // 2️⃣ 그룹핑된 데이터를 단일 배열로 변환
     const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG, REF_LEN_20 * REF_LEN_20_PCTG);
     const flattenedGroupItemList = groupItemList.flat(); // 그룹 리스트를 하나의 배열로 변환
 
-    // 3️⃣ step2, step6, step4 항목들을 다시 합침
-    const step2AndOthers = [
+    // 3️⃣ 무게와 길이로 제외되었던 step2, step6, step4 항목들을 다시 합침(합치면서 CNTR_TP_CD와 PCK_GRP_NO속성을 추가함)
+    let maxPckGrpNo = Math.max(0, ...flattenedGroupItemList.map((item) => item.PCK_GRP_NO || 0));
+    const step2AndOverList = [
         ...flattenedGroupItemList,
-        ...step1ItemList.filter((item) => step2Set.has(item.PCK_NO)), // step2Set에 해당하는 항목 추가
-        ...step1ItemList.filter((item) => step6Set.has(item.PCK_NO)), // step6Set에 해당하는 항목 추가
-        ...step1ItemList.filter((item) => step4Set.has(item.PCK_NO)), // step4Set에 해당하는 항목 추가
+        ...step1ItemList.reduce((acc, item) => {
+            if (step2Set.has(item.PCK_NO) || step6Set.has(item.PCK_NO) || step4Set.has(item.PCK_NO)) {
+                acc.push({ ...item, CNTR_TP_CD: '40FR', PCK_GRP_NO: ++maxPckGrpNo });
+            }
+            return acc;
+        }, []),
     ];
 
     // 4️⃣ 정렬 및그룹 번호 재지정
-    const step2ItemList = regroupItems(step2AndOthers);
+    const step2ItemList = regroupItemList(step2AndOverList);
 
     // 5️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
-    await trx('vos_oog_calc_step2').insert(step2AndOthers);
+    await trx('vos_oog_calc_step2').insert(step2AndOverList);
 
     return step2ItemList;
 };

@@ -144,9 +144,9 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
     return groupItemList;
 };
 
-const regroupItems = (items) => {
+const regroupItemList = (itemList) => {
     // Step 1: CNTR_TP_CD 기준 정렬 (40FR → 40HQ → 20DR)
-    items.sort((a, b) => {
+    itemList.sort((a, b) => {
         const order = { '40FR': 1, '40HQ': 2, '20DR': 3 };
         return order[a.CNTR_TP_CD] - order[b.CNTR_TP_CD];
     });
@@ -156,7 +156,7 @@ const regroupItems = (items) => {
     let lastType = null;
     let groupMapping = {};
 
-    items.forEach((item, index) => {
+    itemList.forEach((item, index) => {
         // 기존 그룹이 새 그룹 번호를 유지하도록 매핑
         if (!(item.PCK_GRP_NO in groupMapping)) {
             groupMapping[item.PCK_GRP_NO] = newGroupNo;
@@ -170,7 +170,7 @@ const regroupItems = (items) => {
         lastType = item.CNTR_TP_CD;
     });
 
-    return items;
+    return itemList;
 };
 
 export {
@@ -180,5 +180,5 @@ export {
     filterListByWidth,
     filterListByHeight,
     groupItemListByLength,
-    regroupItems,
+    regroupItemList,
 };
