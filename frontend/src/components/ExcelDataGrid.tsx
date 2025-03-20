@@ -5,7 +5,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator, fetchOogCalcData, handleExportToExcel } from './FileListHandlers';
-
+import '@google/model-viewer';
 interface ExcelDataGridProps {
     rows: any[];
     pckOrdSeq: string;
@@ -55,12 +55,13 @@ const oogColumns: GridColDef[] = [
         renderCell: (params) => {
             if (!params.value) return null;
             return (
-                <img
+                <model-viewer
                     src={params.value}
-                    alt={params.value}
-                    loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                    alt="3D model"
+                    auto-rotate
+                    camera-controls
+                    style={{ width: '100%', height: '100px' }}
+                ></model-viewer>
             );
         },
     },
@@ -74,14 +75,28 @@ const TabPanel = ({ children, value, index }: any) => {
     );
 };
 
-const imageUrls = ['/images/40fr.jpg', '/images/40hq.jpg', '/images/20dr.jpg'];
+const modelUrls = ['/images/40fr.glb', '/images/40hq.glb', '/images/20dr.glb'];
 
 // 이미지 미리 로딩
-const preloadImage = (urls: string[]) => {
-    urls.forEach((url) => {
-        const img = new Image();
-        img.src = url;
-    });
+// const preloadImage = (urls: string[]) => {
+//     urls.forEach((url) => {
+//         const img = new Image();
+//         img.src = url;
+//     });
+// };
+const preloadGLB = (url: string) => {
+    fetch(url)
+        .then((response) => response.blob()) // 데이터를 Blob 형식으로 변환
+        .then((blob) => {
+            // 브라우저 캐시에 저장
+            const objectURL = URL.createObjectURL(blob);
+            console.log(`GLB 파일 미리 로드됨: ${objectURL}`);
+        })
+        .catch((error) => console.error(`GLB 파일 로딩 실패: ${error}`));
+};
+
+const preloadGLBFiles = (urls: string[]) => {
+    urls.forEach((url) => preloadGLB(url));
 };
 
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
@@ -118,7 +133,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     };
 
     React.useEffect(() => {
-        rows.forEach(() => preloadImage(imageUrls));
+        preloadGLBFiles(modelUrls);
     }, []);
 
     return (

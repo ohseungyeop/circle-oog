@@ -399,7 +399,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             gw: Number(item.GW).toFixed(2),
             rmks: item.RMKS,
             tpsz: item.TPSZ,
-            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.jpg' : null,
+            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.glb' : null,
         }));
         console.log('formattedData', formattedData);
 
