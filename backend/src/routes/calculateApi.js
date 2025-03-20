@@ -51,87 +51,21 @@ const calculate = async (fastify, options) => {
             let step2ItemList;
             //트랜젝션을 step별로 분리함
             try {
-                await fastify.knex.transaction(async (trx) => {
-                    console.log('📦 Packing order sequence:', pckOrdSeq);
+                console.log('📦 Packing order sequence:', pckOrdSeq);
 
-                    // 1️⃣ 무게와 부피로 Flatrack 판별
-                    step1ItemList = await processStep1(fastify, pckOrdSeq, trx);
+                // 1️⃣ 무게와 부피로 Flatrack 판별
+                await fastify.knex.transaction(async (trx) => {
+                    step1ItemList = await processStep1(fastify, trx, pckOrdSeq);
                 });
 
+                // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외 후 그룹핑)
                 await fastify.knex.transaction(async (trx) => {
-                    // 2️⃣ Length 확인 (무게에 의한 FR과 기준 길이 초과 건 제외 후 그룹핑)
-                    step2ItemList = await processStep2(step1ItemList, trx, pckOrdSeq);
+                    step2ItemList = await processStep2(trx, pckOrdSeq, step1ItemList);
                 });
 
+                // 3️⃣ 최종 OOG 데이터(VOS_OOG_CLP) 결과 저장
                 await fastify.knex.transaction(async (trx) => {
-                    // 3️⃣ 최종 OOG 데이터(VOS_OOG_CLP) 결과 저장
-                    await trx('vos_oog_clp').where('PCK_ORD_SEQ', pckOrdSeq).del();
-                    await trx.raw(`
-                        INSERT INTO VOS_OOG_CLP(
-                            PCK_ORD_SEQ
-                            , CLP_NO
-                            , BOX_NO
-                            , ITEM
-                            , MC_LEN
-                            , MC_WDT
-                            , MC_HGT
-                            , BOX_LEN
-                            , BOX_WDT
-                            , BOX_HGT
-                            , QTY
-                            , CBM
-                            , TYPE
-                            , NW
-                            , GW
-                            , REMARKS
-                            , TPSZ)
-                        SELECT ${pckOrdSeq} as pck_ord_seq
-                            , pck_grp_no as clp_no
-                            , pck_no as box_no
-                            , itm_nm as item
-                            , itm_len as mc_len
-                            , itm_wdt as mc_wdt
-                            , itm_hgt as mc_hgt
-                            , box_len
-                            , box_wdt
-                            , box_hgt
-                            , itm_qty as qty
-                            , calc_cbm as cbm
-                            , itm_tp_nm as type
-                            , net_wgt as nw
-                            , grs_wgt as gw
-                            , rmks as remarks
-                            , CASE
-                                WHEN '40FR' = cntr_tp_cd THEN '40''FR'
-                                WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
-                                WHEN '20DR' = cntr_tp_cd THEN '20''DR'
-                            END as tpsz
-                        FROM vos_oog_calc_step2
-                        WHERE pck_ord_seq = ${pckOrdSeq}
-
-                        UNION ALL
-
-                        SELECT ${pckOrdSeq} as pck_ord_seq
-                            , pck_grp_no
-                            , NULL
-                            , 'SUM' as itm_nm
-                            , NULL, NULL, NULL
-                            , SUM(box_len) as box_len
-                            , MAX(box_wdt) as box_wdt
-                            , MAX(box_hgt) as box_hgt
-                            , SUM(itm_qty) as itm_qty
-                            , SUM(calc_cbm) as calc_cbm
-                            , NULL
-                            , SUM(net_wgt) as net_wgt
-                            , SUM(grs_wgt) as grs_wgt
-                            , NULL, NULL
-                        FROM vos_oog_calc_step2
-                        WHERE pck_ord_seq = ${pckOrdSeq}
-                        GROUP BY pck_grp_no
-
-                        ORDER BY clp_no, 
-                            CASE WHEN item = 'SUM' THEN 1 ELSE 0 END;
-                    `);
+                    await processStep3(trx, pckOrdSeq);
                 });
 
                 const clpList = await fastify.knex('VOS_OOG_CLP').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
@@ -145,7 +79,7 @@ const calculate = async (fastify, options) => {
     );
 };
 
-const processStep1 = async (fastify, pckOrdSeq, trx) => {
+const processStep1 = async (fastify, trx, pckOrdSeq) => {
     // 0️⃣ 컨테이너 기준(Dry) 정보 조회
     console.log('------------------------------');
     console.log('0️⃣ 컨테이너 기준(Dry) 정보 조회');
@@ -272,7 +206,7 @@ const processStep1 = async (fastify, pckOrdSeq, trx) => {
     return step1ItemList;
 };
 
-const processStep2 = async (step1ItemList, trx, pckOrdSeq) => {
+const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
     const step2Set = new Set(step2List.map((item) => item.PCK_NO)); //무게 60t 초과 건
     const step6Set = new Set(step6List.map((item) => item.PCK_NO)); //무게 25t 초과 건
     const step4Set = new Set(step4List.map((item) => item.PCK_NO)); //길이 기준 초과 건
@@ -306,6 +240,76 @@ const processStep2 = async (step1ItemList, trx, pckOrdSeq) => {
     await trx('vos_oog_calc_step2').insert(step2AndOverList);
 
     return step2ItemList;
+};
+
+const processStep3 = async (trx, pckOrdSeq) => {
+    await trx('vos_oog_clp').where('PCK_ORD_SEQ', pckOrdSeq).del();
+    await trx.raw(`
+        INSERT INTO VOS_OOG_CLP(
+            PCK_ORD_SEQ
+            , CLP_NO
+            , BOX_NO
+            , ITEM
+            , MC_LEN
+            , MC_WDT
+            , MC_HGT
+            , BOX_LEN
+            , BOX_WDT
+            , BOX_HGT
+            , QTY
+            , CBM
+            , TYPE
+            , NW
+            , GW
+            , REMARKS
+            , TPSZ)
+        SELECT ${pckOrdSeq} as pck_ord_seq
+            , pck_grp_no as clp_no
+            , pck_no as box_no
+            , itm_nm as item
+            , itm_len as mc_len
+            , itm_wdt as mc_wdt
+            , itm_hgt as mc_hgt
+            , box_len
+            , box_wdt
+            , box_hgt
+            , itm_qty as qty
+            , calc_cbm as cbm
+            , itm_tp_nm as type
+            , net_wgt as nw
+            , grs_wgt as gw
+            , rmks as remarks
+            , CASE
+                WHEN '40FR' = cntr_tp_cd THEN '40''FR'
+                WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
+                WHEN '20DR' = cntr_tp_cd THEN '20''DR'
+            END as tpsz
+        FROM vos_oog_calc_step2
+        WHERE pck_ord_seq = ${pckOrdSeq}
+
+        UNION ALL
+
+        SELECT ${pckOrdSeq} as pck_ord_seq
+            , pck_grp_no
+            , NULL
+            , 'SUM' as itm_nm
+            , NULL, NULL, NULL
+            , SUM(box_len) as box_len
+            , MAX(box_wdt) as box_wdt
+            , MAX(box_hgt) as box_hgt
+            , SUM(itm_qty) as itm_qty
+            , SUM(calc_cbm) as calc_cbm
+            , NULL
+            , SUM(net_wgt) as net_wgt
+            , SUM(grs_wgt) as grs_wgt
+            , NULL, NULL
+        FROM vos_oog_calc_step2
+        WHERE pck_ord_seq = ${pckOrdSeq}
+        GROUP BY pck_grp_no
+
+        ORDER BY clp_no, 
+            CASE WHEN item = 'SUM' THEN 1 ELSE 0 END;
+    `);
 };
 
 export default calculate;
