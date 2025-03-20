@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Box, AppBar, Tabs, Tab, Typography } from '@mui/material';
+import { Box, AppBar, Tabs, Tab } from '@mui/material';
 import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator, fetchOogCalcData } from './FileListHandlers';
+
 interface ExcelDataGridProps {
     rows: any[];
     pckOrdSeq: string;
@@ -29,8 +30,7 @@ const excelColumns: GridColDef[] = [
     { field: 'rmks', headerName: 'Remarks', width: 200 },
 ];
 
-const oogColumns: GridColDef[] = [] = [
-
+const oogColumns: GridColDef[] = [
     { field: 'id', headerName: 'Seq', width: 200 },
     { field: 'clpNo', headerName: 'CLP №', width: 200 },
     { field: 'boxNo', headerName: 'BOXNO.', width: 200 },
@@ -48,8 +48,6 @@ const oogColumns: GridColDef[] = [] = [
     { field: 'gw', headerName: 'G/W', width: 200 },
     { field: 'rmks', headerName: 'REMARKS', width: 200 },
     { field: 'tpsz', headerName: 'TPSZ', width: 200 },
-
-
 ];
 
 const TabPanel = ({ children, value, index }: any) => {
@@ -60,9 +58,7 @@ const TabPanel = ({ children, value, index }: any) => {
     );
 };
 
-
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
-
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
@@ -71,12 +67,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
-    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
     const [loading, setLoading] = React.useState(false);
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
-
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue); // 탭 변경 시 상태 업데이트
@@ -91,10 +85,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
         }
     };
 
-
-
     return (
-
         <Box sx={{ width: '100%' }}>
             <h3>🧮 Out of Gauge System</h3>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px' }}>
@@ -105,7 +96,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                         border: 'none',
                         borderRadius: '5px',
                         boxShadow: 'none',
-
                     }}>
                     <Tabs value={tabValue}
                         onChange={handleTabChange}
@@ -125,7 +115,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                 borderBottom: '2px solid blue' // 선택된 탭 밑줄 파란색으로 변경
                             },
                         }}>
-
                         <Tab label="OOG Import Data" />
                         <Tab label="OOG System Data" />
                     </Tabs>
@@ -148,35 +137,46 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             </Box>
 
             <TabPanel value={tabValue} index={0}>
-                <DataGrid
-                    rows={rows}
-                    getRowId={(row) => row.pckNo} // 고유 id 지정
-                    rowCount={rows.length}
-                    columns={excelColumns}
-                    paginationMode="server"
-                    pageSize={5}
-                    disableRowSelectionOnClick
-                    pagination
-                    rowSelectionModel={selectionModel}
-                />
+                <Box sx={{ height: 400, width: '100%' }}>
+                    <DataGrid
+                        rows={rows}
+                        getRowId={(row) => row.pckNo} // 고유 id 지정
+                        columns={excelColumns}
+                        disableRowSelectionOnClick
+                        rowSelectionModel={selectionModel}
+                        loading={loading} // ✅ 로딩 상태 표시
+                        paginationMode="client"
+                        components={{
+                            Footer: () => (
+                                <Box sx={{ padding: '10px', textAlign: 'right' }}>
+                                    총 줄 수: {rows.length}
+                                </Box>
+                            ),
+                        }}
+                    />
+                </Box>
             </TabPanel>
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-
-                <DataGrid
-                    rows={calculatorData}
-                    getRowId={(row) => row.id} // 고유 id 지정
-                    rowCount={calculatorData.length}
-                    columns={oogColumns}
-                    paginationMode="client"
-                    pageSizeOptions={[50, 100, 200]} // 50개 단위로 설정
-                    paginationModel={paginationModel} // 🔹 페이지 상태 적용
-                    onPaginationModelChange={setPaginationModel} // 🔹 페이지 변경 시 업데이트
-                    disableRowSelectionOnClick
-                    pagination
-                    rowSelectionModel={selectionModel}
-                />
+                <Box sx={{ height: 400, width: '100%' }}>
+                    <DataGrid
+                        rows={calculatorData}
+                        getRowId={(row) => row.id} // 고유 id 지정
+                        columns={oogColumns}
+                        disableRowSelectionOnClick
+                        rowSelectionModel={selectionModel}
+                        loading={loading} // ✅ 로딩 상태 표시
+                        paginationMode="client"
+                        components={{
+                            Footer: () => (
+                                <Box sx={{ padding: '10px', textAlign: 'right' }}>
+                                    총 줄 수: {calculatorData.length}
+                                </Box>
+                            ),
+                        }}
+                    />
+                </Box>
             </TabPanel>
 
             <Snackbar
