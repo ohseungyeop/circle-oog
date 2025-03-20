@@ -186,8 +186,8 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
     event.target.value = '';
 };
 
-export const handleExportToExcel = (excelRows, setSnackbar) => {
-    if (excelRows.length === 0) {
+export const handleExportToExcel = (calculatorData, setSnackbar) => {
+    if (calculatorData.length === 0) {
         setSnackbar({
             open: true,
             message: '내보낼 데이터가 없습니다!',
@@ -196,7 +196,7 @@ export const handleExportToExcel = (excelRows, setSnackbar) => {
         return;
     }
 
-    const worksheet = XLSX.utils.json_to_sheet(excelRows);
+    const worksheet = XLSX.utils.json_to_sheet(calculatorData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'PackingList');
 
@@ -360,6 +360,54 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     }
 };
 
+export const fetchOogCaclData = async (pckOrdSeq, apiUrl, cookies) => {
+    try {
+        const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${cookies.authToken}`,
+            },
+        });
+
+        if (!response.ok) throw new Error('데이터 불러오기 실패');
+
+        const data = await response.json();
+        console.log('Fetched Oog Data:', data);
+
+        if (!Array.isArray(data.data)) {
+            console.error('Data is not an array:', data);
+            return [];
+        }
+
+        debugger;
+        const formattedData = data.data.map((item: any, index: number) => ({
+            id: index + 1,
+            clpNo: item.CLP_NO,
+            boxNo: item.BOX_NO,
+            Item: item.ITEM,
+            mcLen: Number(item.MC_LEN).toFixed(2),
+            mcWdt: Number(item.MC_WDT).toFixed(2),
+            mcHgt: Number(item.MC_HGT).toFixed(2),
+            boxLen: Number(item.BOX_LEN).toFixed(2),
+            boxWdt: Number(item.BOX_WDT).toFixed(2),
+            boxHgt: Number(item.BOX_HGT).toFixed(2),
+            qty: Number(item.QTY),
+            cbm: Number(item.CBM).toFixed(4),
+            type: item.TYPE,
+            nw: Number(item.NW).toFixed(2),
+            gw: Number(item.GW).toFixed(2),
+            rmks: item.RMKS,
+            tpsz: item.TPSZ,
+        }));
+        console.log('formattedData', formattedData);
+        return formattedData;
+
+    } catch (error) {
+        console.error('Error fetching Oog data:', error);
+        return [];
+    }
+}
+
 export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows) => {
     let selectedRow = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
 
@@ -400,8 +448,7 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
     }
 };
 
-export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel) => {
-
+export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData) => {
 
     if (!selectionModel || selectionModel.length === 0) {
         setSnackbar({
@@ -424,17 +471,18 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
             throw new Error(`계산 실패: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json(); // 응답 데이터 가져오기
-
         // ✅ 성공 메시지 출력
         setSnackbar({
             open: true,
             message: '계산이 완료되었습니다!',
             severity: 'success',
         });
+        debugger;
+        const oogData = await fetchOogCaclData(pckOrdSeq, apiUrl, cookies);
 
-        // ✅ 필요하면 데이터 저장 (이전에 있던 코드)
-        // setCalculatorData(data); 
+        // ✅ 상태 업데이트하여 화면에 반영
+        setCalculatorData(oogData);
+
 
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
         // fetchData(cookies, apiUrl);

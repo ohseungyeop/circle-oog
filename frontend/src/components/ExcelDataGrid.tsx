@@ -29,6 +29,29 @@ const excelColumns: GridColDef[] = [
     { field: 'rmks', headerName: 'Remarks', width: 200 },
 ];
 
+const oogColumns: GridColDef[] = [] = [
+
+    { field: 'id', headerName: 'Seq', width: 200 },
+    { field: 'clpNo', headerName: 'CLP №', width: 500 },
+    { field: 'boxNo', headerName: 'BOXNO.', width: 200 },
+    { field: 'Item', headerName: ' ITEM', width: 200 },
+    { field: 'mcLen', headerName: 'M/C Length', width: 200 },
+    { field: 'mcWdt', headerName: 'M/C Width', width: 200 },
+    { field: 'mcHgt', headerName: 'M/C Height', width: 200 },
+    { field: 'boxLen', headerName: 'Box Length', width: 200 },
+    { field: 'boxWdt', headerName: 'Box Width', width: 200 },
+    { field: 'boxHgt', headerName: 'Box Height', width: 200 },
+    { field: 'qty', headerName: "Q'ty", width: 200 },
+    { field: 'cbm', headerName: 'CBM', width: 200 },
+    { field: 'type', headerName: 'TYPE', width: 200 },
+    { field: 'nw', headerName: 'N/W', width: 200 },
+    { field: 'gw', headerName: 'G/W', width: 200 },
+    { field: 'rmks', headerName: 'REMARKS', width: 200 },
+    { field: 'tpsz', headerName: 'TPSZ', width: 200 },
+
+
+];
+
 const TabPanel = ({ children, value, index }: any) => {
     return (
         <div role="tabpanel" hidden={value !== index}>
@@ -45,6 +68,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     }
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
+    const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
 
@@ -95,7 +119,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     </Tabs>
                 </AppBar>
                 <button
-                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel)}
+                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData)}
                     style={{
                         padding: '10px 20px',
                         backgroundColor: '#0E4491',
@@ -127,8 +151,17 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-                <Typography>File List Content Goes Here</Typography>
-                {/* 여기에 파일 리스트 콘텐츠를 넣으세요 */}
+                <DataGrid
+                    rows={calculatorData}
+                    getRowId={(row) => row.id} // 고유 id 지정
+                    rowCount={calculatorData.length}
+                    columns={oogColumns}
+                    paginationMode="server"
+                    pageSize={5}
+                    disableRowSelectionOnClick
+                    pagination
+                    selectionModel={selectionModel}
+                />
             </TabPanel>
 
             <Snackbar
