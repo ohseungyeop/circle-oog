@@ -1,64 +1,14 @@
 import replyHelper from '../utils/replyHelper.js';
 
-const insertPackage = async (fastify, options) => {
-    fastify.post(
-        '/',
-        replyHelper(async (request) => {
-            console.log('📩 Received request body:', request.body); // 요청 본문 확인
-            const {
-                PCK_ORD_NO,
-                PCK_NO,
-                ITM_NM,
-                PCK_LEN,
-                PCK_WDT,
-                PCK_HGT,
-                PCK_QTY,
-                PCK_WGT,
-                PCK_RMK,
-                ESTM_PCK_LEN,
-                ESTM_PCK_WDT,
-                ESTM_PCK_HGT,
-                PCK_CBM,
-                PCK_TP_CD,
-                PCK_GRS_WGT,
-                UPD_USR_NM,
-                CRE_USR_NM,
-            } = request.body;
-
-            // 데이터 삽입
-            await fastify.knex('vos_oog_pck').insert({
-                PCK_ORD_NO,
-                PCK_NO,
-                ITM_NM,
-                PCK_LEN,
-                PCK_WDT,
-                PCK_HGT,
-                PCK_QTY,
-                PCK_WGT,
-                PCK_RMK,
-                ESTM_PCK_LEN,
-                ESTM_PCK_WDT,
-                ESTM_PCK_HGT,
-                PCK_CBM,
-                PCK_TP_CD,
-                PCK_GRS_WGT,
-                UPD_USR_NM,
-                CRE_USR_NM,
-            });
-
-            return reply.code(201).send({ message: 'Packing record inserted successfully' });
-        }),
-    );
-};
-
 const getPackageList = async (fastify, options) => {
     fastify.get(
         '/',
         replyHelper(async (request, reply) => {
-            const pckList = await fastify.knex('vos_oog_pck').select('*');
+            const { pckOrdSeq } = request.params;
+            const pckList = await fastify.knex('vos_oog_clp').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
             return pckList;
         }),
     );
 };
 
-export { insertPackage, getPackageList };
+export default getPackageList;
