@@ -109,10 +109,10 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
             item.CNTR_TP_CD = defaultCNTR_TP_CD;
         });
 
-        // 마지막 그룹인 경우 REF_LEN_20 기준으로 마지막 아이템만 변경
+        // 마지막 그룹인 경우 REF_LEN_20 기준으로 마지막 아이템만 변경(기존에 그룹핑이 되지 않은 경우만)
         if (isLastGroup) {
             const lastItem = group[group.length - 1];
-            if (Number(lastItem.BOX_LEN) <= REF_LEN_20) {
+            if (!lastItem.PCK_GRP_NO && Number(lastItem.BOX_LEN) <= REF_LEN_20) {
                 lastItem.CNTR_TP_CD = '20DR';
             }
         }
