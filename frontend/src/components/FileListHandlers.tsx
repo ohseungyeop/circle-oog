@@ -55,6 +55,7 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
     }
 };
 
+
 export const handleTemplateDownload = (apiUrl) => {
     const link = document.createElement('a');
     link.href = `${apiUrl}/vos/oog/v1/files/template`;
@@ -124,7 +125,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -188,8 +189,10 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 };
 
 debugger;
-export const handleExportToExcel = (calculatorData, setSnackbar) => {
-    if (calculatorData.length === 0) {
+
+
+export const handleExportToExcel = (oogData, setSnackbar) => {
+    if (oogData.length === 0) {
         setSnackbar({
             open: true,
             message: '내보낼 데이터가 없습니다!',
@@ -197,14 +200,44 @@ export const handleExportToExcel = (calculatorData, setSnackbar) => {
         });
         return;
     }
+    // 데이터 병합 (합산 없이 병합만, 같은 데이터는 병합)
+    const mergedData = [];
+    let lastRow = null;
 
-    const worksheet = XLSX.utils.json_to_sheet(calculatorData);
+    oogData.forEach((current, index) => {
+        // 동일한 clpNo, type, tpsz 값을 가진 행을 병합
+        if (lastRow && lastRow.clpNo === current.clpNo && lastRow.type === current.type && lastRow.tpsz === current.tpsz) {
+            // 동일하면 병합만 수행 (값은 그대로 둠)
+            lastRow.rowspan += 1;
+        } else {
+            // 처음 등장하는 값이면 새로 추가
+            const newRow = { ...current, rowspan: 1 }; // 새로운 데이터는 rowspan 1로 설정
+            mergedData.push(newRow);
+            lastRow = newRow;
+        }
+    });
+
+    // 엑셀로 변환
+    const worksheet = XLSX.utils.json_to_sheet(mergedData, {
+        header: ['clpNo', 'type', 'tpsz', 'qty', 'cbm', 'nw', 'gw', 'rowspan'], // header에 rowspan 추가
+    });
+
+    // 각 row에 대해 rowspan 처리 (엑셀에서 병합이 되도록 함)
+    const rows = worksheet['!rows'] || [];
+    let prevRow = null;
+    mergedData.forEach((data, rowIndex) => {
+        if (prevRow && prevRow.clpNo === data.clpNo && prevRow.type === data.type && prevRow.tpsz === data.tpsz) {
+            rows[rowIndex - 1] = { ...rows[rowIndex - 1], rowspan: data.rowspan };
+            rows[rowIndex] = { hidden: true }; // 병합된 행은 숨김 처리
+        }
+        prevRow = data;
+    });
+
+    // 엑셀 파일로 내보내기
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'PackingList');
-
     XLSX.writeFile(workbook, 'OogList.xlsx');
 };
-
 const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
     let email = '';
     try {
@@ -284,6 +317,7 @@ export const handleSelectionChange = async (
     rows,
     setSelectionModel,
     setExcelRows,
+    setOogRows,
     fetchExcelData,
     apiUrl,
     cookies,
@@ -297,7 +331,7 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
-            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, fetchExcelData, apiUrl, cookies);
+            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setOogRows, fetchExcelData, apiUrl, cookies);
         }
     } else {
         setExcelRows([]);
@@ -306,15 +340,17 @@ export const handleSelectionChange = async (
     setSelectionModel(newSelection);
 };
 
-const handleExcelChk = async (pckOrdSeq, setExcelRows, fetchExcelData, apiUrl, cookies) => {
+const handleExcelChk = async (pckOrdSeq, setExcelRows, setOogRows, fetchExcelData, apiUrl, cookies) => {
     if (!pckOrdSeq) return;
 
     console.log('📌 선택된 pckOrdSeq:', pckOrdSeq);
 
     const excelData = await fetchExcelData(pckOrdSeq, apiUrl, cookies);
+    const oogData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
     console.log('📌 Excel Data:', excelData);
 
     setExcelRows(excelData);
+    setOogRows(oogData);
 };
 
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
