@@ -55,7 +55,6 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
     }
 };
 
-
 export const handleTemplateDownload = (apiUrl) => {
     const link = document.createElement('a');
     link.href = `${apiUrl}/vos/oog/v1/files/template`;
@@ -186,91 +185,6 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
     reader.readAsArrayBuffer(file);
     event.target.value = '';
-};
-
-debugger;
-export const handleExportToExcel = (oogData, setSnackbar) => {
-    if (oogData.length === 0) {
-        setSnackbar({
-            open: true,
-            message: '내보낼 데이터가 없습니다!',
-            severity: 'error',
-        });
-        return;
-    }
-    // 그룹화 기준: clpNo, type, tpsz, image
-    const mergedData = [];
-    let lastGroup = null;
-
-    oogData.forEach((data) => {
-        const currentGroup = {
-            clpNo: data.clpNo,
-            type: data.type,
-            tpsz: data.tpsz,
-            image: data.image,
-        };
-        if (!lastGroup || JSON.stringify(currentGroup) !== JSON.stringify(lastGroup)) {
-            mergedData.push({ ...data });
-            lastGroup = currentGroup;
-        } else {
-            mergedData.push({ ...data, clpNo: '', type: '', tpsz: '', image: '' });
-        }
-    });
-
-    // 데이터에 순서대로 컬럼을 생성하고, 병합 범위만 따로 계산
-    const ws = XLSX.utils.json_to_sheet(mergedData);
-
-    // 병합할 셀 정보를 저장할 배열
-    const mergeCells = [];
-
-    // 개선된 병합 범위 계산 함수 (특정 필드에 대해)
-    const mergeColumn = (colIndex, fieldName) => {
-        let i = 0;
-        while (i < mergedData.length) {
-            // 만약 해당 행에 값이 있으면 그룹 시작
-            if (mergedData[i][fieldName] !== '') {
-                const start = i;
-                i++;
-                // 연속해서 빈 값인 경우 그룹으로 인식
-                while (i < mergedData.length && mergedData[i][fieldName] === '') {
-                    i++;
-                }
-                // 그룹 길이가 2 이상이면 병합 범위 추가
-                if (i - start > 1) {
-                    mergeCells.push({ s: { r: start, c: colIndex }, e: { r: i - 1, c: colIndex } });
-                }
-            } else {
-                i++;
-            }
-        }
-    };
-
-    // 병합할 컬럼들의 인덱스 지정
-    const header = ['clpNo', 'boxNo', 'Item', 'mcLen', 'mcWdt', 'mcHgt', 'boxLen', 'boxWdt', 'boxHgt', 'qty', 'cbm', 'type', 'nw', 'gw', 'rmks', 'tpsz', 'image'];
-
-    // 컬럼 순서대로 병합을 진행
-    const colIndexes = {
-        'clpNo': header.indexOf('clpNo'),
-        'type': header.indexOf('type'),
-        'tpsz': header.indexOf('tpsz'),
-        'image': header.indexOf('image')
-    };
-
-    // 병합 적용
-    mergeColumn(colIndexes.clpNo, 'clpNo');
-    mergeColumn(colIndexes.type, 'type');
-    mergeColumn(colIndexes.tpsz, 'tpsz');
-    mergeColumn(colIndexes.image, 'image');
-
-    // 병합 정보를 워크시트에 적용
-    ws['!merges'] = mergeCells;
-
-    // 워크북 생성 및 시트 추가
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'OOG Data');
-
-    // 엑셀 파일로 저장
-    XLSX.writeFile(wb, 'OOGList.xlsx');
 };
 
 const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
@@ -470,7 +384,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             gw: Number(item.GW).toFixed(2),
             rmks: item.RMKS,
             tpsz: item.TPSZ,
-            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.glb' : null,
+            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
         }));
         console.log('formattedData', formattedData);
 
