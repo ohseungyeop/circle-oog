@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -371,17 +371,17 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             clpNo: item.CLP_NO,
             boxNo: item.BOX_NO,
             Item: item.ITEM,
-            mcLen: null !== item.MC_LEN ? Number(item.MC_LEN).toFixed(2) : null,
-            mcWdt: null !== item.MC_WDT ? Number(item.MC_WDT).toFixed(2) : null,
-            mcHgt: null !== item.MC_HGT ? Number(item.MC_HGT).toFixed(2) : null,
-            boxLen: Number(item.BOX_LEN).toFixed(2),
-            boxWdt: Number(item.BOX_WDT).toFixed(2),
-            boxHgt: Number(item.BOX_HGT).toFixed(2),
+            mcLen: null !== item.MC_LEN ? Number(item.MC_LEN) : null,
+            mcWdt: null !== item.MC_WDT ? Number(item.MC_WDT) : null,
+            mcHgt: null !== item.MC_HGT ? Number(item.MC_HGT) : null,
+            boxLen: Number(item.BOX_LEN),
+            boxWdt: Number(item.BOX_WDT),
+            boxHgt: Number(item.BOX_HGT),
             qty: Number(item.QTY),
-            cbm: Number(item.CBM).toFixed(4),
+            cbm: Number(item.CBM),
             type: item.TYPE,
-            nw: Number(item.NW).toFixed(2),
-            gw: Number(item.GW).toFixed(2),
+            nw: Number(item.NW),
+            gw: Number(item.GW),
             rmks: item.RMKS,
             tpsz: item.TPSZ,
             image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,

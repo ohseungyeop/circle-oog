@@ -6,6 +6,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator, fetchOogCalcData } from './FileListHandlers';
+import './ExcelDataGrid.module.css';
 
 interface ExcelDataGridProps {
     rows: any[];
@@ -32,9 +33,9 @@ const excelColumns: GridColDef[] = [
 ];
 
 const oogColumns: GridColDef[] = [
-    { field: 'id', headerName: 'NO.', width: 100 },
-    { field: 'clpNo', headerName: 'CLP №', width: 100 },
-    { field: 'boxNo', headerName: 'BOXNO.', width: 100 },
+    // { field: 'id', headerName: 'Seq.', width: 100 },
+    { field: 'clpNo', headerName: 'CLP No.', width: 100 },
+    { field: 'boxNo', headerName: 'Box No.', width: 100 },
     { field: 'Item', headerName: ' ITEM', width: 100 },
     { field: 'mcLen', headerName: 'M/C Length', width: 100 },
     { field: 'mcWdt', headerName: 'M/C Width', width: 100 },
@@ -47,8 +48,9 @@ const oogColumns: GridColDef[] = [
     { field: 'type', headerName: 'TYPE', width: 100 },
     { field: 'nw', headerName: 'N/W', width: 100 },
     { field: 'gw', headerName: 'G/W', width: 100 },
-    { field: 'rmks', headerName: 'REMARKS', width: 100 },
+    { field: 'rmks', headerName: 'Remarks', width: 100 },
     { field: 'tpsz', headerName: 'TPSZ', width: 100 },
+    // { field: 'tpsz', headerName: 'Image', width: 100 },
 ];
 
 const TabPanel = ({ children, value, index }: any) => {
@@ -58,7 +60,6 @@ const TabPanel = ({ children, value, index }: any) => {
         </div>
     );
 };
-
 
 export const handleExportToExcel = () => {
     // HTML 테이블을 선택
@@ -78,7 +79,6 @@ export const handleExportToExcel = () => {
         alert('테이블을 찾을 수 없습니다!');
     }
 };
-
 
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
     if (!rows || rows.length === 0) {
@@ -225,62 +225,162 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-                <div>
-                    <table table id="oogDataTable" border="1" cellPadding="5" cellSpacing="0">
-                        <thead>
-                            <tr>
-                                {oogColumns.map((item) => (
-                                    <th key={item.field}>{item.headerName}</th>
-                                ))}
-                                <th>Image</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {calculatorData.map((item, index, array) => {
-                                const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
-
+                <table id="oogDataTable" border={1} cellPadding={5} cellSpacing={0}>
+                    <thead>
+                        <tr>
+                            {oogColumns.map((item, index) => {
+                                const isTpsz = index === 15;
                                 return (
-                                    <tr key={`${item.clpNo}-${item.boxNo}`}>
-                                        <td>{item.id}</td>
-                                        {/* ✅ CLP_NO 병합 적용 */}
-                                        {isFirstOccurrence ? (
-                                            <td rowSpan={item.rowSpan}>{item.clpNo}</td>
-                                        ) : null}
-
-                                        <td>{item.boxNo}</td>
-                                        <td>{item.Item}</td>
-                                        <td>{item.mcLen}</td>
-                                        <td>{item.mcWdt}</td>
-                                        <td>{item.mcHgt}</td>
-                                        <td>{item.boxLen}</td>
-                                        <td>{item.boxWdt}</td>
-                                        <td>{item.boxHgt}</td>
-                                        <td>{item.qty}</td>
-                                        <td>{item.cbm}</td>
-                                        {/* ✅ TYPE 병합 */}
-                                        {isFirstOccurrence ? (
-                                            <td rowSpan={item.rowSpan}>{item.type}</td>
-                                        ) : null}
-
-                                        <td>{item.nw}</td>
-                                        <td>{item.gw}</td>
-                                        <td>{item.rmks}</td>
-                                        {/* ✅ TPSZ 병합 */}
-                                        {isFirstOccurrence ? (
-                                            <td rowSpan={item.rowSpan}>{item.tpsz}</td>
-                                        ) : null}
-                                        {/* ✅ IMAGE 병합 */}
-                                        {isFirstOccurrence ? (
-                                            <td rowSpan={item.rowSpan}>
-                                                <img src={item.image} alt="container image" />
-                                            </td>
-                                        ) : null}
-                                    </tr>
+                                    <th key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
+                                        {item.headerName}
+                                    </th>
                                 );
                             })}
-                        </tbody>
-                    </table>
-                </div>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {calculatorData.map((item, index, array) => {
+                            const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
+                            return (
+                                <tr
+                                    key={`${item.clpNo}-${item.boxNo}`}
+                                    style={item.Item === 'SUM' ? { backgroundColor: 'yellow' } : {}}
+                                >
+                                    {/* ✅ CLP_NO 병합 적용 */}
+                                    {isFirstOccurrence ? (
+                                        <td align="center" rowSpan={item.rowSpan}>
+                                            {item.clpNo}
+                                        </td>
+                                    ) : null}
+                                    {item.Item === 'SUM' ? (
+                                        <td colSpan={5}></td>
+                                    ) : (
+                                        <>
+                                            <td align="center">{item.boxNo}</td>
+                                            <td>{item.Item}</td>
+                                            <td align="right">
+                                                {item.mcLen.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </td>
+                                            <td align="right">
+                                                {item.mcWdt.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </td>
+                                            <td align="right">
+                                                {item.mcHgt.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </td>
+                                        </>
+                                    )}
+
+                                    <td align="right">
+                                        {item.boxLen.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td align="right">
+                                        {item.boxWdt.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td align="right">
+                                        {item.boxHgt.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td align="right">{item.qty}</td>
+                                    <td align="right">
+                                        {item.cbm.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td align="center">{item.type}</td>
+                                    <td align="right">
+                                        {item.nw.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td align="right">
+                                        {item.gw.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </td>
+                                    <td>{item.rmks}</td>
+                                    {/* ✅ TPSZ 병합 */}
+                                    {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.tpsz}</td> : null}
+                                    {/* ✅ IMAGE 병합 */}
+                                    {isFirstOccurrence ? (
+                                        <td align="center" rowSpan={item.rowSpan}>
+                                            <img src={item.image} alt="container image" />
+                                        </td>
+                                    ) : null}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td colSpan={2} align="center">
+                                <strong>Total</strong>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td align="right">
+                                {calculatorData
+                                    .reduce((sum, item) => sum + item.qty, 0)
+                                    .toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                            </td>
+                            <td align="right">
+                                {calculatorData
+                                    .reduce((sum, item) => sum + item.cbm, 0)
+                                    .toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                            </td>
+                            <td></td>
+                            <td align="right">
+                                {calculatorData
+                                    .reduce((sum, item) => sum + item.nw, 0)
+                                    .toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                            </td>
+                            <td align="right">
+                                {calculatorData
+                                    .reduce((sum, item) => sum + item.gw, 0)
+                                    .toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
                 {/* <DataGrid
                     rows={calculatorData}
                     getRowId={(row) => row.id} // 고유 id 지정
