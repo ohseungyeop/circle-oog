@@ -65,7 +65,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
-    const [snackbar, setSnackbar] = React.useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = React.useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'error' | 'warning' | 'info';
+    }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
     const [loading, setLoading] = React.useState(false);
@@ -78,9 +82,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
         setLoading(true);
 
         try {
-            const response = await fetch(
-                `${apiUrl}/data?page=${paginationModel.page + 1}&size=${paginationModel.pageSize}`
-            );
+            const response = await fetch(`${apiUrl}/data?page=${paginationModel.page + 1}&size=${paginationModel.pageSize}`);
             const newData = await response.json();
 
             setRows((prevRows: any[]) => [...prevRows, ...newData]); // 기존 데이터에 추가
@@ -103,13 +105,15 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue); // 탭 변경 시 상태 업데이트
         if (newValue === 1) {
-            fetchOogCalcData(pckOrdSeq, apiUrl, cookies).then(oogData => {
-                // ✅ 상태 업데이트하여 화면에 반영
-                setCalculatorData(oogData);
-            }).catch(error => {
-                console.error('Error fetching OOG data:', error);
-                setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
-            });
+            fetchOogCalcData(pckOrdSeq, apiUrl, cookies)
+                .then((oogData) => {
+                    // ✅ 상태 업데이트하여 화면에 반영
+                    setCalculatorData(oogData);
+                })
+                .catch((error) => {
+                    console.error('Error fetching OOG data:', error);
+                    setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
+                });
         }
     };
 
@@ -117,15 +121,18 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
         <Box sx={{ width: '100%' }}>
             <h3>🧮 Out of Gauge System</h3>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 20px' }}>
-                <AppBar position="static"
+                <AppBar
+                    position="static"
                     sx={{
                         backgroundColor: 'transparent',
                         width: '70%',
                         border: 'none',
                         borderRadius: '5px',
                         boxShadow: 'none',
-                    }}>
-                    <Tabs value={tabValue}
+                    }}
+                >
+                    <Tabs
+                        value={tabValue}
                         onChange={handleTabChange}
                         indicatorColor="primary"
                         textColor="inherit"
@@ -139,10 +146,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                 fontWeight: 'bold',
                             },
                             '& .Mui-selected': {
-                                color: '#0E4491',  // 선택된 탭 텍스트 색상
-                                borderBottom: '2px solid blue' // 선택된 탭 밑줄 파란색으로 변경
+                                color: '#0E4491', // 선택된 탭 텍스트 색상
+                                borderBottom: '2px solid blue', // 선택된 탭 밑줄 파란색으로 변경
                             },
-                        }}>
+                        }}
+                    >
                         <Tab label="OOG Import Data" />
                         <Tab label="OOG System Data" />
                     </Tabs>
@@ -182,7 +190,46 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-                <DataGrid
+                <div>
+                    <table border="1" cellPadding="5" cellSpacing="0">
+                        <thead>
+                            <tr>
+                                {oogColumns.map((item) => (
+                                    <th>{item.headerName}</th>
+                                ))}
+                                <th>Image</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {calculatorData.map((item) => (
+                                <tr key={item.id}>
+                                    <td>{item.id}</td>
+                                    <td>{item.clpNo}</td>
+                                    <td>{item.boxNo}</td>
+                                    <td>{item.Item}</td>
+                                    <td>{item.mcLen}</td>
+                                    <td>{item.mcWdt}</td>
+                                    <td>{item.mcHgt}</td>
+                                    <td>{item.boxLen}</td>
+                                    <td>{item.boxWdt}</td>
+                                    <td>{item.boxHgt}</td>
+                                    <td>{item.qty}</td>
+                                    <td>{item.cbm}</td>
+                                    <td>{item.type}</td>
+                                    <td>{item.nw}</td>
+                                    <td>{item.gw}</td>
+                                    <td>{item.rmks}</td>
+                                    <td>{item.tpsz}</td>
+                                    <td>
+                                        <img src={item.image} alt="container image" />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                );
+                {/* <DataGrid
                     rows={calculatorData}
                     getRowId={(row) => row.id} // 고유 id 지정
                     rowCount={calculatorData.length}
@@ -194,19 +241,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     disableRowSelectionOnClick
                     rowSelectionModel={selectionModel}
                     loading={loading} // ✅ 로딩 상태 표시
-                />
+                /> */}
             </TabPanel>
 
-            <Snackbar
-                open={snackbar.open}
-                autoHideDuration={6000}
-                onClose={handleCloseSnackbar}
-            >
-                <Alert
-                    onClose={handleCloseSnackbar}
-                    severity={snackbar.severity}
-                    sx={{ width: '100%' }}
-                >
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
                     {snackbar.message}
                 </Alert>
             </Snackbar>

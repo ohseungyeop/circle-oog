@@ -55,7 +55,6 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
     }
 };
 
-
 export const handleTemplateDownload = (apiUrl) => {
     const link = document.createElement('a');
     link.href = `${apiUrl}/vos/oog/v1/files/template`;
@@ -125,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -189,7 +188,6 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 };
 
 debugger;
-
 
 export const handleExportToExcel = (oogData, setSnackbar) => {
     if (oogData.length === 0) {
@@ -435,7 +433,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             gw: Number(item.GW).toFixed(2),
             rmks: item.RMKS,
             tpsz: item.TPSZ,
-            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.glb' : null,
+            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
         }));
         console.log('formattedData', formattedData);
 
