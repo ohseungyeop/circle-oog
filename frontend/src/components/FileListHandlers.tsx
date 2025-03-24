@@ -366,26 +366,60 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             return [];
         }
 
-        const formattedData = data.data.map((item: any, index: number) => ({
-            id: index + 1,
-            clpNo: item.CLP_NO,
-            boxNo: item.BOX_NO,
-            Item: item.ITEM,
-            mcLen: null !== item.MC_LEN ? Number(item.MC_LEN) : null,
-            mcWdt: null !== item.MC_WDT ? Number(item.MC_WDT) : null,
-            mcHgt: null !== item.MC_HGT ? Number(item.MC_HGT) : null,
-            boxLen: Number(item.BOX_LEN),
-            boxWdt: Number(item.BOX_WDT),
-            boxHgt: Number(item.BOX_HGT),
-            qty: Number(item.QTY),
-            cbm: Number(item.CBM),
-            type: item.TYPE,
-            nw: Number(item.NW),
-            gw: Number(item.GW),
-            rmks: item.RMKS,
-            tpsz: item.TPSZ,
-            image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
-        }));
+        // CLP_NO 별로 데이터를 그룹화하여 하나라도 'Y'인 경우를 체크
+        const groupedData = data.data.reduce((acc: any, item: any) => {
+            const clpNo = item.CLP_NO;
+            if (!acc[clpNo]) {
+                acc[clpNo] = {
+                    hasOverWdtYn: false,
+                    hasOverHgtYn: false,
+                };
+            }
+
+            // 같은 CLP_NO의 데이터 중 하나라도 'Y'가 있으면 true로 설정
+            if (item.OVER_WDT_YN === 'Y') {
+                acc[clpNo].hasOverWdtYn = true;
+            }
+            if (item.OVER_HGT_YN === 'Y') {
+                acc[clpNo].hasOverHgtYn = true;
+            }
+
+            return acc;
+        }, {});
+
+        const formattedData = data.data.map((item: any, index: number) => {
+            const clpNo = item.CLP_NO;
+            const group = groupedData[clpNo];
+
+            return {
+                id: index + 1,
+                clpNo: item.CLP_NO,
+                boxNo: item.BOX_NO,
+                Item: item.ITEM,
+                mcLen: null !== item.MC_LEN ? Number(item.MC_LEN) : null,
+                mcWdt: null !== item.MC_WDT ? Number(item.MC_WDT) : null,
+                mcHgt: null !== item.MC_HGT ? Number(item.MC_HGT) : null,
+                boxLen: Number(item.BOX_LEN),
+                boxWdt: Number(item.BOX_WDT),
+                boxHgt: Number(item.BOX_HGT),
+                qty: Number(item.QTY),
+                cbm: Number(item.CBM),
+                type: item.TYPE,
+                nw: Number(item.NW),
+                gw: Number(item.GW),
+                rmks: item.RMKS,
+                tpsz:
+                    item.TPSZ +
+                    (group.hasOverWdtYn || group.hasOverHgtYn
+                        ? '(O' + (group.hasOverWdtYn ? 'W' : '') + (group.hasOverHgtYn ? 'H' : '') + ')'
+                        : ''),
+                image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
+                isOverWdt: 'Y' === item.OVER_WDT_YN,
+                isOverHgt: 'Y' === item.OVER_HGT_YN,
+                hasOverWdt: group.hasOverWdtYn,
+                hasOverHgt: group.hasOverHgtYn,
+            };
+        });
         console.log('formattedData', formattedData);
 
         return formattedData;

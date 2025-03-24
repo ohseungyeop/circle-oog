@@ -285,13 +285,13 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             maximumFractionDigits: 2,
                                         })}
                                     </td>
-                                    <td align="right">
+                                    <td align="right" className={item.isOverWdt ? styles.over : 'normal'}>
                                         {item.boxWdt.toLocaleString(undefined, {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
                                         })}
                                     </td>
-                                    <td align="right">
+                                    <td align="right" className={item.isOverHgt ? styles.over : 'normal'}>
                                         {item.boxHgt.toLocaleString(undefined, {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
