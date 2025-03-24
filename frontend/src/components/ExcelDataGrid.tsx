@@ -36,18 +36,18 @@ const oogColumns: GridColDef[] = [
     // { field: 'id', headerName: 'Seq.', width: 100 },
     { field: 'clpNo', headerName: 'CLP No.', width: 100 },
     { field: 'boxNo', headerName: 'Box No.', width: 100 },
-    { field: 'Item', headerName: ' ITEM', width: 100 },
-    { field: 'mcLen', headerName: 'M/C Length', width: 100 },
-    { field: 'mcWdt', headerName: 'M/C Width', width: 100 },
-    { field: 'mcHgt', headerName: 'M/C Height', width: 100 },
-    { field: 'boxLen', headerName: 'Box Length', width: 100 },
-    { field: 'boxWdt', headerName: 'Box Width', width: 100 },
-    { field: 'boxHgt', headerName: 'Box Height', width: 100 },
+    { field: 'Item', headerName: ' Item', width: 100 },
+    // { field: 'mcLen', headerName: 'M/C Length(㎜)', width: 100 },
+    // { field: 'mcWdt', headerName: 'M/C Width(㎜)', width: 100 },
+    // { field: 'mcHgt', headerName: 'M/C Height(㎜)', width: 100 },
+    { field: 'boxLen', headerName: 'Box Length(㎜)', width: 100 },
+    { field: 'boxWdt', headerName: 'Box Width(㎜)', width: 100 },
+    { field: 'boxHgt', headerName: 'Box Height(㎜)', width: 100 },
     { field: 'qty', headerName: "Q'ty", width: 100 },
     { field: 'cbm', headerName: 'CBM', width: 100 },
-    { field: 'type', headerName: 'TYPE', width: 100 },
-    { field: 'nw', headerName: 'N/W', width: 100 },
-    { field: 'gw', headerName: 'G/W', width: 100 },
+    { field: 'type', headerName: 'Type', width: 100 },
+    { field: 'nw', headerName: 'N/W(㎏)', width: 100 },
+    { field: 'gw', headerName: 'G/W(㎏)', width: 100 },
     { field: 'rmks', headerName: 'Remarks', width: 100 },
     { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
     // { field: 'tpsz', headerName: 'Image', width: 100 },
@@ -107,7 +107,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             const newData = await response.json();
             setContainerData(newData?.data);
 
-            console.log('Container Master Data:', containerData);
             const d40Data = containerData?.filter((item) => item.CNTR_TPSZ_CD === '4H')[0];
             console.log('Container Master Data2:', d40Data);
 
@@ -130,22 +129,12 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     }
                 });
             }
-
-            // debugger;
-
-            // console.log(
-            //     'Container Master Data2:',
-            //     containerData?.data.filter((item) => item.CNTR_TPSZ_CD === '4H'),
-            // );
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
             setLoading(false);
         }
     };
-    // React.useEffect(() => {
-    //     getContainerMaster(CRR_CD);
-    // }, []);
 
     const fetchMoreData = async () => {
         if (loading) return; // 이미 로딩 중이면 중복 요청 방지
@@ -278,7 +267,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     <thead>
                         <tr>
                             {oogColumns.map((item, index) => {
-                                const isTpsz = index === 15;
+                                const isTpsz = index === 12;
                                 return (
                                     <th key={item.field} data-key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
                                         {item.headerName}
@@ -302,12 +291,12 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                         </td>
                                     ) : null}
                                     {item.Item === 'SUM' ? (
-                                        <td colSpan={5}></td>
+                                        <td colSpan={2}></td>
                                     ) : (
                                         <>
                                             <td align="center">{item.boxNo}</td>
                                             <td>{item.Item}</td>
-                                            <td align="right">
+                                            {/* <td align="right">
                                                 {item.mcLen.toLocaleString(undefined, {
                                                     minimumFractionDigits: 2,
                                                     maximumFractionDigits: 2,
@@ -324,7 +313,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                                     minimumFractionDigits: 2,
                                                     maximumFractionDigits: 2,
                                                 })}
-                                            </td>
+                                            </td> */}
                                         </>
                                     )}
 
@@ -381,9 +370,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td></td>
-                            <td colSpan={8} align="center">
-                                <strong>Total </strong>
+                            <th>
+                                <strong>Total</strong>
+                            </th>
+                            <td colSpan={5}>
                                 <span>
                                     {Object.entries(
                                         calculatorData.reduce((countMap, item) => {
@@ -403,36 +393,28 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 
                                             return countMap;
                                         }, {}),
-                                    )
-                                        .map(([tpsz, clpNoSet]) => {
-                                            const count = (clpNoSet as Set<string>).size; // Set의 크기
-                                            return (
-                                                <span key={tpsz}>
-                                                    {tpsz}×<span style={{ color: 'red' }}>{count}</span>
-                                                </span>
-                                            );
-                                        })
-                                        .reduce(
-                                            (acc, curr) => (
-                                                <>
-                                                    {acc}, {curr}
-                                                </>
-                                            ),
-                                            <></>,
-                                        )}{' '}
-                                    {/* 결과를 ','로 구분하여 출력 */}
+                                    ).map(([tpsz, clpNoSet], index) => {
+                                        const count = (clpNoSet as Set<string>).size; // Set의 크기
+                                        return (
+                                            <span key={tpsz}>
+                                                {index > 0 && ', '}
+                                                {tpsz}×<span style={{ color: 'red' }}>{count}</span>
+                                            </span>
+                                        );
+                                    })}
                                 </span>
                             </td>
                             <td align="right">
                                 {calculatorData
+                                    .filter((item) => item.Item === 'SUM')
                                     .reduce((sum, item) => sum + item.qty, 0)
                                     .toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
                                     })}
                             </td>
                             <td align="right">
                                 {calculatorData
+                                    .filter((item) => item.Item === 'SUM')
                                     .reduce((sum, item) => sum + item.cbm, 0)
                                     .toLocaleString(undefined, {
                                         minimumFractionDigits: 2,
@@ -442,6 +424,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                             <td></td>
                             <td align="right">
                                 {calculatorData
+                                    .filter((item) => item.Item === 'SUM')
                                     .reduce((sum, item) => sum + item.nw, 0)
                                     .toLocaleString(undefined, {
                                         minimumFractionDigits: 2,
@@ -450,6 +433,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                             </td>
                             <td align="right">
                                 {calculatorData
+                                    .filter((item) => item.Item === 'SUM')
                                     .reduce((sum, item) => sum + item.gw, 0)
                                     .toLocaleString(undefined, {
                                         minimumFractionDigits: 2,
