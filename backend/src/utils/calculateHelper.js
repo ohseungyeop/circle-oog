@@ -58,6 +58,33 @@ const filterListByHeight = (itemList, threshold) => {
 };
 
 /**
+ * BOX_WDT가 특정 값을 초과하는 아이템에 속성 추가하는 함수
+ * @param {Array} itemList - 아이템 리스트
+ * @param {number} threshold - 초과해야 할 BOX_WDT 값
+ * @returns {Array} - 조건에 맞는 항목에 속성 추가된 전체 아이템 리스트
+ */
+const checkListByWidth = (itemList, threshold) => {
+    return itemList.map((item) => {
+        item.OVER_WDT_YN = parseFloat(item.BOX_WDT) > threshold ? 'Y' : 'N';
+        return item;
+    });
+};
+
+/**
+ * BOX_WDT가 특정 값을 초과하는 아이템에 속성 추가하는 함수
+ * @param {Array} itemList - 아이템 리스트
+ * @param {number} threshold - 초과해야 할 BOX_WDT 값
+ * @returns {Array} - 조건에 맞는 항목에 속성 추가된 전체 아이템 리스트
+ */
+const checkListByHeight = (itemList, threshold) => {
+    return itemList.map((item) => {
+        item.OVER_HGT4_YN = parseFloat(item.BOX_HGT) > threshold ? 'Y' : 'N';
+        // item.OVER_HGT4_YN = item.OVER_HGT_YN;
+        return item;
+    });
+};
+
+/**
  * 길이로 내림차순 정렬하고 기준길이에 넘지 않게 그룹핑 한다.
  * "First-Fit Decreasing(FFD)" 또는 "Best-Fit" 알고리즘
  * @param {Array} target2List - 무게와 길이 초과건을 제외한 대상 아이템
@@ -179,6 +206,8 @@ export {
     filterListByLength,
     filterListByWidth,
     filterListByHeight,
+    checkListByWidth,
+    checkListByHeight,
     groupItemListByLength,
     regroupItemList,
 };

@@ -6,6 +6,8 @@ import {
     filterListByLength,
     filterListByWidth,
     filterListByHeight,
+    checkListByWidth,
+    checkListByHeight,
     groupItemListByLength,
     regroupItemList,
 } from '../utils/calculateHelper.js';
@@ -22,6 +24,8 @@ let REF_HGT_40 = 0;
 let REF_HGT_20 = 0;
 let REF_LEN_40_PCTG = 0;
 let REF_LEN_20_PCTG = 0;
+let REF_WDT_40_PCTG = 0;
+let REF_HGT_40_PCTG = 0;
 let step1List;
 let step1Tail;
 let step2List;
@@ -99,6 +103,8 @@ const processStep1 = async (fastify, trx, pckOrdSeq) => {
     REF_HGT_20 = d2Row.CNTR_HGT ?? 2233; //2.233m
     REF_LEN_40_PCTG = d4Row.CNTR_LEN_PCTG / 100 ?? 0.95; //95%
     REF_LEN_20_PCTG = d2Row.CNTR_LEN_PCTG / 100 ?? 0.85; //85%
+    REF_WDT_40_PCTG = d4Row.CNTR_WDT_PCTG / 100 ?? 1; //100%
+    REF_HGT_40_PCTG = d4Row.CNTR_HGT_PCTG / 100 ?? 1; //100%
     console.log('--길이 기준:', REF_LEN_40);
     console.log('--폭 기준:', REF_WDT_40);
     console.log('--40높이 기준:', REF_HGT_40);
@@ -232,10 +238,14 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
         }, []),
     ];
 
-    // 4️⃣ 정렬 및그룹 번호 재지정
+    // 4️⃣ OW, OH 점검 매핑
+    checkListByWidth(step2AndOverList, REF_WDT_40 * REF_WDT_40_PCTG);
+    checkListByHeight(step2AndOverList, REF_HGT_40 * REF_HGT_40_PCTG);
+
+    // 5️⃣ 정렬 및그룹 번호 재지정
     const step2ItemList = regroupItemList(step2AndOverList);
 
-    // 5️⃣ 기존 데이터 삭제 후 step2 저장
+    // 6️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
     await trx('vos_oog_calc_step2').insert(step2AndOverList);
 
@@ -262,7 +272,9 @@ const processStep3 = async (trx, pckOrdSeq) => {
             , NW
             , GW
             , REMARKS
-            , TPSZ)
+            , TPSZ
+            , OVER_WDT_YN
+            , OVER_HGT_YN)
         SELECT ${pckOrdSeq} as pck_ord_seq
             , pck_grp_no as clp_no
             , pck_no as box_no
@@ -284,6 +296,8 @@ const processStep3 = async (trx, pckOrdSeq) => {
                 WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
                 WHEN '20DR' = cntr_tp_cd THEN '20''DR'
             END as tpsz
+            , over_wdt_yn
+            , over_hgt4_yn
         FROM vos_oog_calc_step2
         WHERE pck_ord_seq = ${pckOrdSeq}
 
@@ -302,7 +316,7 @@ const processStep3 = async (trx, pckOrdSeq) => {
             , NULL
             , SUM(net_wgt) as net_wgt
             , SUM(grs_wgt) as grs_wgt
-            , NULL, NULL
+            , NULL, NULL, NULL, NULL
         FROM vos_oog_calc_step2
         WHERE pck_ord_seq = ${pckOrdSeq}
         GROUP BY pck_grp_no
