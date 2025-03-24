@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
         build: {
             outDir: path.resolve(__dirname, './'), // '/home/nodeapp/vos-oog/frontend' 폴더에 빌드 결과물 저장
             emptyOutDir: true, // 빌드 전에 기존 파일 삭제
+            publicDir: 'public', // public 폴더를 명시적으로 설정
             // 프로덕션 환경에서 빌드 최적화 추가
             minify: isProduction ? 'esbuild' : false,
             sourcemap: !isProduction, // 프로덕션에서는 소스맵 비활성화
