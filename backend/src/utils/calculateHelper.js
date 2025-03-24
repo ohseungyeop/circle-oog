@@ -218,13 +218,13 @@ const regroupItemList = (itemList) => {
             // 3순위: OVER_WDT_YN (폭)
             // 4순위: OVER_HGT_YN (높이)
             const aPriority =
-                (a.OVER_WGT_YN === 'Y' ? 24 : 0) +
-                (a.OVER_LEN_YN === 'Y' ? 13 : 0) +
+                (a.OVER_WGT_YN === 'Y' ? 204 : 0) +
+                (a.OVER_LEN_YN === 'Y' ? 23 : 0) +
                 (a.OVER_WDT_YN === 'Y' ? 2 : 0) +
                 (a.OVER_HGT_YN === 'Y' ? 1 : 0);
             const bPriority =
-                (b.OVER_WGT_YN === 'Y' ? 24 : 0) +
-                (b.OVER_LEN_YN === 'Y' ? 13 : 0) +
+                (b.OVER_WGT_YN === 'Y' ? 204 : 0) +
+                (b.OVER_LEN_YN === 'Y' ? 23 : 0) +
                 (b.OVER_WDT_YN === 'Y' ? 2 : 0) +
                 (b.OVER_HGT_YN === 'Y' ? 1 : 0);
             return bPriority - aPriority; // 우선순위가 높은 값이 먼저 오도록 내림차순 정렬
