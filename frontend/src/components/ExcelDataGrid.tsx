@@ -359,15 +359,18 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             const count = (clpNoSet as Set<string>).size; // Set의 크기
                                             return (
                                                 <span key={tpsz}>
-                                                    {tpsz}X<span style={{ color: 'red' }}>{count}</span>개
+                                                    {tpsz}X<span style={{ color: 'red' }}>{count}</span>
                                                 </span>
                                             );
                                         })
-                                        .reduce((acc, curr) => (
-                                            <>
-                                                {acc}, {curr}
-                                            </>
-                                        ))}{' '}
+                                        .reduce(
+                                            (acc, curr) => (
+                                                <>
+                                                    {acc}, {curr}
+                                                </>
+                                            ),
+                                            <></>,
+                                        )}{' '}
                                     {/* 결과를 ','로 구분하여 출력 */}
                                 </span>
                             </td>
