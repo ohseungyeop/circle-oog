@@ -1,6 +1,6 @@
 import { uploadFile, selectFileList, uploadDetail, deleteFile, downloadTemplate, selectDetails } from './fileApi.js';
+import { getPackageList, getContainerMaster } from './packageApi.js';
 import calculate from './calculateApi.js';
-import getPackageList from './packageApi.js';
 import { registerUser, verifyToken, verifyEmail } from './userApi.js';
 
 // https://www.notion.so/OOG-175d5cf7a5cc8070b615dd7520403c8c?pvs=4#1acd5cf7a5cc809f9721de2f28f0c891
@@ -17,6 +17,9 @@ async function routes(fastify, options) {
     fastify.register(selectDetails, { prefix: '/vos/oog/v1/files/details/:pckOrdSeq([0-9]+)' }); // GET
     fastify.register(deleteFile, { prefix: '/vos/oog/v1/files/:pckOrdSeq([0-9]+)' }); // DELETE
     fastify.register(downloadTemplate, { prefix: '/vos/oog/v1/files/template' }); // GET
+
+    // 기준 정보 조회
+    fastify.register(getContainerMaster, { prefix: '/vos/oog/v1/container/spec/:crrCd' }); // GET
 
     // 계산 처리
     fastify.register(calculate, { prefix: '/vos/oog/v1/calculate/:pckOrdSeq([0-9]+)' }); // POST

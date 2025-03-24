@@ -49,7 +49,7 @@ const oogColumns: GridColDef[] = [
     { field: 'nw', headerName: 'N/W', width: 100 },
     { field: 'gw', headerName: 'G/W', width: 100 },
     { field: 'rmks', headerName: 'Remarks', width: 100 },
-    { field: 'tpsz', headerName: 'TPSZ', width: 100 },
+    { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
     // { field: 'tpsz', headerName: 'Image', width: 100 },
 ];
 
@@ -84,6 +84,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
+    const CRR_CD = 'VOS';
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
@@ -95,9 +96,56 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const [tabValue, setTabValue] = React.useState(0);
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
     const [loading, setLoading] = React.useState(false);
+    const [containerData, setContainerData] = React.useState<any[]>([]);
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
+
+    const getContainerMaster = async (crrCd: string) => {
+        try {
+            const response = await fetch(`${apiUrl}/vos/oog/v1/container/spec/${crrCd}`);
+            const newData = await response.json();
+            setContainerData(newData?.data);
+
+            console.log('Container Master Data:', containerData);
+            const d40Data = containerData?.filter((item) => item.CNTR_TPSZ_CD === '4H')[0];
+            console.log('Container Master Data2:', d40Data);
+
+            const table = document.getElementById('oogDataTable');
+            if (table) {
+                const thList = table.querySelectorAll('thead th'); // 모든 th 요소 선택
+                thList.forEach((th) => {
+                    if (th.getAttribute('data-key') === 'boxLen') {
+                        th.innerHTML += `<br/><b>${d40Data.CNTR_LEN.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${Number(d40Data.CNTR_LEN_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
+                    } else if (th.getAttribute('data-key') === 'boxWdt') {
+                        th.innerHTML += `<br/><b>${d40Data.CNTR_WDT.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${Number(d40Data.CNTR_WDT_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
+                    } else if (th.getAttribute('data-key') === 'boxHgt') {
+                        th.innerHTML += `<br/><b>${d40Data.CNTR_HGT.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${Number(d40Data.CNTR_HGT_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
+                    }
+                });
+            }
+
+            // debugger;
+
+            // console.log(
+            //     'Container Master Data2:',
+            //     containerData?.data.filter((item) => item.CNTR_TPSZ_CD === '4H'),
+            // );
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    // React.useEffect(() => {
+    //     getContainerMaster(CRR_CD);
+    // }, []);
 
     const fetchMoreData = async () => {
         if (loading) return; // 이미 로딩 중이면 중복 요청 방지
@@ -137,9 +185,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
         setPaginationModel(newModel);
     };
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = async (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
         if (newValue === 1) {
+            await getContainerMaster(CRR_CD);
             fetchOogCalcData(pckOrdSeq, apiUrl, cookies)
                 .then((oogData) => {
                     const rowSpanMap = calculateRowSpan(oogData);
@@ -231,7 +280,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                             {oogColumns.map((item, index) => {
                                 const isTpsz = index === 15;
                                 return (
-                                    <th key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
+                                    <th key={item.field} data-key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
                                         {item.headerName}
                                     </th>
                                 );
@@ -359,7 +408,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             const count = (clpNoSet as Set<string>).size; // Set의 크기
                                             return (
                                                 <span key={tpsz}>
-                                                    {tpsz}X<span style={{ color: 'red' }}>{count}</span>
+                                                    {tpsz}×<span style={{ color: 'red' }}>{count}</span>
                                                 </span>
                                             );
                                         })

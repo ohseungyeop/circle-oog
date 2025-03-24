@@ -10,11 +10,16 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     font-size: 14px;
     border-top: 1px solid rgba(224, 224, 224, 1); /* 가로선만 유지 */
+    white-space: nowrap;
 }
 
 .oogDataTable th {
     height: 45px;
-    font-weight: 500;
+    font-weight: bold;
+}
+
+.oogDataTable th b {
+    color: blueviolet;
 }
 
 .oogDataTable td {

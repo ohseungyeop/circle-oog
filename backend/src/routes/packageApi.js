@@ -1,5 +1,8 @@
 import replyHelper from '../utils/replyHelper.js';
 
+const CRR_CD = 'VOS';
+// const REF_CNTR_TPSZ = ['D2', '4H'];
+
 const getPackageList = async (fastify, options) => {
     fastify.get(
         '/',
@@ -11,4 +14,21 @@ const getPackageList = async (fastify, options) => {
     );
 };
 
-export default getPackageList;
+const getContainerMaster = async (fastify, options) => {
+    fastify.get(
+        '/',
+        replyHelper(async (request, reply) => {
+            const { crrCd } = request.params || CRR_CD;
+
+            const cntrInfo = await fastify
+                .knex('VOS_OOG_CNTR_MST')
+                .where({ CRR_CD: crrCd || CRR_CD })
+                // .whereIn('CNTR_TPSZ_CD', REF_CNTR_TPSZ)
+                .select('*');
+
+            return cntrInfo;
+        }),
+    );
+};
+
+export { getPackageList, getContainerMaster };
