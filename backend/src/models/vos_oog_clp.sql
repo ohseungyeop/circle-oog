@@ -20,8 +20,9 @@ CREATE TABLE vos_oog_clp (
     GW DECIMAL(12, 2) DEFAULT NULL COMMENT 'Gross Weight',
     REMARKS VARCHAR(255) DEFAULT NULL COMMENT 'Packing Remarks',
     TPSZ VARCHAR(10) DEFAULT '40''HQ' COMMENT 'Dry40(40HQ), Flatrack(40FR), Dry20(20DR)',
-    OVER_WDT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Width 2.438m 초과 여부',
-    OVER_HGT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT '40fr Height 2.233m 초과 여부',
+    OVER_WGT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Weight 초과 여부',
+    OVER_WDT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Width 초과 여부',
+    OVER_HGT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT '40fr Height 초과 여부',
 -- ----------------E: user-defined
     CRE_DT DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT 'Created Time',
     UPD_DT DATETIME DEFAULT CURRENT_TIMESTAMP() COMMENT 'Updated Time',

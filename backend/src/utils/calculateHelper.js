@@ -71,9 +71,9 @@ const checkListByWidth = (itemList, threshold) => {
 };
 
 /**
- * BOX_WDT가 특정 값을 초과하는 아이템에 속성 추가하는 함수
+ * BOX_HGT가 특정 값을 초과하는 아이템에 속성 추가하는 함수
  * @param {Array} itemList - 아이템 리스트
- * @param {number} threshold - 초과해야 할 BOX_WDT 값
+ * @param {number} threshold - 초과해야 할 BOX_HGT 값
  * @returns {Array} - 조건에 맞는 항목에 속성 추가된 전체 아이템 리스트
  */
 const checkListByHeight = (itemList, threshold) => {
@@ -172,10 +172,28 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
 };
 
 const regroupItemList = (itemList) => {
-    // Step 1: CNTR_TP_CD 기준 정렬 (40FR → 40HQ → 20DR)
+    // Step 1: CNTR_TP_CD 기준 정렬 (40FR(OWH→OH→OW) → 40HQ → 20DR)
     itemList.sort((a, b) => {
         const order = { '40FR': 1, '40HQ': 2, '20DR': 3 };
-        return order[a.CNTR_TP_CD] - order[b.CNTR_TP_CD];
+
+        // 1. CNTR_TP_CD 기준으로 먼저 정렬
+        const cntrTpCdComparison = order[a.CNTR_TP_CD] - order[b.CNTR_TP_CD];
+
+        // CNTR_TP_CD가 다르면, 그 기준으로 먼저 정렬
+        if (cntrTpCdComparison !== 0) {
+            return cntrTpCdComparison;
+        }
+
+        // 2. CNTR_TP_CD가 동일한 경우, OVER_WDT_YN, OVER_HGT_YN 기준으로 우선순위 정렬
+        // 40FR에 대해서만 추가 정렬 기준 적용
+        if (a.CNTR_TP_CD === '40FR' && b.CNTR_TP_CD === '40FR') {
+            const aPriority = (a.OVER_WDT_YN === 'Y' ? 1 : 0) + (a.OVER_HGT_YN === 'Y' ? 2 : 0);
+            const bPriority = (b.OVER_WDT_YN === 'Y' ? 1 : 0) + (b.OVER_HGT_YN === 'Y' ? 2 : 0);
+
+            return bPriority - aPriority; // 우선순위가 높은 값이 먼저 오도록 내림차순 정렬
+        }
+
+        return 0; // CNTR_TP_CD가 동일하면 순서 그대로 유지
     });
 
     // Step 2: PCK_GRP_NO를 순차적으로 재할당

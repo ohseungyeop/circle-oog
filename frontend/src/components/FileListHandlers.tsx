@@ -387,9 +387,24 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             return acc;
         }, {});
 
+        const tpszCount: { [key: string]: number } = {};
+
         const formattedData = data.data.map((item: any, index: number) => {
             const clpNo = item.CLP_NO;
             const group = groupedData[clpNo];
+            // debugger;
+            // tpsz 값을 계산
+            const tpsz =
+                item.TPSZ +
+                (group.hasOverWdtYn || group.hasOverHgtYn
+                    ? '(O' + (group.hasOverWdtYn ? 'W' : '') + (group.hasOverHgtYn ? 'H' : '') + ')'
+                    : '');
+            // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
+            if (!tpszCount[tpsz]) {
+                tpszCount[tpsz] = 1; // 첫 번째 항목에 일련번호 1 부여
+            } else if (clpNo !== data.data[index - 1].CLP_NO) {
+                tpszCount[tpsz] += 1; // 기존 값이 있으면 일련번호 증가
+            }
 
             return {
                 id: index + 1,
@@ -408,11 +423,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 nw: Number(item.NW),
                 gw: Number(item.GW),
                 rmks: item.RMKS,
-                tpsz:
-                    item.TPSZ +
-                    (group.hasOverWdtYn || group.hasOverHgtYn
-                        ? '(O' + (group.hasOverWdtYn ? 'W' : '') + (group.hasOverHgtYn ? 'H' : '') + ')'
-                        : ''),
+                tpsz: tpsz + ' ' + tpszCount[tpsz],
                 image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
                 isOverWdt: 'Y' === item.OVER_WDT_YN,
                 isOverHgt: 'Y' === item.OVER_HGT_YN,
@@ -420,6 +431,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 hasOverHgt: group.hasOverHgtYn,
             };
         });
+
         console.log('formattedData', formattedData);
 
         return formattedData;
