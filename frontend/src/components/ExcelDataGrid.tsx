@@ -319,7 +319,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                     </td>
                                     <td className={styles.remarkColumn}>{item.rmks}</td>
                                     {/* ✅ TPSZ 병합 */}
-                                    {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.tpsz}</td> : null}
+                                    {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.displayTpsz}</td> : null}
                                     {/* ✅ IMAGE 병합 */}
                                     {isFirstOccurrence ? (
                                         <td align="center" rowSpan={item.rowSpan}>
@@ -333,15 +333,44 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     <tfoot>
                         <tr>
                             <td></td>
-                            <td colSpan={2} align="center">
-                                <strong>Total</strong>
+                            <td colSpan={8} align="center">
+                                <strong>Total </strong>
+                                <span>
+                                    {Object.entries(
+                                        calculatorData.reduce((countMap, item) => {
+                                            const tpsz = item.tpsz; // tpsz 값 가져오기
+                                            if (tpsz) {
+                                                const clpNo = item.clpNo;
+                                                const key = `${clpNo}-${tpsz}`; // CLP_NO와 tpsz를 조합하여 키 생성
+
+                                                // 이미 해당 tpsz가 countMap에 없으면 배열로 초기화
+                                                if (!countMap[tpsz]) {
+                                                    countMap[tpsz] = new Set(); // 중복을 제거하기 위해 Set 사용
+                                                }
+
+                                                // clpNo가 중복되지 않도록 Set에 추가
+                                                countMap[tpsz].add(clpNo);
+                                            }
+
+                                            return countMap;
+                                        }, {}),
+                                    )
+                                        .map(([tpsz, clpNoSet]) => {
+                                            const count = (clpNoSet as Set<string>).size; // Set의 크기
+                                            return (
+                                                <span key={tpsz}>
+                                                    {tpsz}X<span style={{ color: 'red' }}>{count}</span>개
+                                                </span>
+                                            );
+                                        })
+                                        .reduce((acc, curr) => (
+                                            <>
+                                                {acc}, {curr}
+                                            </>
+                                        ))}{' '}
+                                    {/* 결과를 ','로 구분하여 출력 */}
+                                </span>
                             </td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
                             <td align="right">
                                 {calculatorData
                                     .reduce((sum, item) => sum + item.qty, 0)

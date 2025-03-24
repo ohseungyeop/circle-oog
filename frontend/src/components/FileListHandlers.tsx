@@ -402,17 +402,18 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             const group = groupedData[clpNo];
             // debugger;
             // tpsz 값을 계산
-            const tpsz =
-                item.TPSZ +
-                (group.hasOverWgtYn
-                    ? '(Weight)'
-                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                    ? '(O' +
-                      (group.hasOverLenYn ? 'L' : '') +
-                      (group.hasOverWdtYn ? 'W' : '') +
-                      (group.hasOverHgtYn ? 'H' : '') +
-                      ')'
-                    : '');
+            const tpsz = item.TPSZ
+                ? item.TPSZ +
+                  (group.hasOverWgtYn
+                      ? '(Weight)'
+                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                      ? '(O' +
+                        (group.hasOverLenYn ? 'L' : '') +
+                        (group.hasOverWdtYn ? 'W' : '') +
+                        (group.hasOverHgtYn ? 'H' : '') +
+                        ')'
+                      : '')
+                : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
             if (!tpszCount[tpsz]) {
@@ -438,7 +439,8 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 nw: Number(item.NW),
                 gw: Number(item.GW),
                 rmks: item.RMKS,
-                tpsz: tpsz + ' ' + tpszCount[tpsz],
+                displayTpsz: tpsz + ' ' + tpszCount[tpsz],
+                tpsz: tpsz,
                 image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
