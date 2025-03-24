@@ -42,3 +42,18 @@
 .oogDataTable tfoot tr td:nth-child(n + 2):nth-child(-n + 8) {
     background-color: darkorange;
 }
+
+.oogDataTable tfoot tr td span .totalNumColor {
+    color: #f00;
+}
+
+.calculatorButton {
+    padding: 10px 20px;
+    background-color: #0e4491;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-size: 15px;
+}
