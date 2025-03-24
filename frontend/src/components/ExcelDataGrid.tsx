@@ -6,7 +6,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator, fetchOogCalcData } from './FileListHandlers';
-import './ExcelDataGrid.module.css';
+import styles from './ExcelDataGrid.module.css';
 
 interface ExcelDataGridProps {
     rows: any[];
@@ -61,7 +61,7 @@ const TabPanel = ({ children, value, index }: any) => {
     );
 };
 
-export const handleExportToExcel = () => {
+export const handleExportToExcel = async () => {
     // HTML 테이블을 선택
     const table = document.getElementById('oogDataTable');
 
@@ -225,7 +225,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-                <table id="oogDataTable" border={1} cellPadding={5} cellSpacing={0}>
+                <table id="oogDataTable" className={styles.oogDataTable} border={1} cellPadding={5} cellSpacing={0}>
                     <thead>
                         <tr>
                             {oogColumns.map((item, index) => {
@@ -317,7 +317,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             maximumFractionDigits: 2,
                                         })}
                                     </td>
-                                    <td>{item.rmks}</td>
+                                    <td className={styles.remarkColumn}>{item.rmks}</td>
                                     {/* ✅ TPSZ 병합 */}
                                     {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.tpsz}</td> : null}
                                     {/* ✅ IMAGE 병합 */}

@@ -1,25 +1,31 @@
-table {
+.oogDataTable {
     width: 100%;
     border-color: rgba(224, 224, 224, 1);
     border-collapse: collapse;
 }
 
-th,
-td {
+.oogDataTable th,
+.oogDataTable td {
     font-family: -apple-system, 'system-ui', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     font-size: 14px;
     border-top: 1px solid rgba(224, 224, 224, 1); /* 가로선만 유지 */
 }
 
-th {
+.oogDataTable th {
     height: 45px;
     font-weight: 500;
 }
 
-td {
+.oogDataTable td {
     padding: 4px 8px;
     font-weight: 400;
     border-left: none; /* 세로선 제거 */
     border-right: none; /* 세로선 제거 */
+}
+
+/* 첫 번째 td에는 기존 스타일 유지 (선 유지) */
+.oogDataTable td:first-child,
+.oogDataTable .remarkColumn {
+    border-right: 1px solid rgba(224, 224, 224, 1);
 }
