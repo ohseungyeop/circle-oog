@@ -279,7 +279,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                         </>
                                     )}
 
-                                    <td align="right">
+                                    <td align="right" className={item.isOverLen ? styles.over : 'normal'}>
                                         {item.boxLen.toLocaleString(undefined, {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,
@@ -311,7 +311,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             maximumFractionDigits: 2,
                                         })}
                                     </td>
-                                    <td align="right">
+                                    <td align="right" className={item.isOverWgt ? styles.over : 'normal'}>
                                         {item.gw.toLocaleString(undefined, {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2,

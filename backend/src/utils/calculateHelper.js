@@ -58,6 +58,31 @@ const filterListByHeight = (itemList, threshold) => {
 };
 
 /**
+ * BOX_WGT가 초과하는 아이템에 속성 추가하는 함수
+ * @param {Array} itemList - 아이템 리스트
+ * @returns {Array} - 조건에 맞는 항목에 속성 추가된 전체 아이템 리스트
+ */
+const checkListByWeight = (itemList) => {
+    return itemList.map((item) => {
+        item.OVER_WGT_YN = 'Y' === item.OVER_40T_YN || 'Y' === item.OVER_60T_YN || 'Y' === item.OVER_25T_YN ? 'Y' : 'N';
+        return item;
+    });
+};
+
+/**
+ * BOX_LEN가 특정 값을 초과하는 아이템에 속성 추가하는 함수
+ * @param {Array} itemList - 아이템 리스트
+ * @param {number} threshold - 초과해야 할 BOX_LEN 값
+ * @returns {Array} - 조건에 맞는 항목에 속성 추가된 전체 아이템 리스트
+ */
+const checkListByLength = (itemList, threshold) => {
+    return itemList.map((item) => {
+        item.OVER_LEN_YN = parseFloat(item.BOX_LEN) > threshold ? 'Y' : 'N';
+        return item;
+    });
+};
+
+/**
  * BOX_WDT가 특정 값을 초과하는 아이템에 속성 추가하는 함수
  * @param {Array} itemList - 아이템 리스트
  * @param {number} threshold - 초과해야 할 BOX_WDT 값
@@ -172,7 +197,7 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
 };
 
 const regroupItemList = (itemList) => {
-    // Step 1: CNTR_TP_CD 기준 정렬 (40FR(OWH→OH→OW) → 40HQ → 20DR)
+    // Step 1: CNTR_TP_CD 기준 정렬 (40FR(Weight→OLWH→OL→OWH→OH→OW) → 40HQ → 20DR)
     itemList.sort((a, b) => {
         const order = { '40FR': 1, '40HQ': 2, '20DR': 3 };
 
@@ -184,12 +209,24 @@ const regroupItemList = (itemList) => {
             return cntrTpCdComparison;
         }
 
-        // 2. CNTR_TP_CD가 동일한 경우, OVER_WDT_YN, OVER_HGT_YN 기준으로 우선순위 정렬
+        // 2. CNTR_TP_CD가 동일한 경우, OVER_WGT_YN, OVER_LEN_YN, OVER_WDT_YN, OVER_HGT_YN 기준으로 우선순위 정렬
         // 40FR에 대해서만 추가 정렬 기준 적용
         if (a.CNTR_TP_CD === '40FR' && b.CNTR_TP_CD === '40FR') {
-            const aPriority = (a.OVER_WDT_YN === 'Y' ? 1 : 0) + (a.OVER_HGT_YN === 'Y' ? 2 : 0);
-            const bPriority = (b.OVER_WDT_YN === 'Y' ? 1 : 0) + (b.OVER_HGT_YN === 'Y' ? 2 : 0);
-
+            // 우선순위 계산:
+            // 1순위: OVER_WGT_YN (무게)
+            // 2순위: OVER_LEN_YN (길이)
+            // 3순위: OVER_WDT_YN (폭)
+            // 4순위: OVER_HGT_YN (높이)
+            const aPriority =
+                (a.OVER_WGT_YN === 'Y' ? 24 : 0) +
+                (a.OVER_LEN_YN === 'Y' ? 13 : 0) +
+                (a.OVER_WDT_YN === 'Y' ? 2 : 0) +
+                (a.OVER_HGT_YN === 'Y' ? 1 : 0);
+            const bPriority =
+                (b.OVER_WGT_YN === 'Y' ? 24 : 0) +
+                (b.OVER_LEN_YN === 'Y' ? 13 : 0) +
+                (b.OVER_WDT_YN === 'Y' ? 2 : 0) +
+                (b.OVER_HGT_YN === 'Y' ? 1 : 0);
             return bPriority - aPriority; // 우선순위가 높은 값이 먼저 오도록 내림차순 정렬
         }
 
@@ -224,6 +261,8 @@ export {
     filterListByLength,
     filterListByWidth,
     filterListByHeight,
+    checkListByWeight,
+    checkListByLength,
     checkListByWidth,
     checkListByHeight,
     groupItemListByLength,

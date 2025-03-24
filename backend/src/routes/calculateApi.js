@@ -6,6 +6,8 @@ import {
     filterListByLength,
     filterListByWidth,
     filterListByHeight,
+    checkListByWeight,
+    checkListByLength,
     checkListByWidth,
     checkListByHeight,
     groupItemListByLength,
@@ -238,7 +240,9 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
         }, []),
     ];
 
-    // 4️⃣ OW, OH 점검 매핑
+    // 4️⃣ Weight, OW, OH 점검 매핑
+    checkListByWeight(step2AndOverList);
+    checkListByLength(step2AndOverList, REF_LEN_40 * REF_LEN_40_PCTG);
     checkListByWidth(step2AndOverList, REF_WDT_40 * REF_WDT_40_PCTG);
     checkListByHeight(step2AndOverList, REF_HGT_40 * REF_HGT_40_PCTG);
 
@@ -273,6 +277,8 @@ const processStep3 = async (trx, pckOrdSeq) => {
             , GW
             , REMARKS
             , TPSZ
+            , OVER_WGT_YN
+            , OVER_LEN_YN
             , OVER_WDT_YN
             , OVER_HGT_YN)
         SELECT ${pckOrdSeq} as pck_ord_seq
@@ -296,6 +302,8 @@ const processStep3 = async (trx, pckOrdSeq) => {
                 WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
                 WHEN '20DR' = cntr_tp_cd THEN '20''DR'
             END as tpsz
+            , over_wgt_yn
+            , over_len_yn
             , over_wdt_yn
             , over_hgt4_yn
         FROM vos_oog_calc_step2
@@ -316,6 +324,7 @@ const processStep3 = async (trx, pckOrdSeq) => {
             , NULL
             , SUM(net_wgt) as net_wgt
             , SUM(grs_wgt) as grs_wgt
+            , NULL, NULL
             , NULL, NULL, NULL, NULL
         FROM vos_oog_calc_step2
         WHERE pck_ord_seq = ${pckOrdSeq}

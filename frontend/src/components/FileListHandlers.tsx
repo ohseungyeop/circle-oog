@@ -371,12 +371,20 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             const clpNo = item.CLP_NO;
             if (!acc[clpNo]) {
                 acc[clpNo] = {
+                    hasOverWgtYn: false,
+                    hasOverLenYn: false,
                     hasOverWdtYn: false,
                     hasOverHgtYn: false,
                 };
             }
 
             // 같은 CLP_NO의 데이터 중 하나라도 'Y'가 있으면 true로 설정
+            if (item.OVER_WGT_YN === 'Y') {
+                acc[clpNo].hasOverWgtYn = true;
+            }
+            if (item.OVER_LEN_YN === 'Y') {
+                acc[clpNo].hasOverLenYn = true;
+            }
             if (item.OVER_WDT_YN === 'Y') {
                 acc[clpNo].hasOverWdtYn = true;
             }
@@ -396,9 +404,16 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz =
                 item.TPSZ +
-                (group.hasOverWdtYn || group.hasOverHgtYn
-                    ? '(O' + (group.hasOverWdtYn ? 'W' : '') + (group.hasOverHgtYn ? 'H' : '') + ')'
+                (group.hasOverWgtYn
+                    ? '(Weight)'
+                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                    ? '(O' +
+                      (group.hasOverLenYn ? 'L' : '') +
+                      (group.hasOverWdtYn ? 'W' : '') +
+                      (group.hasOverHgtYn ? 'H' : '') +
+                      ')'
                     : '');
+
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
             if (!tpszCount[tpsz]) {
                 tpszCount[tpsz] = 1; // 첫 번째 항목에 일련번호 1 부여
@@ -425,8 +440,12 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 rmks: item.RMKS,
                 tpsz: tpsz + ' ' + tpszCount[tpsz],
                 image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
+                isOverWgt: 'Y' === item.OVER_WGT_YN,
+                isOverLen: 'Y' === item.OVER_LEN_YN,
                 isOverWdt: 'Y' === item.OVER_WDT_YN,
                 isOverHgt: 'Y' === item.OVER_HGT_YN,
+                hasOverWgt: group.hasOverWgtYn,
+                hasOverLen: group.hasOverLenYn,
                 hasOverWdt: group.hasOverWdtYn,
                 hasOverHgt: group.hasOverHgtYn,
             };

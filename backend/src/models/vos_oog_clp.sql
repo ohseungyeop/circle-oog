@@ -21,6 +21,7 @@ CREATE TABLE vos_oog_clp (
     REMARKS VARCHAR(255) DEFAULT NULL COMMENT 'Packing Remarks',
     TPSZ VARCHAR(10) DEFAULT '40''HQ' COMMENT 'Dry40(40HQ), Flatrack(40FR), Dry20(20DR)',
     OVER_WGT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Weight 초과 여부',
+    OVER_LEN_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Length 초과 여부',
     OVER_WDT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT 'Width 초과 여부',
     OVER_HGT_YN ENUM('Y', 'N') DEFAULT 'N' COMMENT '40fr Height 초과 여부',
 -- ----------------E: user-defined
