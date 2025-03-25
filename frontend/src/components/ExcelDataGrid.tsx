@@ -107,32 +107,27 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             const newData = await response.json();
             setContainerData(newData?.data);
 
-            const d40Data = newData?.data?.find((item) => item.CNTR_TPSZ_CD === '4H');
-            if (!d40Data) {
-                console.warn('No container data found for CNTR_TPSZ_CD = 4H');
-                return;
-            }
-
+            const d40Data = containerData?.filter((item) => item.CNTR_TPSZ_CD === '4H')[0];
             console.log('Container Master Data2:', d40Data);
 
             const table = document.getElementById('oogDataTable');
-            if (!table) return;
-
-            const thMappings: Record<string, { value: number; percentage: number }> = {
-                boxLen: { value: d40Data.CNTR_LEN, percentage: Number(d40Data.CNTR_LEN_PCTG) },
-                boxWdt: { value: d40Data.CNTR_WDT, percentage: Number(d40Data.CNTR_WDT_PCTG) },
-                boxHgt: { value: d40Data.CNTR_HGT, percentage: Number(d40Data.CNTR_HGT_PCTG) },
-            };
-
-            for (const th of table.querySelectorAll('thead th')) {
-                const key = th.getAttribute('data-key');
-                if (key && thMappings[key]) {
-                    const { value, percentage } = thMappings[key];
-                    th.insertAdjacentHTML(
-                        'beforeend',
-                        `<br/><b>${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${percentage}%)</b>`,
-                    );
-                }
+            if (table) {
+                const thList = table.querySelectorAll('thead th'); // 모든 th 요소 선택
+                thList.forEach((th) => {
+                    if (th.getAttribute('data-key') === 'boxLen') {
+                        th.innerHTML += `<br/><b>${d40Data.CNTR_LEN.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${Number(d40Data.CNTR_LEN_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
+                    } else if (th.getAttribute('data-key') === 'boxWdt') {
+                        th.innerHTML += `<br/><b>${d40Data.CNTR_WDT.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${Number(d40Data.CNTR_WDT_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
+                    } else if (th.getAttribute('data-key') === 'boxHgt') {
+                        th.innerHTML += `<br/><b>${d40Data.CNTR_HGT.toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${Number(d40Data.CNTR_HGT_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
+                    }
+                });
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -182,15 +177,16 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const handleTabChange = async (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
         if (newValue === 1) {
-            try {
-                const oogData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
-                const rowSpanMap = calculateRowSpan(oogData);
-                setCalculatorData(oogData.map((item) => ({ ...item, rowSpan: rowSpanMap[item.clpNo] })));
-                await getContainerMaster(CRR_CD);
-            } catch (error) {
-                console.error('Error fetching OOG data:', error);
-                setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
-            }
+            await getContainerMaster(CRR_CD);
+            fetchOogCalcData(pckOrdSeq, apiUrl, cookies)
+                .then((oogData) => {
+                    const rowSpanMap = calculateRowSpan(oogData);
+                    setCalculatorData(oogData.map((item) => ({ ...item, rowSpan: rowSpanMap[item.clpNo] })));
+                })
+                .catch((error) => {
+                    console.error('Error fetching OOG data:', error);
+                    setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
+                });
         }
     };
 
@@ -234,191 +230,237 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                 </AppBar>
                 <button
                     onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData)}
-                    className={styles.calculatorButton}
+                    style={{
+                        padding: '10px 20px',
+                        backgroundColor: '#0E4491',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontFamily: 'sans-serif',
+                        fontSize: '15px',
+                    }}
                 >
                     Calculator
                 </button>
             </Box>
 
             <TabPanel value={tabValue} index={0}>
-                <DataGrid
-                    rows={rows ?? []}
-                    getRowId={(row) => row.pckNo ?? `fallback-${row.id}`} // 고유 id 지정
-                    rowCount={rows?.length ?? 0}
+                <DataGrid sx={{ height: 700, width: '100%' }}
+                    rows={rows}
+                    getRowId={(row) => row.pckNo} // 고유 id 지정
+                    rowCount={rows.length}
                     columns={excelColumns}
                     paginationMode="server"
                     pageSizeOptions={[50, 100, 100]} // 50개 단위로 설정
-                    paginationModel={paginationModel || { page: 0, pageSize: 50 }}
+                    paginationModel={paginationModel}
                     onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
                     disableRowSelectionOnClick
-                    rowSelectionModel={selectionModel || []}
+                    rowSelectionModel={selectionModel}
                     loading={loading} // ✅ 로딩 상태 표시
                 />
             </TabPanel>
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
-                <table id="oogDataTable" className={styles.oogDataTable} border={1} cellPadding={5} cellSpacing={0}>
-                    <thead>
-                        <tr>
-                            {oogColumns.map((item, index) => {
-                                const isTpsz = index === 12;
+                <div className={styles.oogTableContainer}>
+                    <table id="oogDataTable" className={styles.oogDataTable} border={1} cellPadding={5} cellSpacing={0}>
+                        <thead>
+                            <tr>
+                                {oogColumns.map((item, index) => {
+                                    const isTpsz = index === 12;
+                                    return (
+                                        <th key={item.field} data-key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
+                                            {item.headerName}
+                                        </th>
+                                    );
+                                })}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {calculatorData.map((item, index, array) => {
+                                const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
                                 return (
-                                    <th key={item.field} data-key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
-                                        {item.headerName}
-                                    </th>
+                                    <tr
+                                        key={`${item.clpNo}-${item.boxNo}`}
+                                        style={item.Item === 'SUM' ? { backgroundColor: 'yellow' } : {}}
+                                    >
+                                        {/* ✅ CLP_NO 병합 적용 */}
+                                        {isFirstOccurrence ? (
+                                            <td align="center" rowSpan={item.rowSpan}>
+                                                {item.clpNo}
+                                            </td>
+                                        ) : null}
+                                        {item.Item === 'SUM' ? (
+                                            <td colSpan={2}></td>
+                                        ) : (
+                                            <>
+                                                <td align="center">{item.boxNo}</td>
+                                                <td>{item.Item}</td>
+                                                {/* <td align="right">
+                                                {item.mcLen.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </td>
+                                            <td align="right">
+                                                {item.mcWdt.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </td>
+                                            <td align="right">
+                                                {item.mcHgt.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
+                                            </td> */}
+                                            </>
+                                        )}
+
+                                        <td align="right" className={item.isOverLen ? styles.over : 'normal'}>
+                                            {item.boxLen.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td align="right" className={item.isOverWdt ? styles.over : 'normal'}>
+                                            {item.boxWdt.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td align="right" className={item.isOverHgt ? styles.over : 'normal'}>
+                                            {item.boxHgt.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td align="right">{item.qty}</td>
+                                        <td align="right">
+                                            {item.cbm.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td align="center">{item.type}</td>
+                                        <td align="right">
+                                            {item.nw.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td align="right" className={item.isOverWgt ? styles.over : 'normal'}>
+                                            {item.gw.toLocaleString(undefined, {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2,
+                                            })}
+                                        </td>
+                                        <td className={styles.remarkColumn}>{item.rmks}</td>
+                                        {/* ✅ TPSZ 병합 */}
+                                        {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.displayTpsz}</td> : null}
+                                        {/* ✅ IMAGE 병합 */}
+                                        {isFirstOccurrence ? (
+                                            <td align="center" rowSpan={item.rowSpan}>
+                                                <img src={item.image} alt="container image" />
+                                            </td>
+                                        ) : null}
+                                    </tr>
                                 );
                             })}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {calculatorData.map((item, index, array) => {
-                            const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
-                            return (
-                                <tr
-                                    key={`${item.clpNo}-${item.boxNo}`}
-                                    style={item.Item === 'SUM' ? { backgroundColor: 'yellow' } : {}}
-                                >
-                                    {/* ✅ CLP_NO 병합 적용 */}
-                                    {isFirstOccurrence ? (
-                                        <td align="center" rowSpan={item.rowSpan}>
-                                            {item.clpNo}
-                                        </td>
-                                    ) : null}
-                                    {item.Item === 'SUM' ? (
-                                        <td colSpan={2}></td>
-                                    ) : (
-                                        <>
-                                            <td align="center">{item.boxNo}</td>
-                                            <td>{item.Item}</td>
-                                        </>
-                                    )}
-                                    <td align="right" className={item.isOverLen ? styles.over : 'normal'}>
-                                        {item.boxLen.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td align="right" className={item.isOverWdt ? styles.over : 'normal'}>
-                                        {item.boxWdt.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td align="right" className={item.isOverHgt ? styles.over : 'normal'}>
-                                        {item.boxHgt.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td align="right">{item.qty}</td>
-                                    <td align="right">
-                                        {item.cbm.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td align="center">{item.type}</td>
-                                    <td align="right">
-                                        {item.nw.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td align="right" className={item.isOverWgt ? styles.over : 'normal'}>
-                                        {item.gw.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </td>
-                                    <td className={styles.remarkColumn}>{item.rmks}</td>
-                                    {/* ✅ TPSZ 병합 */}
-                                    {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.displayTpsz}</td> : null}
-                                    {/* ✅ IMAGE 병합 */}
-                                    {isFirstOccurrence ? (
-                                        <td align="center" rowSpan={item.rowSpan}>
-                                            <img src={item.image} alt="container image" />
-                                        </td>
-                                    ) : null}
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th>
-                                <strong>Total</strong>
-                            </th>
-                            <td colSpan={5}>
-                                <span>
-                                    {Object.entries(
-                                        calculatorData.reduce((countMap, item) => {
-                                            const tpsz = item.tpsz; // tpsz 값 가져오기
-                                            if (tpsz) {
-                                                const clpNo = item.clpNo;
-                                                // 이미 해당 tpsz가 countMap에 없으면 배열로 초기화
-                                                if (!countMap[tpsz]) {
-                                                    countMap[tpsz] = new Set(); // 중복을 제거하기 위해 Set 사용
-                                                }
-                                                // clpNo가 중복되지 않도록 Set에 추가
-                                                countMap[tpsz].add(clpNo);
-                                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>
+                                    <strong>Total</strong>
+                                </th>
+                                <td colSpan={5}>
+                                    <span>
+                                        {Object.entries(
+                                            calculatorData.reduce((countMap, item) => {
+                                                const tpsz = item.tpsz; // tpsz 값 가져오기
+                                                if (tpsz) {
+                                                    const clpNo = item.clpNo;
+                                                    const key = `${clpNo}-${tpsz}`; // CLP_NO와 tpsz를 조합하여 키 생성
 
-                                            return countMap;
-                                        }, {}),
-                                    ).map(([tpsz, clpNoSet], index) => {
-                                        const count = (clpNoSet as Set<string>).size; // Set의 크기
-                                        return (
-                                            <span key={tpsz}>
-                                                {index > 0 && ', '}
-                                                {tpsz}×<span className="totalNumColor">{count}</span>
-                                            </span>
-                                        );
-                                    })}
-                                </span>
-                            </td>
-                            <td align="right">
-                                {calculatorData
-                                    .filter((item) => item.Item === 'SUM')
-                                    .reduce((sum, item) => sum + item.qty, 0)
-                                    .toLocaleString(undefined, {
-                                        maximumFractionDigits: 2,
-                                    })}
-                            </td>
-                            <td align="right">
-                                {calculatorData
-                                    .filter((item) => item.Item === 'SUM')
-                                    .reduce((sum, item) => sum + item.cbm, 0)
-                                    .toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                            </td>
-                            <td></td>
-                            <td align="right">
-                                {calculatorData
-                                    .filter((item) => item.Item === 'SUM')
-                                    .reduce((sum, item) => sum + item.nw, 0)
-                                    .toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                            </td>
-                            <td align="right">
-                                {calculatorData
-                                    .filter((item) => item.Item === 'SUM')
-                                    .reduce((sum, item) => sum + item.gw, 0)
-                                    .toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                            </td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
+                                                    // 이미 해당 tpsz가 countMap에 없으면 배열로 초기화
+                                                    if (!countMap[tpsz]) {
+                                                        countMap[tpsz] = new Set(); // 중복을 제거하기 위해 Set 사용
+                                                    }
+
+                                                    // clpNo가 중복되지 않도록 Set에 추가
+                                                    countMap[tpsz].add(clpNo);
+                                                }
+
+                                                return countMap;
+                                            }, {}),
+                                        ).map(([tpsz, clpNoSet], index) => {
+                                            const count = (clpNoSet as Set<string>).size; // Set의 크기
+                                            return (
+                                                <span key={tpsz}>
+                                                    {index > 0 && ', '}
+                                                    {tpsz}×<span style={{ color: 'red' }}>{count}</span>
+                                                </span>
+                                            );
+                                        })}
+                                    </span>
+                                </td>
+                                <td align="right">
+                                    {calculatorData
+                                        .filter((item) => item.Item === 'SUM')
+                                        .reduce((sum, item) => sum + item.qty, 0)
+                                        .toLocaleString(undefined, {
+                                            maximumFractionDigits: 2,
+                                        })}
+                                </td>
+                                <td align="right">
+                                    {calculatorData
+                                        .filter((item) => item.Item === 'SUM')
+                                        .reduce((sum, item) => sum + item.cbm, 0)
+                                        .toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                </td>
+                                <td></td>
+                                <td align="right">
+                                    {calculatorData
+                                        .filter((item) => item.Item === 'SUM')
+                                        .reduce((sum, item) => sum + item.nw, 0)
+                                        .toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                </td>
+                                <td align="right">
+                                    {calculatorData
+                                        .filter((item) => item.Item === 'SUM')
+                                        .reduce((sum, item) => sum + item.gw, 0)
+                                        .toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {/* <DataGrid
+                    rows={calculatorData}
+                    getRowId={(row) => row.id} // 고유 id 지정
+                    rowCount={calculatorData.length}
+                    columns={oogColumns}
+                    paginationMode="server"
+                    pageSizeOptions={[50, 100, 100]} // 50개 단위로 설정
+                    paginationModel={paginationModel}
+                    onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
+                    disableRowSelectionOnClick
+                    rowSelectionModel={selectionModel}
+                    loading={loading} // ✅ 로딩 상태 표시
+                /> */}
             </TabPanel>
 
             <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
