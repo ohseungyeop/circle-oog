@@ -266,7 +266,7 @@ export const handleSelectionChange = async (
     rows,
     setSelectionModel,
     setExcelRows,
-    setOogRows,
+    setCalculatorData,
     fetchExcelData,
     apiUrl,
     cookies,
@@ -280,18 +280,18 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
-            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setOogRows, fetchExcelData, apiUrl, cookies);
+            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, apiUrl, cookies);
         }
 
     } else {
         setExcelRows([]);
-        setOogRows([]);
+        setCalculatorData([]);
     }
 
     setSelectionModel(newSelection);
 };
 
-const handleExcelChk = async (pckOrdSeq, setExcelRows, setOogRows, fetchExcelData, apiUrl, cookies) => {
+export const handleExcelChk = async (pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, apiUrl, cookies) => {
     if (!pckOrdSeq) return;
 
     console.log('📌 선택된 pckOrdSeq:', pckOrdSeq);
@@ -301,7 +301,7 @@ const handleExcelChk = async (pckOrdSeq, setExcelRows, setOogRows, fetchExcelDat
     console.log('📌 Excel Data:', excelData);
 
     setExcelRows(excelData);
-    setOogRows(calculatorData)
+    setCalculatorData(calculatorData)
 };
 
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {

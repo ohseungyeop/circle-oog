@@ -5,7 +5,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { handleCalculator, fetchOogCalcData, handleSelectionChange } from './FileListHandlers';
+import { handleCalculator } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
 
 interface ExcelDataGridProps {
@@ -88,16 +88,16 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const CRR_CD = 'VOS';
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
-    const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
         message: string;
         severity: 'success' | 'error' | 'warning' | 'info';
     }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
-    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
-    const [loading, setLoading] = React.useState(false);
+    // const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
+    // const [loading, setLoading] = React.useState(false);
     const [containerData, setContainerData] = React.useState<any[]>([]);
+    const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
@@ -108,27 +108,32 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             const newData = await response.json();
             setContainerData(newData?.data);
 
-            const d40Data = containerData?.filter((item) => item.CNTR_TPSZ_CD === '4H')[0];
+            const d40Data = newData?.data?.find((item) => item.CNTR_TPSZ_CD === '4H');
+            if (!d40Data) {
+                console.warn('No container data found for CNTR_TPSZ_CD = 4H');
+                return;
+            }
+
             console.log('Container Master Data2:', d40Data);
 
             const table = document.getElementById('oogDataTable');
-            if (table) {
-                const thList = table.querySelectorAll('thead th'); // 모든 th 요소 선택
-                thList.forEach((th) => {
-                    if (th.getAttribute('data-key') === 'boxLen') {
-                        th.innerHTML += `<br/><b>${d40Data.CNTR_LEN.toLocaleString(undefined, {
-                            maximumFractionDigits: 2,
-                        })} (${Number(d40Data.CNTR_LEN_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
-                    } else if (th.getAttribute('data-key') === 'boxWdt') {
-                        th.innerHTML += `<br/><b>${d40Data.CNTR_WDT.toLocaleString(undefined, {
-                            maximumFractionDigits: 2,
-                        })} (${Number(d40Data.CNTR_WDT_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
-                    } else if (th.getAttribute('data-key') === 'boxHgt') {
-                        th.innerHTML += `<br/><b>${d40Data.CNTR_HGT.toLocaleString(undefined, {
-                            maximumFractionDigits: 2,
-                        })} (${Number(d40Data.CNTR_HGT_PCTG)}%)</b>`; // 기존 텍스트 뒤에 추가
-                    }
-                });
+            if (!table) return;
+
+            const thMappings: Record<string, { value: number; percentage: number }> = {
+                boxLen: { value: d40Data.CNTR_LEN, percentage: Number(d40Data.CNTR_LEN_PCTG) },
+                boxWdt: { value: d40Data.CNTR_WDT, percentage: Number(d40Data.CNTR_WDT_PCTG) },
+                boxHgt: { value: d40Data.CNTR_HGT, percentage: Number(d40Data.CNTR_HGT_PCTG) },
+            };
+
+            for (const th of table.querySelectorAll('thead th')) {
+                const key = th.getAttribute('data-key');
+                if (key && thMappings[key]) {
+                    const { value, percentage } = thMappings[key];
+                    th.insertAdjacentHTML(
+                        'beforeend',
+                        `<br/><b>${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${percentage}%)</b>`,
+                    );
+                }
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -178,19 +183,16 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     const handleTabChange = async (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
         if (newValue === 1) {
-            await getContainerMaster(CRR_CD);
-            fetchOogCalcData(pckOrdSeq, apiUrl, cookies)
-                .then((oogData) => {
-                    const rowSpanMap = calculateRowSpan(oogData);
-                    setCalculatorData(oogData.map((item) => ({ ...item, rowSpan: rowSpanMap[item.clpNo] })));
-                })
-                .catch((error) => {
-                    console.error('Error fetching OOG data:', error);
-                    setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
-                });
+            try {
+                const rowSpanMap = calculateRowSpan(oogData);
+                setCalculatorData(oogData.map((item) => ({ ...item, rowSpan: rowSpanMap[item.clpNo] })));
+                await getContainerMaster(CRR_CD);
+            } catch (error) {
+                console.error('Error fetching OOG data:', error);
+                setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
+            }
         }
     };
-
 
     return (
         <Box sx={{ width: '100%' }}>
@@ -232,34 +234,25 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                 </AppBar>
                 <button
                     onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData)}
-                    style={{
-                        padding: '10px 20px',
-                        backgroundColor: '#0E4491',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontFamily: 'sans-serif',
-                        fontSize: '15px',
-                    }}
+                    className={styles.calculatorButton}
                 >
                     Calculator
                 </button>
             </Box>
 
             <TabPanel value={tabValue} index={0}>
-                <DataGrid sx={{ height: 700, width: '100%' }}
-                    rows={rows}
-                    getRowId={(row) => row.pckNo} // 고유 id 지정
-                    rowCount={rows.length}
+                <DataGrid className={styles.excelDataGrid}  // ✅ DataGrid 컴포넌트 추가{
+                    rows={rows ?? []}
+                    getRowId={(row) => row.pckNo ?? `fallback-${row.id}`} // 고유 id 지정
+                    rowCount={rows?.length ?? 0}
                     columns={excelColumns}
                     paginationMode="server"
-                    pageSizeOptions={[50, 100, 100]} // 50개 단위로 설정
-                    paginationModel={paginationModel}
-                    onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
+                    // pageSizeOptions={[50, 100, 100]} // 50개 단위로 설정
+                    // paginationModel={paginationModel || { page: 0, pageSize: 50 }}
+                    // onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
                     disableRowSelectionOnClick
-                    rowSelectionModel={selectionModel}
-                    loading={loading} // ✅ 로딩 상태 표시
+                    rowSelectionModel={selectionModel || []}
+                //loading={loading} // ✅ 로딩 상태 표시
                 />
             </TabPanel>
 
@@ -280,7 +273,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                             </tr>
                         </thead>
                         <tbody>
-                            {oogData.map((item, index, array) => {
+                            {calculatorData.map((item, index, array) => {
                                 const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
                                 return (
                                     <tr
@@ -299,27 +292,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             <>
                                                 <td align="center">{item.boxNo}</td>
                                                 <td>{item.Item}</td>
-                                                {/* <td align="right">
-                                                {item.mcLen.toLocaleString(undefined, {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </td>
-                                            <td align="right">
-                                                {item.mcWdt.toLocaleString(undefined, {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </td>
-                                            <td align="right">
-                                                {item.mcHgt.toLocaleString(undefined, {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                })}
-                                            </td> */}
                                             </>
                                         )}
-
                                         <td align="right" className={item.isOverLen ? styles.over : 'normal'}>
                                             {item.boxLen.toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
@@ -383,13 +357,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                                 const tpsz = item.tpsz; // tpsz 값 가져오기
                                                 if (tpsz) {
                                                     const clpNo = item.clpNo;
-                                                    const key = `${clpNo}-${tpsz}`; // CLP_NO와 tpsz를 조합하여 키 생성
-
                                                     // 이미 해당 tpsz가 countMap에 없으면 배열로 초기화
                                                     if (!countMap[tpsz]) {
                                                         countMap[tpsz] = new Set(); // 중복을 제거하기 위해 Set 사용
                                                     }
-
                                                     // clpNo가 중복되지 않도록 Set에 추가
                                                     countMap[tpsz].add(clpNo);
                                                 }
@@ -401,7 +372,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             return (
                                                 <span key={tpsz}>
                                                     {index > 0 && ', '}
-                                                    {tpsz}×<span style={{ color: 'red' }}>{count}</span>
+                                                    {tpsz}×<span className="totalNumColor">{count}</span>
                                                 </span>
                                             );
                                         })}
@@ -450,19 +421,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                         </tfoot>
                     </table>
                 </div>
-                {/* <DataGrid
-                    rows={calculatorData}
-                    getRowId={(row) => row.id} // 고유 id 지정
-                    rowCount={calculatorData.length}
-                    columns={oogColumns}
-                    paginationMode="server"
-                    pageSizeOptions={[50, 100, 100]} // 50개 단위로 설정
-                    paginationModel={paginationModel}
-                    onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
-                    disableRowSelectionOnClick
-                    rowSelectionModel={selectionModel}
-                    loading={loading} // ✅ 로딩 상태 표시
-                /> */}
             </TabPanel>
 
             <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>

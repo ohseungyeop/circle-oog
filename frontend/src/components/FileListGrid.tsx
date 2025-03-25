@@ -22,7 +22,7 @@ const FileListGrid = () => {
   const [rows, setRows] = React.useState([]);
   const [pckOrdSeq, setPckOrdSeq] = React.useState<string>('N/A');
   const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
-  const [oogData, setOogRows] = React.useState([]);
+  const [calculatorData, setCalculatorData] = React.useState([]);
   const [cookies] = useCookies(['authToken']);
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
   const [snackbar, setSnackbar] = React.useState({ open: false, message: '', severity: 'success' });
@@ -125,14 +125,14 @@ const FileListGrid = () => {
         rows={rows}
         columns={columns}
         selectionModel={selectionModel}
-        handleSelectionChange={(newSelection) => handleSelectionChange(newSelection, rows, setSelectionModel, setExcelRows, setOogRows, fetchExcelData, apiUrl, cookies)}
+        handleSelectionChange={(newSelection) => handleSelectionChange(newSelection, rows, setSelectionModel, setExcelRows, setCalculatorData, fetchExcelData, apiUrl, cookies)}
       />
 
       <ExcelDataGrid
         rows={excelRows}
         pckOrdSeq={pckOrdSeq}
         selectionModel={selectionModel}
-        oogData={oogData}
+        oogData={calculatorData}
       />
 
       <Snackbar
