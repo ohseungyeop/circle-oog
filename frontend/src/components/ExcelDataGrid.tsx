@@ -94,7 +94,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
         severity: 'success' | 'error' | 'warning' | 'info';
     }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
-    // const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 50 });
+    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
     // const [loading, setLoading] = React.useState(false);
     const [containerData, setContainerData] = React.useState<any[]>([]);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
@@ -247,8 +247,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                     rowCount={rows?.length ?? 0}
                     columns={excelColumns}
                     paginationMode="server"
-                    // pageSizeOptions={[50, 100, 100]} // 50개 단위로 설정
-                    // paginationModel={paginationModel || { page: 0, pageSize: 50 }}
+                    pageSize={10} //
+                    paginationModel={paginationModel || { page: 0, pageSize: 10 }}
                     // onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
                     disableRowSelectionOnClick
                     rowSelectionModel={selectionModel || []}
@@ -433,3 +433,5 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 };
 
 export default ExcelDataGrid;
+
+
