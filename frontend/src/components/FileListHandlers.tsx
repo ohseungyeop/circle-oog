@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -282,8 +282,10 @@ export const handleSelectionChange = async (
         if (selectedRow) {
             await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setOogRows, fetchExcelData, apiUrl, cookies);
         }
+
     } else {
         setExcelRows([]);
+        setOogRows([]);
     }
 
     setSelectionModel(newSelection);
@@ -295,11 +297,11 @@ const handleExcelChk = async (pckOrdSeq, setExcelRows, setOogRows, fetchExcelDat
     console.log('📌 선택된 pckOrdSeq:', pckOrdSeq);
 
     const excelData = await fetchExcelData(pckOrdSeq, apiUrl, cookies);
-    const oogData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
+    const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
     console.log('📌 Excel Data:', excelData);
 
     setExcelRows(excelData);
-    setOogRows(oogData);
+    setOogRows(calculatorData)
 };
 
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
@@ -404,15 +406,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                  (group.hasOverWgtYn
-                      ? '(Weight)'
-                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                      ? '(O' +
+                (group.hasOverWgtYn
+                    ? '(Weight)'
+                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                        ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                      : '')
+                        : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트

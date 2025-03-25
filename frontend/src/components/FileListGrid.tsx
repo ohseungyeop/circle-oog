@@ -21,7 +21,6 @@ const columns = [
 const FileListGrid = () => {
   const [rows, setRows] = React.useState([]);
   const [pckOrdSeq, setPckOrdSeq] = React.useState<string>('N/A');
-
   const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
   const [oogData, setOogRows] = React.useState([]);
   const [cookies] = useCookies(['authToken']);
@@ -88,7 +87,7 @@ const FileListGrid = () => {
       </button>
 
       <button
-        onClick={() => handleExportToExcel(oogData, setSnackbar)}
+        onClick={() => handleExportToExcel()}
         style={{
           marginBottom: '10px',
           margin: '15px',
@@ -133,7 +132,7 @@ const FileListGrid = () => {
         rows={excelRows}
         pckOrdSeq={pckOrdSeq}
         selectionModel={selectionModel}
-
+        oogData={oogData}
       />
 
       <Snackbar

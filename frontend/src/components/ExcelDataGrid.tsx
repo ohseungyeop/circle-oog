@@ -5,11 +5,12 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { handleCalculator, fetchOogCalcData } from './FileListHandlers';
+import { handleCalculator, fetchOogCalcData, handleSelectionChange } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
 
 interface ExcelDataGridProps {
     rows: any[];
+    oogData: any[];
     pckOrdSeq: string;
     selectionModel: GridRowSelectionModel;
 }
@@ -80,7 +81,7 @@ export const handleExportToExcel = async () => {
     }
 };
 
-const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel }) => {
+const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel, oogData }) => {
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
@@ -190,6 +191,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
         }
     };
 
+
     return (
         <Box sx={{ width: '100%' }}>
             <h3>🧮 Out of Gauge System</h3>
@@ -278,7 +280,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                             </tr>
                         </thead>
                         <tbody>
-                            {calculatorData.map((item, index, array) => {
+                            {oogData.map((item, index, array) => {
                                 const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
                                 return (
                                     <tr
