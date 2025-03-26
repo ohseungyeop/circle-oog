@@ -60,6 +60,10 @@
     color: #f00;
 }
 
+.oogDataTable tbody tr.subTotal {
+    background-color: yellow;
+}
+
 .oogDataTable tfoot {
     position: sticky;
     bottom: 0;

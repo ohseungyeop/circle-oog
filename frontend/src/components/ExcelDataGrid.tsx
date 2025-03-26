@@ -58,7 +58,7 @@ const TabPanel = ({ children, value, index }: any) => {
     );
 };
 
-export const handleExportToExcel = async () => {
+const handleExportToExcel = async () => {
     // HTML 테이블을 선택
     const table = document.getElementById('oogDataTable');
 
@@ -285,10 +285,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                             {calculatorData.map((item, index, array) => {
                                 const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
                                 return (
-                                    <tr
-                                        key={`${item.clpNo}-${item.boxNo}`}
-                                        style={item.Item === 'SUM' ? { backgroundColor: 'yellow' } : {}}
-                                    >
+                                    <tr key={`${item.clpNo}-${item.boxNo}`} className={item.Item === 'SUM' ? styles.subTotal : ''}>
                                         {/* ✅ CLP_NO 병합 적용 */}
                                         {isFirstOccurrence ? (
                                             <td align="center" rowSpan={item.rowSpan}>
@@ -441,4 +438,4 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     );
 };
 
-export default ExcelDataGrid;
+export { ExcelDataGrid, handleExportToExcel };

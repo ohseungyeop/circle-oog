@@ -4,8 +4,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import FileList from './FileList';
-import { handleExportToExcel } from './ExcelDataGrid';
-import ExcelDataGrid from './ExcelDataGrid';
+import { ExcelDataGrid, handleExportToExcel } from './ExcelDataGrid';
 import {
     fetchData,
     handleFileUpload,
