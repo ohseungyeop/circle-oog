@@ -10,6 +10,7 @@ import styles from './ExcelDataGrid.module.css';
 
 interface ExcelDataGridProps {
     rows: any[];
+    setRows: React.Dispatch<React.SetStateAction<any[]>>; // 부모로부터 전달받은 setRows
     oogData: any[];
     pckOrdSeq: string;
     selectionModel: GridRowSelectionModel;
@@ -34,13 +35,9 @@ const excelColumns: GridColDef[] = [
 ];
 
 const oogColumns: GridColDef[] = [
-    // { field: 'id', headerName: 'Seq.', width: 100 },
     { field: 'clpNo', headerName: 'CLP No.', width: 100 },
     { field: 'boxNo', headerName: 'Box No.', width: 100 },
     { field: 'Item', headerName: ' Item', width: 100 },
-    // { field: 'mcLen', headerName: 'M/C Length(㎜)', width: 100 },
-    // { field: 'mcWdt', headerName: 'M/C Width(㎜)', width: 100 },
-    // { field: 'mcHgt', headerName: 'M/C Height(㎜)', width: 100 },
     { field: 'boxLen', headerName: 'Box Length(㎜)', width: 100 },
     { field: 'boxWdt', headerName: 'Box Width(㎜)', width: 100 },
     { field: 'boxHgt', headerName: 'Box Height(㎜)', width: 100 },
@@ -51,7 +48,6 @@ const oogColumns: GridColDef[] = [
     { field: 'gw', headerName: 'G/W(㎏)', width: 100 },
     { field: 'rmks', headerName: 'Remarks', width: 100 },
     { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
-    // { field: 'tpsz', headerName: 'Image', width: 100 },
 ];
 
 const TabPanel = ({ children, value, index }: any) => {
@@ -81,7 +77,7 @@ export const handleExportToExcel = async () => {
     }
 };
 
-const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel, oogData }) => {
+const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq, selectionModel, oogData }) => {
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
@@ -95,11 +91,17 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
-    // const [loading, setLoading] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
     const [containerData, setContainerData] = React.useState<any[]>([]);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
+    // const handleCloseSnackbar = () => {
+    //     setSnackbar({ ...snackbar, open: false });
+    // };
     const handleCloseSnackbar = () => {
-        setSnackbar({ ...snackbar, open: false });
+        setSnackbar((prevState) => ({
+            ...prevState,
+            open: false,
+        }));
     };
 
     const getContainerMaster = async (crrCd: string) => {
@@ -241,25 +243,32 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
             </Box>
 
             <TabPanel value={tabValue} index={0}>
-                <DataGrid className={styles.excelDataGrid}  // ✅ DataGrid 컴포넌트 추가{
+                <DataGrid
+                    className={styles.excelDataGrid} // ✅ DataGrid 컴포넌트 추가{
                     rows={rows ?? []}
                     getRowId={(row) => row.pckNo ?? `fallback-${row.id}`} // 고유 id 지정
                     rowCount={rows?.length ?? 0}
                     columns={excelColumns}
                     paginationMode="server"
-                    pageSize={10} //
+                    // pageSize={10} //
+                    pageSizeOptions={[5, 10, 20, 50]}
                     paginationModel={paginationModel || { page: 0, pageSize: 10 }}
                     // onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
                     disableRowSelectionOnClick
                     rowSelectionModel={selectionModel || []}
-                //loading={loading} // ✅ 로딩 상태 표시
+                    //loading={loading} // ✅ 로딩 상태 표시
+                    sx={{
+                        '& .MuiDataGrid-footerContainer': {
+                            display: 'none', // 푸터 숨기기
+                        },
+                    }}
                 />
             </TabPanel>
 
             {/* TabPanel: 두 번째 탭 (File List) */}
             <TabPanel value={tabValue} index={1}>
                 <div className={styles.oogTableContainer}>
-                    <table id="oogDataTable" className={styles.oogDataTable} border={1} cellPadding={5} cellSpacing={0}>
+                    <table id="oogDataTable" className={styles.oogDataTable}>
                         <thead>
                             <tr>
                                 {oogColumns.map((item, index) => {
@@ -372,7 +381,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                             return (
                                                 <span key={tpsz}>
                                                     {index > 0 && ', '}
-                                                    {tpsz}×<span className="totalNumColor">{count}</span>
+                                                    {tpsz}×<span className={styles.totalNumColor}>{count}</span>
                                                 </span>
                                             );
                                         })}
@@ -433,5 +442,3 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
 };
 
 export default ExcelDataGrid;
-
-
