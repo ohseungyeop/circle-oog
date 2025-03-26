@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, AppBar, Tabs, Tab } from '@mui/material';
+import { Box, AppBar, Tabs, Tab, Button } from '@mui/material';
 import * as XLSX from 'xlsx';
 import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
@@ -102,7 +102,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
             open: false,
         }));
     };
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+
+    // const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [modalData, setModalData] = React.useState({
         pckOrdSeq: 0,
         clpNo: 0,
@@ -118,11 +121,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         xCount = xCount ?? 3;
         yCount = yCount ?? 13;
         setModalData({ pckOrdSeq, clpNo, tpsz, xCount, yCount });
-        setIsModalOpen(true);
+        setIsDialogOpen(true);
     };
 
     const closeModal = () => {
-        setIsModalOpen(false);
+        setIsDialogOpen(false);
     };
 
     const getContainerMaster = async (crrCd: string) => {
@@ -255,12 +258,13 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                         <Tab label="OOG System Data" />
                     </Tabs>
                 </AppBar>
-                <button
+                <Button
+                    variant="contained"
+                    color="primary"
                     onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData)}
-                    className={styles.calculatorButton}
                 >
                     Calculator
-                </button>
+                </Button>
             </Box>
 
             <TabPanel value={tabValue} index={0}>
@@ -365,9 +369,18 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                         {/* ✅ TPSZ 병합 */}
                                         {isFirstOccurrence ? (
                                             <td rowSpan={item.rowSpan}>
-                                                <span onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}>
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    sx={{ textTransform: 'none' }}
+                                                    onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}
+                                                >
                                                     {item.displayTpsz}
-                                                </span>
+                                                </Button>
+
+                                                {/* <span onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}>
+                                                    {item.displayTpsz}
+                                                </span> */}
                                             </td>
                                         ) : null}
                                         {/* ✅ IMAGE 병합 */}
@@ -463,16 +476,15 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 </Alert>
             </Snackbar>
 
-            {isModalOpen && (
-                <LashingPage
-                    pckOrdSeq={modalData.pckOrdSeq}
-                    clpNo={modalData.clpNo}
-                    tpsz={modalData.tpsz}
-                    xCount={modalData.xCount}
-                    yCount={modalData.yCount}
-                    onClose={closeModal}
-                />
-            )}
+            <LashingPage
+                isOpen={isDialogOpen}
+                onClose={closeModal}
+                pckOrdSeq={modalData.pckOrdSeq}
+                clpNo={modalData.clpNo}
+                tpsz={modalData.tpsz}
+                xCount={modalData.xCount}
+                yCount={modalData.yCount}
+            />
         </Box>
     );
 };

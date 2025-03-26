@@ -81,14 +81,3 @@
 .oogDataTable tfoot th {
     background-color: #ee9;
 }
-
-.calculatorButton {
-    padding: 10px 20px;
-    background-color: #0e4491;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: sans-serif;
-    font-size: 15px;
-}

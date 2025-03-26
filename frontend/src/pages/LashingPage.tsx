@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import styles from './LashingPage.module.css';
+// import styles from './LashingPage.module.css';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 
+interface MyDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    pckOrdSeq: number;
+    clpNo: number;
+    tpsz: string;
+    xCount?: number;
+    yCount?: number;
+}
 interface ModalProps {
     pckOrdSeq: number;
     clpNo: number;
@@ -24,7 +34,7 @@ interface lashingLinkProps {
     toY: number;
 }
 
-const LashingPage: React.FC<ModalProps> = ({ pckOrdSeq, clpNo, tpsz, xCount, yCount, onClose }) => {
+const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpNo, tpsz, xCount, yCount }) => {
     const [nodes, setNodes] = useState<lashingPointProps[]>([]);
     const [connections, setConnections] = useState<lashingLinkProps[]>([]);
     const [dragging, setDragging] = useState<lashingLinkProps | null>(null);
@@ -134,66 +144,68 @@ const LashingPage: React.FC<ModalProps> = ({ pckOrdSeq, clpNo, tpsz, xCount, yCo
     };
 
     return (
-        <div className={styles.lashingMain}>
-            <div className={styles.lashingBody}>
-                <div className={styles.lashingHeader}>
-                    <h2 className={styles.lashingTitle}>
-                        Lashing (<strong>PckOrdSeq:</strong> {pckOrdSeq},<strong>ClpNo:</strong> {clpNo},<strong>Tpsz:</strong>{' '}
-                        {tpsz})
-                    </h2>
-                    <button onClick={onClose} className={styles.modalCloseButton}>
-                        X
-                    </button>
-                </div>
-                <svg
-                    width={SVG_WIDTH}
-                    height={SVG_HEIGHT}
-                    viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-                    preserveAspectRatio="xMidYMid meet"
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={() => setDragging(null)}
-                >
-                    <g transform={`translate(${SVG_WIDTH / 2}, ${SVG_HEIGHT / 2})`}>
-                        {connections.map((conn, index) => (
-                            <line
-                                key={`line-${index}`}
-                                x1={conn.from?.x}
-                                y1={conn.from?.y}
-                                x2={conn.to?.x}
-                                y2={conn.to?.y}
-                                stroke="blue"
-                                strokeWidth="2"
-                                onClick={() => handleLineClick(index)}
-                            />
-                        ))}
-                        {dragging && (
-                            <line
-                                x1={dragging.from?.x}
-                                y1={dragging.from?.y}
-                                x2={dragging.toX}
-                                y2={dragging.toY}
-                                stroke="gray"
-                                strokeWidth="2"
-                                strokeDasharray="5,5"
-                            />
-                        )}
-                        {nodes.map((node) => (
-                            <circle
-                                key={node.id}
-                                cx={(node.x - X_CNT * 0.5) * SVG_WIDTH}
-                                cy={(node.y - Y_CNT * 0.5) * SVG_HEIGHT}
-                                r={20}
-                                fill={highlightedNode === node ? 'green' : 'red'}
-                                onMouseDown={() => handleMouseDown(node)}
-                                onMouseUp={() => handleMouseUp(node)}
-                                onMouseEnter={() => handleMouseEnter(node)} // 마우스가 circle에 들어올 때
-                                onMouseLeave={handleMouseLeave} // 마우스가 circle을 벗어날 때
-                            />
-                        ))}
-                    </g>
-                </svg>
-            </div>
-        </div>
+        <>
+            <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
+                <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white' }}>
+                    <strong>Lashing</strong> [PckOrdSeq: {pckOrdSeq}, ClpNo: {clpNo}, Tpsz: {tpsz}]
+                </DialogTitle>
+                <DialogContent sx={{ overflowX: 'hidden' }}>
+                    <svg
+                        width={SVG_WIDTH}
+                        height={SVG_HEIGHT}
+                        viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+                        preserveAspectRatio="xMidYMid meet"
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={() => setDragging(null)}
+                    >
+                        {/* <g transform={`translate(${SVG_WIDTH / 2 - (SVG_WIDTH/2)}, ${SVG_HEIGHT / 2})`}> */}
+                        <g transform={`translate(0,0)`}>
+                            {connections.map((conn, index) => (
+                                <line
+                                    key={`line-${index}`}
+                                    x1={conn.from?.x}
+                                    y1={conn.from?.y}
+                                    x2={conn.to?.x}
+                                    y2={conn.to?.y}
+                                    stroke="blue"
+                                    strokeWidth="2"
+                                    onClick={() => handleLineClick(index)}
+                                />
+                            ))}
+                            {dragging && (
+                                <line
+                                    x1={dragging.from?.x}
+                                    y1={dragging.from?.y}
+                                    x2={dragging.toX}
+                                    y2={dragging.toY}
+                                    stroke="gray"
+                                    strokeWidth="2"
+                                    strokeDasharray="5,5"
+                                />
+                            )}
+                            {nodes.map((node) => (
+                                <circle
+                                    key={node.id}
+                                    cx={(node.x - 0.5) * SVG_WIDTH + SVG_WIDTH / 2}
+                                    cy={(node.y - 0.5) * SVG_HEIGHT + SVG_HEIGHT / 2}
+                                    r={14}
+                                    fill={highlightedNode === node ? 'green' : 'red'}
+                                    onMouseDown={() => handleMouseDown(node)}
+                                    onMouseUp={() => handleMouseUp(node)}
+                                    onMouseEnter={() => handleMouseEnter(node)} // 마우스가 circle에 들어올 때
+                                    onMouseLeave={handleMouseLeave} // 마우스가 circle을 벗어날 때
+                                />
+                            ))}
+                        </g>
+                    </svg>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={onClose} color="primary">
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
     );
 };
 
