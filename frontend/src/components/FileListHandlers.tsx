@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -282,7 +282,6 @@ export const handleSelectionChange = async (
         if (selectedRow) {
             await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, apiUrl, cookies);
         }
-
     } else {
         setExcelRows([]);
         setCalculatorData([]);
@@ -301,7 +300,7 @@ export const handleExcelChk = async (pckOrdSeq, setExcelRows, setCalculatorData,
     console.log('📌 Excel Data:', excelData);
 
     setExcelRows(excelData);
-    setCalculatorData(calculatorData)
+    setCalculatorData(calculatorData);
 };
 
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
@@ -406,15 +405,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                (group.hasOverWgtYn
-                    ? '(Weight)'
-                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                        ? '(O' +
+                  (group.hasOverWgtYn
+                      ? '(Weight)'
+                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                      ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                        : '')
+                      : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -426,6 +425,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
 
             return {
                 id: index + 1,
+                pckOrdSeq: item.PCK_ORD_SEQ,
                 clpNo: item.CLP_NO,
                 boxNo: item.BOX_NO,
                 Item: item.ITEM,

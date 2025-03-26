@@ -7,6 +7,7 @@ import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
+import LashingPage from '../pages/LashingPage.tsx';
 
 interface ExcelDataGridProps {
     rows: any[];
@@ -35,6 +36,7 @@ const excelColumns: GridColDef[] = [
 ];
 
 const oogColumns: GridColDef[] = [
+    { field: 'pckOrdSeq', headerName: 'PCK_ORD_SEQ', width: 0 },
     { field: 'clpNo', headerName: 'CLP No.', width: 100 },
     { field: 'boxNo', headerName: 'Box No.', width: 100 },
     { field: 'Item', headerName: ' Item', width: 100 },
@@ -94,14 +96,33 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     const [loading, setLoading] = React.useState(false);
     const [containerData, setContainerData] = React.useState<any[]>([]);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
-    // const handleCloseSnackbar = () => {
-    //     setSnackbar({ ...snackbar, open: false });
-    // };
     const handleCloseSnackbar = () => {
         setSnackbar((prevState) => ({
             ...prevState,
             open: false,
         }));
+    };
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [modalData, setModalData] = React.useState({
+        pckOrdSeq: 0,
+        clpNo: 0,
+        tpsz: '',
+        xCount: 0,
+        yCount: 0,
+    });
+    React.useEffect(() => {
+        console.log(modalData);
+    }, [modalData]);
+
+    const openModal = (pckOrdSeq: number, clpNo: number, tpsz: string, xCount?: number, yCount?: number) => {
+        xCount = xCount ?? 3;
+        yCount = yCount ?? 13;
+        setModalData({ pckOrdSeq, clpNo, tpsz, xCount, yCount });
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
     };
 
     const getContainerMaster = async (crrCd: string) => {
@@ -271,14 +292,16 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                     <table id="oogDataTable" className={styles.oogDataTable}>
                         <thead>
                             <tr>
-                                {oogColumns.map((item, index) => {
-                                    const isTpsz = index === 12;
-                                    return (
-                                        <th key={item.field} data-key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
-                                            {item.headerName}
-                                        </th>
-                                    );
-                                })}
+                                {oogColumns
+                                    .filter((item) => item.field !== 'pckOrdSeq')
+                                    .map((item, index) => {
+                                        const isTpsz = index === 12;
+                                        return (
+                                            <th key={item.field} data-key={item.field} {...(isTpsz ? { colSpan: 2 } : {})}>
+                                                {item.headerName}
+                                            </th>
+                                        );
+                                    })}
                             </tr>
                         </thead>
                         <tbody>
@@ -340,7 +363,13 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                         </td>
                                         <td className={styles.remarkColumn}>{item.rmks}</td>
                                         {/* ✅ TPSZ 병합 */}
-                                        {isFirstOccurrence ? <td rowSpan={item.rowSpan}>{item.displayTpsz}</td> : null}
+                                        {isFirstOccurrence ? (
+                                            <td rowSpan={item.rowSpan}>
+                                                <span onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}>
+                                                    {item.displayTpsz}
+                                                </span>
+                                            </td>
+                                        ) : null}
                                         {/* ✅ IMAGE 병합 */}
                                         {isFirstOccurrence ? (
                                             <td align="center" rowSpan={item.rowSpan}>
@@ -421,8 +450,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                         })}
                                 </td>
                                 <td></td>
-                                <td></td>
-                                <td></td>
+                                <th colSpan={2}></th>
                             </tr>
                         </tfoot>
                     </table>
@@ -434,6 +462,17 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                     {snackbar.message}
                 </Alert>
             </Snackbar>
+
+            {isModalOpen && (
+                <LashingPage
+                    pckOrdSeq={modalData.pckOrdSeq}
+                    clpNo={modalData.clpNo}
+                    tpsz={modalData.tpsz}
+                    xCount={modalData.xCount}
+                    yCount={modalData.yCount}
+                    onClose={closeModal}
+                />
+            )}
         </Box>
     );
 };
