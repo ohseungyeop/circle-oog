@@ -1,14 +1,6 @@
 import replyHelper from '../utils/replyHelper.js';
 import authMiddleware from '../utils/authMiddleware.js';
 
-/**
- * @typedef {Object} LashingConnection
- * @property {{ id: string, group: string, x: number, y: number }} from
- * @property {{ id: string, group: string, x: number, y: number }} to
- * @property {number} toX
- * @property {number} toY
- */
-
 const saveLashingInfo = async (fastify, options) => {
     fastify.post(
         '/',
@@ -16,18 +8,63 @@ const saveLashingInfo = async (fastify, options) => {
             preHandler: [authMiddleware],
         },
         replyHelper(async (request, reply) => {
-            const connections = /** @type {LashingConnection[]} */ (request.body); // JSON 배열 받기
+            const { pckOrdSeq, clpNo, tpsz, xCount, yCount, data } = request.body;
+
+            // Request body validation
+            if (!pckOrdSeq || !clpNo || !tpsz || !data) {
+                throw new Error('Invalid request body');
+            }
 
             try {
-                console.log('Received connections:', connections);
+                // Begin transaction
+                await fastify.knex.transaction(async (trx) => {
+                    // Delete existing data
+                    await trx('vos_oog_lashing').where('PCK_ORD_SEQ', pckOrdSeq).where('CLP_NO', clpNo).del();
 
-                return 'Lashing data saved successfully';
+                    // Insert new data
+                    await trx('vos_oog_lashing').insert({
+                        PCK_ORD_SEQ: pckOrdSeq,
+                        CLP_NO: clpNo,
+                        TPSZ: tpsz || '40FR',
+                        X_COUNT: xCount || null,
+                        Y_COUNT: yCount || null,
+                        LASH_DATA: JSON.stringify(data),
+                    });
+                });
+                return { message: 'Lashing data saved successfully' };
             } catch (error) {
-                console.error('❌ Error fetching item list:', error);
-                throw error; // 🚨 `replyHelper`가 오류 처리하도록 예외 던지기
+                console.error('Error inserting data:', error);
+                throw new Error('Database error occurred');
             }
         }),
     );
 };
 
-export { saveLashingInfo };
+const getLashingInfo = async (fastify, options) => {
+    fastify.get('/', async (request, reply) => {
+        const { pckOrdSeq, clpNo } = request.params;
+        if (!pckOrdSeq || !clpNo) {
+            return reply.code(400).send({ error: 'PCK_ORD_SEQ and CLP_NO are required' });
+        }
+
+        try {
+            const connections = await fastify
+                .knex('vos_oog_lashing')
+                .select('LASH_DATA')
+                .where('PCK_ORD_SEQ', pckOrdSeq)
+                .where('CLP_NO', clpNo);
+
+            // 데이터가 없다면 빈 배열 반환
+            if (!connections.length) {
+                return reply.code(200).send({ message: 'No connections found' });
+            }
+
+            return JSON.parse(connections[0]?.LASH_DATA);
+        } catch (error) {
+            console.error('Error retrieving lashing data:', error);
+            return reply.code(500).send({ error: 'Failed to retrieve lashing data' });
+        }
+    });
+};
+
+export { saveLashingInfo, getLashingInfo };

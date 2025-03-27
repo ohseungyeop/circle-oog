@@ -5,15 +5,20 @@ import CloseIcon from '@mui/icons-material/Close';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 
-interface MyDialogProps {
-    isOpen: boolean;
-    onClose: () => void;
+interface lashingPageProps {
+    isOpen?: boolean;
+    onClose?: () => void;
     pckOrdSeq: number;
     clpNo: number;
     tpsz: string;
     xCount?: number;
     yCount?: number;
 }
+
+interface lashingPageDataProps extends lashingPageProps {
+    data: lashingLinkProps[];
+}
+
 interface lashingPointProps {
     id: string;
     group: string;
@@ -28,7 +33,7 @@ interface lashingLinkProps {
     toY: number;
 }
 
-const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpNo, tpsz, xCount, yCount }) => {
+const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, clpNo, tpsz, xCount, yCount }) => {
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{
@@ -84,12 +89,43 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
         }
 
         setNodes(newNodes);
+        setConnections([]);
     }, [isOpen, onClose]);
 
     useEffect(() => {
-        // console.log('Current Connections:', JSON.stringify(connections, null, 2));
-        console.log(JSON.stringify(connections));
+        console.log('Current Connections:', JSON.stringify(connections, null, 2));
     }, [connections]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (pckOrdSeq === 0 || clpNo === 0) {
+                console.log('Invalid pckOrdSeq or clpNo');
+                return; // pckOrdSeq나 clpNo가 0인 경우 요청을 보내지 않음
+            }
+            try {
+                const response = await fetch(`${apiUrl}/vos/oog/v1/lashing/${pckOrdSeq}/${clpNo}`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${cookies.authToken}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch lashing data`);
+                }
+                const result = await response.json();
+                setConnections(result);
+            } catch (error) {
+                console.error('❌ Error fetching lashing data:', error);
+                setSnackbar({
+                    open: true,
+                    message: `데이터를 불러오는 데 실패했습니다.`,
+                    severity: 'error',
+                });
+            }
+        };
+        fetchData();
+    }, [isOpen]);
 
     const handleMouseDown = (node: lashingPointProps) => {
         setDragging({
@@ -124,6 +160,9 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
                 const newConnection = { from: dragging.from, to: targetNode, toX: targetNode.x, toY: targetNode.y };
                 // 기존 connections 배열에서 이미 같은 연결이 있는지 확인
                 setConnections((prev) => {
+                    if (!Array.isArray(prev)) {
+                        return [newConnection]; // prev가 배열이 아닐 경우 새 배열로 초기화
+                    }
                     const connectionExists = prev.some(
                         (conn) =>
                             (conn.from?.id === newConnection.from.id && conn.to?.id === newConnection.to.id) ||
@@ -173,13 +212,21 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
             return;
         }
         try {
+            const lashingPageData: lashingPageDataProps = {
+                pckOrdSeq: pckOrdSeq,
+                clpNo: clpNo,
+                tpsz: tpsz.replace("'", ''),
+                xCount: xCount,
+                yCount: yCount,
+                data: connections,
+            };
             const response = await fetch(`${apiUrl}/vos/oog/v1/lashing`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${cookies.authToken}`,
                 },
-                body: JSON.stringify(JSON.stringify(connections)),
+                body: JSON.stringify(lashingPageData),
             });
 
             // ✅ 응답이 정상인지 체크
@@ -230,18 +277,19 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
                         onMouseUp={() => setDragging(null)}
                     >
                         <g transform={`translate(${FORCE_ALIGN_X},${FORCE_ALIGN_Y})`}>
-                            {connections.map((conn, index) => (
-                                <line
-                                    key={`line-${index}`}
-                                    x1={conn.from ? conn.from.x * SVG_WIDTH : 0}
-                                    y1={conn.from ? conn.from.y * SVG_HEIGHT : 0}
-                                    x2={conn.to ? conn.to.x * SVG_WIDTH : conn.toX}
-                                    y2={conn.to ? conn.to.y * SVG_HEIGHT : conn.toY}
-                                    stroke="blue"
-                                    strokeWidth="2"
-                                    onClick={() => handleLineClick(index)}
-                                />
-                            ))}
+                            {Array.isArray(connections) &&
+                                connections.map((conn, index) => (
+                                    <line
+                                        key={`line-${index}`}
+                                        x1={conn.from ? conn.from.x * SVG_WIDTH : 0}
+                                        y1={conn.from ? conn.from.y * SVG_HEIGHT : 0}
+                                        x2={conn.to ? conn.to.x * SVG_WIDTH : conn.toX}
+                                        y2={conn.to ? conn.to.y * SVG_HEIGHT : conn.toY}
+                                        stroke="blue"
+                                        strokeWidth="2"
+                                        onClick={() => handleLineClick(index)}
+                                    />
+                                ))}
                             {dragging && (
                                 <line
                                     x1={dragging.from ? dragging.from.x * SVG_WIDTH : 0}
