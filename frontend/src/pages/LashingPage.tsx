@@ -11,15 +11,6 @@ interface MyDialogProps {
     xCount?: number;
     yCount?: number;
 }
-interface ModalProps {
-    pckOrdSeq: number;
-    clpNo: number;
-    tpsz: string;
-    xCount?: number;
-    yCount?: number;
-    onClose: () => void;
-}
-
 interface lashingPointProps {
     id: string;
     group: string;
@@ -41,14 +32,12 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
     const [highlightedNode, setHighlightedNode] = useState<lashingPointProps | null>(null);
     const SVG_WIDTH = 600; // 전체 SVG 너비
     const SVG_HEIGHT = 850; // 전체 SVG 높이
-    let X_CNT = 0; // Front, Back 갯수
-    let Y_CNT = 0; // Left, Right 갯수
 
     useEffect(() => {
         console.log('xCount:', xCount);
         console.log('yCount:', yCount);
-        X_CNT = xCount ?? 3; // Front, Back 갯수
-        Y_CNT = yCount ?? 13; // Left, Right 갯수
+        const X_CNT = xCount ?? 3; // Front, Back 갯수
+        const Y_CNT = yCount ?? 13; // Left, Right 갯수
         const FB_X_POS = 100; // Front, Back 시작 x 좌표
         const F_Y_POS = 50; // Front 시작 y 좌표
         const L_X_POS = 50; // Left 시작 x 좌표
@@ -79,7 +68,7 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
         console.log(newNodes);
 
         setNodes(newNodes);
-    }, []);
+    }, [isOpen, onClose]);
 
     useEffect(() => {
         console.log('Current Connections:', JSON.stringify(connections, null, 2));

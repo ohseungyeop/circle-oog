@@ -372,15 +372,19 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                                 <Button
                                                     variant="contained"
                                                     color="primary"
-                                                    sx={{ textTransform: 'none' }}
+                                                    sx={{
+                                                        textTransform: 'none',
+                                                        '&.Mui-disabled': {
+                                                            color: 'black', // 비활성화된 버튼의 글자 색상
+                                                        },
+                                                        // 활성화된 상태에서의 글자 색상은 기본색을 유지하도록 설정
+                                                        color: 'white', // 기본 색상을 그대로 사용
+                                                    }}
                                                     onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}
+                                                    disabled={!item.tpsz.includes('FR')} // 'FR'이 포함되지 않으면 비활성화
                                                 >
                                                     {item.displayTpsz}
                                                 </Button>
-
-                                                {/* <span onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}>
-                                                    {item.displayTpsz}
-                                                </span> */}
                                             </td>
                                         ) : null}
                                         {/* ✅ IMAGE 병합 */}
