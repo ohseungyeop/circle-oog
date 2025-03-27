@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-// import styles from './LashingPage.module.css';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { useCookies } from 'react-cookie';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 interface MyDialogProps {
     isOpen: boolean;
@@ -26,16 +29,31 @@ interface lashingLinkProps {
 }
 
 const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpNo, tpsz, xCount, yCount }) => {
+    const apiUrl = import.meta.env.VITE_BACKEND_URL;
+    const [cookies] = useCookies(['authToken']);
+    const [snackbar, setSnackbar] = React.useState<{
+        open: boolean;
+        message: string;
+        severity: 'success' | 'error' | 'warning' | 'info';
+    }>({ open: false, message: '', severity: 'success' });
+    const handleCloseSnackbar = () => {
+        setSnackbar((prevState) => ({
+            ...prevState,
+            open: false,
+        }));
+    };
+
     const [nodes, setNodes] = useState<lashingPointProps[]>([]);
     const [connections, setConnections] = useState<lashingLinkProps[]>([]);
     const [dragging, setDragging] = useState<lashingLinkProps | null>(null);
     const [highlightedNode, setHighlightedNode] = useState<lashingPointProps | null>(null);
+
     const SVG_WIDTH = 600; // 전체 SVG 너비
     const SVG_HEIGHT = 850; // 전체 SVG 높이
+    const FORCE_ALIGN_X = 80;
+    const FORCE_ALIGN_Y = 30;
 
     useEffect(() => {
-        console.log('xCount:', xCount);
-        console.log('yCount:', yCount);
         const X_CNT = xCount ?? 3; // Front, Back 갯수
         const Y_CNT = yCount ?? 13; // Left, Right 갯수
         const FB_X_POS = 100; // Front, Back 시작 x 좌표
@@ -65,22 +83,34 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
             newNodes.push({ id: `R${i}`, group: 'right', x: rightXRatio, y: yRatio });
         }
 
-        console.log(newNodes);
-
         setNodes(newNodes);
     }, [isOpen, onClose]);
 
     useEffect(() => {
-        console.log('Current Connections:', JSON.stringify(connections, null, 2));
+        // console.log('Current Connections:', JSON.stringify(connections, null, 2));
+        console.log(JSON.stringify(connections));
     }, [connections]);
 
     const handleMouseDown = (node: lashingPointProps) => {
-        setDragging({ from: node, to: null, toX: node.x, toY: node.y });
+        setDragging({
+            from: node,
+            to: null,
+            toX: (node.x - 0.5) * SVG_WIDTH + SVG_WIDTH / 2,
+            toY: (node.y - 0.5) * SVG_HEIGHT + SVG_HEIGHT / 2,
+        });
     };
 
     const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
         if (!dragging) return;
-        setDragging({ ...dragging, toX: e.clientX, toY: e.clientY });
+
+        const svgElement = e.currentTarget; // 현재 SVG 요소 가져오기
+        const svgRect = svgElement.getBoundingClientRect(); // SVG의 위치 정보 가져오기
+
+        // SVG 내부 좌표 계산
+        const relativeX = e.clientX - svgRect.left - FORCE_ALIGN_X;
+        const relativeY = e.clientY - svgRect.top - FORCE_ALIGN_Y;
+
+        setDragging({ ...dragging, toX: relativeX, toY: relativeY });
     };
 
     const handleMouseUp = (targetNode: lashingPointProps | null) => {
@@ -132,11 +162,63 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
         setHighlightedNode(null); // 마우스가 원을 벗어났을 때 강조를 해제
     };
 
+    const saveLashing = async () => {
+        const lineList = document.getElementsByTagName('line');
+        if (!lineList.length) {
+            setSnackbar({
+                open: true,
+                message: '연결된 라인이 없습니다!',
+                severity: 'warning',
+            });
+            return;
+        }
+        try {
+            const response = await fetch(`${apiUrl}/vos/oog/v1/lashing`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${cookies.authToken}`,
+                },
+                body: JSON.stringify(JSON.stringify(connections)),
+            });
+
+            // ✅ 응답이 정상인지 체크
+            if (!response.ok) {
+                throw new Error(`저장 실패: ${response.status} ${response.statusText}`);
+            }
+
+            // ✅ 성공 메시지 출력
+            setSnackbar({
+                open: true,
+                message: '저장되었습니다.',
+                severity: 'success',
+            });
+        } catch (error) {
+            setSnackbar({
+                open: true,
+                message: `저장을 실패했습니다.`,
+                severity: 'error',
+            });
+        }
+    };
+
     return (
         <>
             <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
                 <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white' }}>
                     <strong>Lashing</strong> [PckOrdSeq: {pckOrdSeq}, ClpNo: {clpNo}, Tpsz: {tpsz}]
+                    <IconButton
+                        aria-label="close"
+                        onClick={onClose}
+                        sx={{
+                            position: 'absolute',
+                            right: 8,
+                            top: 8,
+                            color: 'white',
+                        }}
+                    >
+                        <CloseIcon />
+                    </IconButton>
                 </DialogTitle>
                 <DialogContent sx={{ overflowX: 'hidden' }}>
                     <svg
@@ -147,15 +229,14 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
                         onMouseMove={handleMouseMove}
                         onMouseUp={() => setDragging(null)}
                     >
-                        {/* <g transform={`translate(${SVG_WIDTH / 2 - (SVG_WIDTH/2)}, ${SVG_HEIGHT / 2})`}> */}
-                        <g transform={`translate(0,0)`}>
+                        <g transform={`translate(${FORCE_ALIGN_X},${FORCE_ALIGN_Y})`}>
                             {connections.map((conn, index) => (
                                 <line
                                     key={`line-${index}`}
-                                    x1={conn.from?.x}
-                                    y1={conn.from?.y}
-                                    x2={conn.to?.x}
-                                    y2={conn.to?.y}
+                                    x1={conn.from ? conn.from.x * SVG_WIDTH : 0}
+                                    y1={conn.from ? conn.from.y * SVG_HEIGHT : 0}
+                                    x2={conn.to ? conn.to.x * SVG_WIDTH : conn.toX}
+                                    y2={conn.to ? conn.to.y * SVG_HEIGHT : conn.toY}
                                     stroke="blue"
                                     strokeWidth="2"
                                     onClick={() => handleLineClick(index)}
@@ -163,8 +244,8 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
                             ))}
                             {dragging && (
                                 <line
-                                    x1={dragging.from?.x}
-                                    y1={dragging.from?.y}
+                                    x1={dragging.from ? dragging.from.x * SVG_WIDTH : 0}
+                                    y1={dragging.from ? dragging.from.y * SVG_HEIGHT : 0}
                                     x2={dragging.toX}
                                     y2={dragging.toY}
                                     stroke="gray"
@@ -189,11 +270,16 @@ const LashingPage: React.FC<MyDialogProps> = ({ isOpen, onClose, pckOrdSeq, clpN
                     </svg>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={onClose} color="primary">
-                        Close
+                    <Button variant="contained" color="primary" onClick={() => saveLashing()}>
+                        Save
                     </Button>
                 </DialogActions>
             </Dialog>
+            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </>
     );
 };

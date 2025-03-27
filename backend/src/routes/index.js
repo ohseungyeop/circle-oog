@@ -1,6 +1,7 @@
 import { uploadFile, selectFileList, uploadDetail, deleteFile, downloadTemplate, selectDetails } from './fileApi.js';
 import { getPackageList, getContainerMaster } from './packageApi.js';
 import calculate from './calculateApi.js';
+import { saveLashingInfo } from './lashingApi.js';
 import { registerUser, verifyToken, verifyEmail } from './userApi.js';
 
 // https://www.notion.so/OOG-175d5cf7a5cc8070b615dd7520403c8c?pvs=4#1acd5cf7a5cc809f9721de2f28f0c891
@@ -26,6 +27,9 @@ async function routes(fastify, options) {
 
     // 처리 결과
     fastify.register(getPackageList, { prefix: '/vos/oog/v1/packages/:pckOrdSeq([0-9]+)' }); // GET
+
+    // Lashing 정보 저장
+    fastify.register(saveLashingInfo, { prefix: '/vos/oog/v1/lashing' }); // POST
 
     // 사용자 관리
     fastify.register(registerUser, { prefix: '/vos/oog/v1/users' }); // POST

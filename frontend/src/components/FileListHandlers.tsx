@@ -403,6 +403,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             const group = groupedData[clpNo];
             // debugger;
             // tpsz 값을 계산
+            console.log('item', item);
             const tpsz = item.TPSZ
                 ? item.TPSZ +
                   (group.hasOverWgtYn
@@ -442,7 +443,8 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 gw: Number(item.GW),
                 rmks: item.RMKS,
                 displayTpsz: tpsz + ' ' + tpszCount[tpsz],
-                tpsz: tpsz,
+                tpsz: item.TPSZ,
+                // tpsz: tpsz,
                 image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
