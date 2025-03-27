@@ -1,18 +1,5 @@
 import replyHelper from '../utils/replyHelper.js';
 import authMiddleware from '../utils/authMiddleware.js';
-import {
-    calculateCBM,
-    filterListByWeight,
-    filterListByLength,
-    filterListByWidth,
-    filterListByHeight,
-    checkListByWeight,
-    checkListByLength,
-    checkListByWidth,
-    checkListByHeight,
-    groupItemListByLength,
-    regroupItemList,
-} from '../utils/calculateHelper.js';
 
 /**
  * @typedef {Object} LashingConnection
