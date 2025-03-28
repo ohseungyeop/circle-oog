@@ -296,17 +296,28 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                                 />
                             )}
                             {nodes.map((node) => (
-                                <circle
-                                    key={node.id}
-                                    cx={(node.x - 0.5) * SVG_WIDTH + SVG_WIDTH / 2}
-                                    cy={(node.y - 0.5) * SVG_HEIGHT + SVG_HEIGHT / 2}
-                                    r={14}
-                                    fill={highlightedNode === node ? 'green' : 'red'}
-                                    onMouseDown={() => handleMouseDown(node)}
-                                    onMouseUp={() => handleMouseUp(node)}
-                                    onMouseEnter={() => handleMouseEnter(node)} // 마우스가 circle에 들어올 때
-                                    onMouseLeave={handleMouseLeave} // 마우스가 circle을 벗어날 때
-                                />
+                                <g key={node.id}>
+                                    <circle
+                                        cx={(node.x - 0.5) * SVG_WIDTH + SVG_WIDTH / 2}
+                                        cy={(node.y - 0.5) * SVG_HEIGHT + SVG_HEIGHT / 2}
+                                        r={14}
+                                        fill={highlightedNode === node ? 'green' : 'red'}
+                                        onMouseDown={() => handleMouseDown(node)}
+                                        onMouseUp={() => handleMouseUp(node)}
+                                        onMouseEnter={() => handleMouseEnter(node)}
+                                        onMouseLeave={handleMouseLeave}
+                                    />
+                                    <text
+                                        x={(node.x - 0.5) * SVG_WIDTH + SVG_WIDTH / 2}
+                                        y={(node.y - 0.5) * SVG_HEIGHT + SVG_HEIGHT / 2}
+                                        dy={5} // 글자를 원의 중앙에 위치하도록 조정
+                                        fontSize="15"
+                                        fill="white"
+                                        textAnchor="middle"
+                                    >
+                                        {node.id}
+                                    </text>
+                                </g>
                             ))}
                         </g>
                     </svg>
