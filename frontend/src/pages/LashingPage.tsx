@@ -90,7 +90,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
 
         setNodes(newNodes);
         setConnections([]);
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     useEffect(() => {
         console.log('Current Connections:', JSON.stringify(connections, null, 2));
@@ -160,20 +160,13 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                 const newConnection = { from: dragging.from, to: targetNode, toX: targetNode.x, toY: targetNode.y };
                 // 기존 connections 배열에서 이미 같은 연결이 있는지 확인
                 setConnections((prev) => {
-                    if (!Array.isArray(prev)) {
-                        return [newConnection]; // prev가 배열이 아닐 경우 새 배열로 초기화
-                    }
                     const connectionExists = prev.some(
                         (conn) =>
                             (conn.from?.id === newConnection.from.id && conn.to?.id === newConnection.to.id) ||
                             (conn.from?.id === newConnection.to.id && conn.to?.id === newConnection.from.id),
                     );
 
-                    // 연결이 없으면 추가하고, 있으면 그대로 반환
-                    if (connectionExists) {
-                        return prev;
-                    }
-                    return [...prev, newConnection];
+                    return connectionExists ? prev : [...prev, newConnection];
                 });
             }
         }
@@ -215,11 +208,12 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
             const lashingPageData: lashingPageDataProps = {
                 pckOrdSeq: pckOrdSeq,
                 clpNo: clpNo,
-                tpsz: tpsz.replace("'", ''),
+                tpsz: tpsz?.replace("'", '') ?? '40FR',
                 xCount: xCount,
                 yCount: yCount,
                 data: connections,
             };
+            console.log('lashingPageData:', JSON.stringify(lashingPageData));
             const response = await fetch(`${apiUrl}/vos/oog/v1/lashing`, {
                 method: 'POST',
                 headers: {

@@ -113,9 +113,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         xCount: 0,
         yCount: 0,
     });
-    React.useEffect(() => {
-        console.log(modalData);
-    }, [modalData]);
 
     const openModal = (pckOrdSeq: number, clpNo: number, tpsz: string, xCount?: number, yCount?: number) => {
         xCount = xCount ?? 3;

@@ -401,9 +401,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
         const formattedData = data.data.map((item: any, index: number) => {
             const clpNo = item.CLP_NO;
             const group = groupedData[clpNo];
-            // debugger;
             // tpsz 값을 계산
-            console.log('item', item);
             const tpsz = item.TPSZ
                 ? item.TPSZ +
                   (group.hasOverWgtYn
