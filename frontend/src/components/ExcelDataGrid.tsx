@@ -5,7 +5,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { handleCalculator } from './FileListHandlers';
+import { fetchOogCalcData, handleCalculator } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
 import LashingPage from '../pages/LashingPage.tsx';
 
@@ -206,16 +206,54 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     const handleTabChange = async (event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
         if (newValue === 1) {
+            // OOG System Data 탭 선택 시
             try {
-                const rowSpanMap = calculateRowSpan(oogData);
-                setCalculatorData(oogData.map((item) => ({ ...item, rowSpan: rowSpanMap[item.clpNo] })));
+                debugger;
+                if (oogData.length === 0) {
+                    // oogData가 비어있을 경우 fetchOogCalcData로 데이터를 가져옵니다.
+                    fetchOogCalcData(apiUrl, pckOrdSeq, cookies).then((calcData) => {
+                        // rowSpan을 계산하여 추가
+                        const rowSpanMap = calculateRowSpan(calcData);
+                        const updatedData = calcData.map((item) => ({
+                            ...item,
+                            rowSpan: rowSpanMap[item.clpNo],
+                        }));
+
+                        // 최종적으로 상태 업데이트
+                        setCalculatorData(updatedData);
+                    });
+                } else {
+                    // oogData가 이미 있을 경우, rowSpan만 계산해서 상태 업데이트
+                    const rowSpanMap = calculateRowSpan(oogData);
+                    const calcData = oogData.map((item) => ({
+                        ...item,
+                        rowSpan: rowSpanMap[item.clpNo],
+                    }));
+
+                    setCalculatorData(calcData);
+                }
+
+                // 추가 작업 실행
                 await getContainerMaster(CRR_CD);
+
             } catch (error) {
                 console.error('Error fetching OOG data:', error);
                 setSnackbar({ open: true, message: 'Error fetching OOG data', severity: 'error' });
             }
         }
     };
+
+    // 📌 calculatorData가 변경될 때마다 rowSpan을 업데이트
+    React.useEffect(() => {
+        if (tabValue === 1 && oogData.length > 0) {
+            const rowSpanMap = calculateRowSpan(oogData);
+            const updatedData = oogData.map((item) => ({
+                ...item,
+                rowSpan: rowSpanMap[item.clpNo],  // rowSpan 계산 후 추가
+            }));
+            setCalculatorData(updatedData);  // 상태 업데이트
+        }
+    }, [oogData, tabValue]);  // tabValue와 oogData가 변경될 때만 실행
 
     return (
         <Box sx={{ width: '100%' }}>

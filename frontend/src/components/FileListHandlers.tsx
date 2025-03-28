@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -280,7 +280,7 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
-            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, apiUrl, cookies);
+            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, fetchOogCalcData, apiUrl, cookies);
         }
     } else {
         setExcelRows([]);
@@ -290,19 +290,34 @@ export const handleSelectionChange = async (
     setSelectionModel(newSelection);
 };
 
-export const handleExcelChk = async (pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, apiUrl, cookies) => {
+export const handleExcelChk = async (
+    pckOrdSeq,
+    setExcelRows,
+    setCalculatorData,
+    fetchExcelData,
+    fetchOogCalcData,
+    apiUrl,
+    cookies
+) => {
     if (!pckOrdSeq) return;
 
     console.log('📌 선택된 pckOrdSeq:', pckOrdSeq);
 
-    const excelData = await fetchExcelData(pckOrdSeq, apiUrl, cookies);
-    const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
-    console.log('📌 Excel Data:', excelData);
+    try {
+        // 데이터 비동기적으로 가져오기
+        const excelData = await fetchExcelData(pckOrdSeq, apiUrl, cookies);
+        const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
 
-    setExcelRows(excelData);
-    setCalculatorData(calculatorData);
+        console.log('📌 Excel Data:', excelData);
+        console.log('📌 Calculator Data:', calculatorData);
+
+        // 상태 업데이트
+        setExcelRows(excelData);
+        setCalculatorData(calculatorData);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
 };
-
 export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/files/details/${pckOrdSeq}`, {
@@ -404,15 +419,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                  (group.hasOverWgtYn
-                      ? '(Weight)'
-                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                      ? '(O' +
+                (group.hasOverWgtYn
+                    ? '(Weight)'
+                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                        ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                      : '')
+                        : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
