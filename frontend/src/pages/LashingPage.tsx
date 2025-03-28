@@ -314,6 +314,8 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                                         fontSize="15"
                                         fill="white"
                                         textAnchor="middle"
+                                        pointerEvents="none"
+                                        style={{ userSelect: 'none' }}
                                     >
                                         {node.id}
                                     </text>
