@@ -364,6 +364,7 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
 };
 
 export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
+    console.log("🔍 Calling API with:", apiUrl, pckOrdSeq, cookies);
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/packages/${pckOrdSeq}`, {
             method: 'GET',
@@ -371,10 +372,14 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 Authorization: `Bearer ${cookies.authToken}`,
             },
         });
+        console.log("🔍 API Response Status:", response.status);
+        // API 응답을 먼저 텍스트로 확인 (HTML인지 JSON인지 판별)
+        const rawText = await response.text();
+        console.log("🔍 API Raw Response:", rawText);
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
 
-        const data = await response.json();
+        const data = JSON.parse(rawText);
         console.log('Fetched Oog Data:', data);
 
         if (!Array.isArray(data.data)) {
@@ -546,10 +551,12 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
             open: true,
             message: '계산이 완료되었습니다!',
             severity: 'success',
-        });
-
+        })
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
-        // fetchData(cookies, apiUrl);
+        // fetchData(cookies, apiUrl)        // 된 로우에 대한 계산 데이터 가져오기
+        const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
+        setCalculatorData(calculatorData);
+        console.log('Calculator Data:', calculatorData);
     } catch (error) {
         setSnackbar({
             open: true,
