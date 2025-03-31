@@ -160,13 +160,16 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                 const newConnection = { from: dragging.from, to: targetNode, toX: targetNode.x, toY: targetNode.y };
                 // 기존 connections 배열에서 이미 같은 연결이 있는지 확인
                 setConnections((prev) => {
-                    const connectionExists = prev.some(
+                    // prev가 배열인지 확인하고, 아니라면 빈 배열로 초기화
+                    const connectionsArray = Array.isArray(prev) ? prev : [];
+                
+                    const connectionExists = connectionsArray.some(
                         (conn) =>
                             (conn.from?.id === newConnection.from.id && conn.to?.id === newConnection.to.id) ||
                             (conn.from?.id === newConnection.to.id && conn.to?.id === newConnection.from.id),
                     );
-
-                    return connectionExists ? prev : [...prev, newConnection];
+                
+                    return connectionExists ? connectionsArray : [...connectionsArray, newConnection];
                 });
             }
         }
