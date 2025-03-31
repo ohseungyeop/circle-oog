@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -432,15 +432,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                  (group.hasOverWgtYn
-                      ? '(Weight)'
-                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                      ? '(O' +
+                (group.hasOverWgtYn
+                    ? '(Weight)'
+                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                        ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                      : '')
+                        : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -532,6 +532,20 @@ export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, se
     }
 };
 
+const calculateRowSpan = (data: any[]) => {
+    const rowSpanMap: Record<string, number> = {};
+
+    data.forEach((item) => {
+        if (rowSpanMap[item.clpNo]) {
+            rowSpanMap[item.clpNo]++;
+        } else {
+            rowSpanMap[item.clpNo] = 1;
+        }
+    });
+
+    return rowSpanMap;
+};
+
 export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData) => {
     if (!selectionModel || selectionModel.length === 0) {
         setSnackbar({
@@ -563,7 +577,15 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
         // fetchData(cookies, apiUrl)        // 된 로우에 대한 계산 데이터 가져오기
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
-        setCalculatorData(calculatorData);
+
+        const rowSpanMap = calculateRowSpan(calculatorData);
+        const updatedData = calculatorData.map((item) => ({
+            ...item,
+            rowSpan: rowSpanMap[item.clpNo], // clpNo 기준으로 rowSpan 값 추가
+        }));
+
+        setCalculatorData(updatedData);
+
         console.log('Calculator Data:', calculatorData);
     } catch (error) {
         setSnackbar({

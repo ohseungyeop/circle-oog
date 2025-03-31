@@ -221,11 +221,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
 
                     setCalculatorData(updatedData);
                     console.log('OOG Data:', updatedData);
-                } else {
-                    console.error('OOG Data is invalid or empty:', oogData);
-                    setSnackbar({ open: true, message: 'No OOG Data found', severity: 'warning' });
                 }
-
                 // 추가 작업 실행 (예: 컨테이너 데이터 가져오기)
                 await getContainerMaster(CRR_CD);
 
