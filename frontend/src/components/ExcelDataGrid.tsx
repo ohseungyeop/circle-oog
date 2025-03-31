@@ -210,18 +210,16 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
             try {
                 debugger;
 
-                // 데이터가 배열이 맞는지 다시 한 번 확인
-                if (Array.isArray(oogData) && oogData.length > 0) {
-                    // rowSpan 계산 추가
-                    const rowSpanMap = calculateRowSpan(oogData);
-                    const updatedData = oogData.map((item) => ({
-                        ...item,
-                        rowSpan: rowSpanMap[item.clpNo],
-                    }));
+                // 데이터가 배열이 맞는지 다시 한 번 확
+                // rowSpan 계산 추가
+                const rowSpanMap = calculateRowSpan(oogData);
+                const updatedData = oogData.map((item) => ({
+                    ...item,
+                    rowSpan: rowSpanMap[item.clpNo],
+                }));
 
-                    setCalculatorData(updatedData);
-                    console.log('OOG Data:', updatedData);
-                }
+                setCalculatorData(updatedData);
+                console.log('OOG Data:', updatedData);
                 // 추가 작업 실행 (예: 컨테이너 데이터 가져오기)
                 await getContainerMaster(CRR_CD);
 
