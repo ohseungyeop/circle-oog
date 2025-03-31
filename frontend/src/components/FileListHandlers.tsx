@@ -124,7 +124,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -280,7 +280,15 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
-            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, fetchOogCalcData, apiUrl, cookies);
+            await handleExcelChk(
+                selectedRow.pckOrdSeq,
+                setExcelRows,
+                setCalculatorData,
+                fetchExcelData,
+                fetchOogCalcData,
+                apiUrl,
+                cookies,
+            );
         }
     } else {
         setExcelRows([]);
@@ -297,7 +305,7 @@ export const handleExcelChk = async (
     fetchExcelData,
     fetchOogCalcData,
     apiUrl,
-    cookies
+    cookies,
 ) => {
     if (!pckOrdSeq) return;
 
@@ -364,7 +372,7 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
 };
 
 export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
-    console.log("🔍 Calling API with:", apiUrl, pckOrdSeq, cookies);
+    console.log('🔍 Calling API with:', apiUrl, pckOrdSeq, cookies);
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/packages/${pckOrdSeq}`, {
             method: 'GET',
@@ -372,10 +380,10 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 Authorization: `Bearer ${cookies.authToken}`,
             },
         });
-        console.log("🔍 API Response Status:", response.status);
+        console.log('🔍 API Response Status:', response.status);
         // API 응답을 먼저 텍스트로 확인 (HTML인지 JSON인지 판별)
         const rawText = await response.text();
-        console.log("🔍 API Raw Response:", rawText);
+        console.log('🔍 API Raw Response:', rawText);
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
 
@@ -424,15 +432,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                (group.hasOverWgtYn
-                    ? '(Weight)'
-                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                        ? '(O' +
+                  (group.hasOverWgtYn
+                      ? '(Weight)'
+                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                      ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                        : '')
+                      : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -463,7 +471,7 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
                 displayTpsz: tpsz + ' ' + tpszCount[tpsz],
                 tpsz: item.TPSZ,
                 // tpsz: tpsz,
-                image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.svg' : null,
+                image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.png' : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
                 isOverWdt: 'Y' === item.OVER_WDT_YN,
@@ -551,7 +559,7 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
             open: true,
             message: '계산이 완료되었습니다!',
             severity: 'success',
-        })
+        });
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
         // fetchData(cookies, apiUrl)        // 된 로우에 대한 계산 데이터 가져오기
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
