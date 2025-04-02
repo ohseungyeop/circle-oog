@@ -28,8 +28,8 @@ const FileListGrid = () => {
     const [rows, setRows] = React.useState<any[]>([]);
     const [pckOrdSeq, setPckOrdSeq] = React.useState<string>('N/A');
     const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
-    const [calculatorData, setCalculatorData] = React.useState([]);
-    const [cookies] = useCookies(['authToken']);
+    const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
+    const [cookies, setCookie, removeCookie] = useCookies(['authToken']);
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
@@ -41,7 +41,7 @@ const FileListGrid = () => {
         severity: 'success',
     });
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [selectionModel, setSelectionModel] = React.useState([]);
+    const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
 
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
@@ -49,7 +49,7 @@ const FileListGrid = () => {
 
     React.useEffect(() => {
         if (cookies.authToken) {
-            fetchData(cookies, apiUrl, setRows);
+            fetchData({ authToken: cookies.authToken }, apiUrl, setRows);
         }
     }, [cookies.authToken]);
 
@@ -80,7 +80,9 @@ const FileListGrid = () => {
             <input
                 ref={fileInputRef}
                 type="file"
-                onChange={(event) => handleFileUpload(event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)}
+                onChange={(event) =>
+                    handleFileUpload(event, { authToken: cookies.authToken }, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)
+                }
                 hidden
             />
             <button
@@ -119,7 +121,17 @@ const FileListGrid = () => {
             </button>
 
             <button
-                onClick={() => handleDeleteRows(apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows)}
+                onClick={() =>
+                    handleDeleteRows(
+                        apiUrl,
+                        { authToken: cookies.authToken },
+                        selectionModel,
+                        rows,
+                        setSnackbar,
+                        fetchData,
+                        setRows,
+                    )
+                }
                 style={{
                     marginBottom: '10px',
                     padding: '10px 20px',
@@ -141,14 +153,14 @@ const FileListGrid = () => {
                 selectionModel={selectionModel}
                 handleSelectionChange={(newSelection) =>
                     handleSelectionChange(
-                        newSelection,
+                        [...newSelection].filter((id): id is number => typeof id === 'number'),
                         rows,
                         setSelectionModel,
                         setExcelRows,
                         setCalculatorData,
                         fetchExcelData,
                         apiUrl,
-                        cookies,
+                        { authToken: cookies.authToken },
                     )
                 }
             />
