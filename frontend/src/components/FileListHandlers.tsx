@@ -487,7 +487,10 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
                 displayTpsz: tpsz + ' ' + tpszCount[tpsz],
                 tpsz: item.TPSZ,
                 // tpsz: tpsz,
-                image: null !== item.TPSZ ? '/images/' + item.TPSZ.replace("'", '').toLowerCase() + '.png' : null,
+                image:
+                    null !== item.TPSZ
+                        ? '/images/' + (group.hasOverWgtYn ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) + '.png'
+                        : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
                 isOverWdt: 'Y' === item.OVER_WDT_YN,
