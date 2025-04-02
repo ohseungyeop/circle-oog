@@ -2,7 +2,11 @@ import { Snackbar } from '@mui/material';
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
 
-export const fetchData = async (cookies, apiUrl, setRows) => {
+interface Cookies {
+    authToken: string;
+}
+
+export const fetchData = async (cookies: Cookies, apiUrl: string, setRows: (rows: any[]) => void) => {
     if (!cookies.authToken) {
         console.error('No auth token found');
         return;
@@ -55,13 +59,21 @@ export const fetchData = async (cookies, apiUrl, setRows) => {
     }
 };
 
-export const handleTemplateDownload = (apiUrl) => {
+export const handleTemplateDownload = (apiUrl: string) => {
     const link = document.createElement('a');
     link.href = `${apiUrl}/vos/oog/v1/files/template`;
     link.click();
 };
 
-export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows) => {
+export const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    cookies: Cookies,
+    apiUrl: string,
+    setSnackbar: any,
+    setExcelRows: any,
+    fetchData: any,
+    setRows: any,
+) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -124,7 +136,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -187,7 +199,7 @@ export const handleFileUpload = async (event, cookies, apiUrl, setSnackbar, setE
     event.target.value = '';
 };
 
-const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
+const importExcel = async (file: File, cookies: Cookies, apiUrl: string, setSnackbar: any) => {
     let email = '';
     try {
         const decoded: any = jwtDecode(cookies.authToken);
@@ -229,7 +241,12 @@ const importExcel = async (file, cookies, apiUrl, setSnackbar) => {
     }
 };
 
-const insertExcelData = async (data, apiUrl, cookies, setSnackbar) => {
+interface ExcelData {
+    id: number;
+    [key: string]: any; // Replace with specific keys and types if known
+}
+
+const insertExcelData = async (data: ExcelData[], apiUrl: string, cookies: Cookies, setSnackbar: any) => {
     if (data.length === 0) {
         setSnackbar({
             open: true,
@@ -262,14 +279,14 @@ const insertExcelData = async (data, apiUrl, cookies, setSnackbar) => {
 };
 
 export const handleSelectionChange = async (
-    newSelection,
-    rows,
-    setSelectionModel,
-    setExcelRows,
-    setCalculatorData,
-    fetchExcelData,
-    apiUrl,
-    cookies,
+    newSelection: number[],
+    rows: any[],
+    setSelectionModel: (selection: number[]) => void,
+    setExcelRows: (rows: any[]) => void,
+    setCalculatorData: (data: any[]) => void,
+    fetchExcelData: (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => Promise<any[]>,
+    apiUrl: string,
+    cookies: Cookies,
 ) => {
     if (newSelection.length > 1) {
         newSelection = [newSelection[newSelection.length - 1]];
@@ -299,13 +316,13 @@ export const handleSelectionChange = async (
 };
 
 export const handleExcelChk = async (
-    pckOrdSeq,
-    setExcelRows,
-    setCalculatorData,
-    fetchExcelData,
-    fetchOogCalcData,
-    apiUrl,
-    cookies,
+    pckOrdSeq: number,
+    setExcelRows: (rows: any[]) => void,
+    setCalculatorData: (data: any[]) => void,
+    fetchExcelData: (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => Promise<any[]>,
+    fetchOogCalcData: (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => Promise<any[]>,
+    apiUrl: string,
+    cookies: Cookies,
 ) => {
     if (!pckOrdSeq) return;
 
@@ -326,7 +343,7 @@ export const handleExcelChk = async (
         console.error('Error fetching data:', error);
     }
 };
-export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
+export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => {
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/files/details/${pckOrdSeq}`, {
             method: 'GET',
@@ -371,7 +388,7 @@ export const fetchExcelData = async (pckOrdSeq, apiUrl, cookies) => {
     }
 };
 
-export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
+export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => {
     console.log('🔍 Calling API with:', apiUrl, pckOrdSeq, cookies);
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/packages/${pckOrdSeq}`, {
@@ -432,15 +449,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                (group.hasOverWgtYn
-                    ? '(Weight)'
-                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                        ? '(O' +
+                  (group.hasOverWgtYn
+                      ? '(Weight)'
+                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                      ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                        : '')
+                      : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -492,7 +509,15 @@ export const fetchOogCalcData = async (pckOrdSeq, apiUrl, cookies) => {
     }
 };
 
-export const handleDeleteRows = async (apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows) => {
+export const handleDeleteRows = async (
+    apiUrl: string,
+    cookies: Cookies,
+    selectionModel: number[],
+    rows: any[],
+    setSnackbar: any,
+    fetchData: any,
+    setRows: any,
+) => {
     let selectedRow = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
 
     if (selectedRow.length === 0) {
@@ -546,7 +571,14 @@ const calculateRowSpan = (data: any[]) => {
     return rowSpanMap;
 };
 
-export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData) => {
+export const handleCalculator = async (
+    apiUrl: string,
+    pckOrdSeq: number,
+    cookies: Cookies,
+    setSnackbar: any,
+    selectionModel: number[],
+    setCalculatorData: (data: any[]) => void,
+) => {
     if (!selectionModel || selectionModel.length === 0) {
         setSnackbar({
             open: true,
@@ -579,7 +611,7 @@ export const handleCalculator = async (apiUrl, pckOrdSeq, cookies, setSnackbar, 
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
 
         const rowSpanMap = calculateRowSpan(calculatorData);
-        const updatedData = calculatorData.map((item) => ({
+        const updatedData = calculatorData.map((item: { clpNo: string; [key: string]: any }) => ({
             ...item,
             rowSpan: rowSpanMap[item.clpNo], // clpNo 기준으로 rowSpan 값 추가
         }));

@@ -162,13 +162,13 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                 setConnections((prev) => {
                     // prev가 배열인지 확인하고, 아니라면 빈 배열로 초기화
                     const connectionsArray = Array.isArray(prev) ? prev : [];
-                
+
                     const connectionExists = connectionsArray.some(
                         (conn) =>
                             (conn.from?.id === newConnection.from.id && conn.to?.id === newConnection.to.id) ||
                             (conn.from?.id === newConnection.to.id && conn.to?.id === newConnection.from.id),
                     );
-                
+
                     return connectionExists ? connectionsArray : [...connectionsArray, newConnection];
                 });
             }
@@ -248,7 +248,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
 
     return (
         <>
-            <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="sm">
+            <Dialog open={isOpen ?? false} onClose={onClose} fullWidth maxWidth="sm">
                 <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white' }}>
                     <strong>Lashing</strong> [PckOrdSeq: {pckOrdSeq}, ClpNo: {clpNo}, Tpsz: {tpsz}]
                     <IconButton

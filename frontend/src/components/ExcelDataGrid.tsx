@@ -131,7 +131,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
             const newData = await response.json();
             setContainerData(newData?.data);
 
-            const d40Data = newData?.data?.find((item) => item.CNTR_TPSZ_CD === '4H');
+            const d40Data = newData?.data?.find((item: { CNTR_TPSZ_CD: string }) => item.CNTR_TPSZ_CD === '4H');
             if (!d40Data) {
                 console.warn('No container data found for CNTR_TPSZ_CD = 4H');
                 return;
@@ -222,7 +222,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 console.log('OOG Data:', updatedData);
                 // 추가 작업 실행 (예: 컨테이너 데이터 가져오기)
                 await getContainerMaster(CRR_CD);
-
             } catch (error) {
                 console.error('OOG 데이터를 가져오는 중 에러 발생:', error);
                 setSnackbar({ open: true, message: 'OOG 데이터를 가져오는 중 에러 발생', severity: 'error' });
@@ -236,11 +235,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
             const rowSpanMap = calculateRowSpan(oogData);
             const updatedData = oogData.map((item) => ({
                 ...item,
-                rowSpan: rowSpanMap[item.clpNo],  // rowSpan 계산 후 추가
+                rowSpan: rowSpanMap[item.clpNo], // rowSpan 계산 후 추가
             }));
-            setCalculatorData(updatedData);  // 상태 업데이트
+            setCalculatorData(updatedData); // 상태 업데이트
         }
-    }, [oogData, tabValue]);  // tabValue와 oogData가 변경될 때만 실행
+    }, [oogData, tabValue]); // tabValue와 oogData가 변경될 때만 실행
 
     return (
         <Box sx={{ width: '100%' }}>

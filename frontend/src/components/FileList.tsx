@@ -29,7 +29,11 @@ const FileList: React.FC<FileListProps> = ({
       <DataGrid
         rows={rows}
         columns={columns}
-        pageSize={5}
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize: 5 },
+          },
+        }}
         rowCount={rows.length}
         paginationMode="server"
         pagination

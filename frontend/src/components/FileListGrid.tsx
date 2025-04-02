@@ -40,7 +40,7 @@ const FileListGrid = () => {
         message: '',
         severity: 'success',
     });
-    const fileInputRef = React.useRef(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [selectionModel, setSelectionModel] = React.useState([]);
 
     const handleCloseSnackbar = () => {
