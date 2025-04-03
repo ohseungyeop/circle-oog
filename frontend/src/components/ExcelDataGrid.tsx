@@ -208,18 +208,17 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         setTabValue(newValue);
         if (newValue === 1) {
             try {
-                debugger;
+                if (Array.isArray(oogData) && oogData.length > 0) {
+                    // rowSpan 계산 추가
+                    const rowSpanMap = calculateRowSpan(oogData);
+                    const updatedData = oogData.map((item) => ({
+                        ...item,
+                        rowSpan: rowSpanMap[item.clpNo],
+                    }));
 
-                // 데이터가 배열이 맞는지 다시 한 번 확
-                // rowSpan 계산 추가
-                const rowSpanMap = calculateRowSpan(oogData);
-                const updatedData = oogData.map((item) => ({
-                    ...item,
-                    rowSpan: rowSpanMap[item.clpNo],
-                }));
-
-                setCalculatorData(updatedData);
-                console.log('OOG Data:', updatedData);
+                    setCalculatorData(updatedData);
+                    console.log('OOG Data:', updatedData);
+                }
                 // 추가 작업 실행 (예: 컨테이너 데이터 가져오기)
                 await getContainerMaster(CRR_CD);
             } catch (error) {
@@ -237,7 +236,11 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 ...item,
                 rowSpan: rowSpanMap[item.clpNo], // rowSpan 계산 후 추가
             }));
+
             setCalculatorData(updatedData); // 상태 업데이트
+        }
+        else if (tabValue === 0) {
+            setCalculatorData([]); // 탭이 변경되면 calculatorData 초기화
         }
     }, [oogData, tabValue]); // tabValue와 oogData가 변경될 때만 실행
 
