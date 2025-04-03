@@ -5,7 +5,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { fetchOogCalcData, handleCalculator } from './FileListHandlers';
+import { handleCalculator } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
 import LashingPage from '../pages/LashingPage.tsx';
 
@@ -24,13 +24,13 @@ const excelColumns: GridColDef[] = [
     { field: 'itmLen', headerName: 'Package Length', width: 100 },
     { field: 'itmWdt', headerName: 'Package Width', width: 100 },
     { field: 'itmHgt', headerName: 'Package Height', width: 100 },
+    { field: 'itmQty', headerName: "Q'ty", width: 100 },
+    { field: 'netWgt', headerName: 'Net Weight', width: 100 },
     { field: 'boxLen', headerName: 'Box Length', width: 100 },
     { field: 'boxWdt', headerName: 'Box Width', width: 100 },
     { field: 'boxHgt', headerName: 'Box Height', width: 100 },
-    { field: 'itmQty', headerName: "Q'ty", width: 100 },
     { field: 'itmCbm', headerName: 'CBM', width: 100 },
     { field: 'itmTpNm', headerName: 'Item Type', width: 100 },
-    { field: 'netWgt', headerName: 'Net Weight', width: 100 },
     { field: 'grsWgt', headerName: 'Gross Weight', width: 100 },
     { field: 'rmks', headerName: 'Remarks', width: 100 },
 ];
@@ -239,7 +239,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
 
             setCalculatorData(updatedData); // 상태 업데이트
         }
-
     }, [oogData, tabValue]); // tabValue와 oogData가 변경될 때만 실행
 
     return (
