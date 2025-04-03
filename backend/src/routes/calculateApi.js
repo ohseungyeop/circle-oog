@@ -16,9 +16,9 @@ import {
 
 const CRR_CD = 'VOS';
 const REF_CNTR_TPSZ = ['D2', '4H'];
-const HARD_WGT_40 = 40000; //(kg) → 40t
+const HARD_WGT_40 = 38000; //(kg) → 40t(38t)
 const HARD_WGT_60 = 60000; //(kg) → 60t
-const HARD_WGT_25 = 25000; //(kg) → 25t
+const HARD_WGT_25 = 28000; //(kg) → 25t(28t)
 let REF_LEN_40 = 0;
 let REF_LEN_20 = 0;
 let REF_WDT_40 = 0;
@@ -220,9 +220,25 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
     const step4Set = new Set(step4List.map((item) => item.PCK_NO)); //길이 기준 초과 건
 
     // 1️⃣ 대상 제외 후 길이로 내림차순 정렬
-    const target2List = step1ItemList
-        .filter((item) => !step2Set.has(item.PCK_NO) && !step6Set.has(item.PCK_NO) && !step4Set.has(item.PCK_NO))
-        .sort((a, b) => b.BOX_LEN - a.BOX_LEN);
+    const target2List = step1ItemList.filter(
+        (item) => !step2Set.has(item.PCK_NO) && !step6Set.has(item.PCK_NO) && !step4Set.has(item.PCK_NO),
+    );
+
+    checkListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG);
+    checkListByWidth(target2List, REF_WDT_40 * REF_WDT_40_PCTG);
+    checkListByHeight(target2List, REF_HGT_40 * REF_HGT_40_PCTG);
+
+    target2List.sort((a, b) => {
+        // 1. OVER 속성 중 하나라도 "Y"인 항목을 우선 정렬
+        const aHasOver = a.OVER_LEN_YN === 'Y' || a.OVER_WDT_YN === 'Y' || a.OVER_HGT4_YN === 'Y';
+        const bHasOver = b.OVER_LEN_YN === 'Y' || b.OVER_WDT_YN === 'Y' || b.OVER_HGT4_YN === 'Y';
+
+        if (aHasOver && !bHasOver) return -1; // a가 먼저 (OVER 속성 있음)
+        if (!aHasOver && bHasOver) return 1; // b가 먼저 (OVER 속성 있음)
+
+        // 2. BOX_LEN 기준 내림차순 정렬
+        return b.BOX_LEN - a.BOX_LEN;
+    });
 
     // 2️⃣ 그룹핑된 데이터를 단일 배열로 변환
     const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG, REF_LEN_20 * REF_LEN_20_PCTG);

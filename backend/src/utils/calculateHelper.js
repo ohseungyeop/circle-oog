@@ -171,7 +171,6 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
     });
 
     // 6. 결과 확인
-    /*
     console.log(`기준 길이: ${REF_LEN_40}`);
     console.log(`총 그룹 개수: ${groupItemList.length}`);
     groupItemList.forEach((group, index) => {
@@ -191,7 +190,6 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
             ),
         );
     });
-    */
 
     return groupItemList;
 };
