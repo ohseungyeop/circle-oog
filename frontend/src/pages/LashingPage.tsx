@@ -53,39 +53,39 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
     const [dragging, setDragging] = useState<lashingLinkProps | null>(null);
     const [highlightedNode, setHighlightedNode] = useState<lashingPointProps | null>(null);
 
-    const SVG_WIDTH = 600; // 전체 SVG 너비
-    const SVG_HEIGHT = 850; // 전체 SVG 높이
-    const FORCE_ALIGN_X = 80;
-    const FORCE_ALIGN_Y = 30;
+    const SVG_WIDTH = 800; // 전체 SVG 너비
+    const SVG_HEIGHT = 450; // 전체 SVG 높이
+    const FORCE_ALIGN_X = 30;
+    const FORCE_ALIGN_Y = 80;
 
     useEffect(() => {
-        const X_CNT = xCount ?? 3; // Front, Back 갯수
-        const Y_CNT = yCount ?? 13; // Left, Right 갯수
+        const X_CNT = xCount ?? 13; // Front, Back 갯수
+        const Y_CNT = yCount ?? 3; // Left, Right 갯수
         const FB_X_POS = 100; // Front, Back 시작 x 좌표
         const F_Y_POS = 50; // Front 시작 y 좌표
         const L_X_POS = 50; // Left 시작 x 좌표
-        const X_STEP = 100; // Front, Back 간격
+        const X_STEP = 50; // Front, Back 간격
         const Y_STEP = 50; // Left, Right 간격
         let newNodes = [];
 
-        // Front, Back
+        // Left, Right
         for (let i = 1; i <= X_CNT; i++) {
             let xRatio = (FB_X_POS + X_STEP * (i - 1)) / SVG_WIDTH;
             let frontYRatio = F_Y_POS / SVG_HEIGHT;
             let backYRatio = (Y_CNT * Y_STEP + Y_STEP * 2) / SVG_HEIGHT;
 
-            newNodes.push({ id: `F${i}`, group: 'front', x: xRatio, y: frontYRatio });
-            newNodes.push({ id: `B${i}`, group: 'back', x: xRatio, y: backYRatio });
+            newNodes.push({ id: `R${i}`, group: 'right', x: xRatio, y: frontYRatio });
+            newNodes.push({ id: `L${i}`, group: 'left', x: xRatio, y: backYRatio });
         }
 
-        // Left, Right
+        // Front, Back
         for (let i = 1; i <= Y_CNT; i++) {
             let yRatio = (Y_STEP + Y_STEP * (i - 1) + Y_STEP) / SVG_HEIGHT;
             let leftXRatio = L_X_POS / SVG_WIDTH;
-            let rightXRatio = (X_CNT * X_STEP + L_X_POS) / SVG_WIDTH;
+            let rightXRatio = (X_CNT * X_STEP + L_X_POS * 2) / SVG_WIDTH;
 
-            newNodes.push({ id: `L${i}`, group: 'left', x: leftXRatio, y: yRatio });
-            newNodes.push({ id: `R${i}`, group: 'right', x: rightXRatio, y: yRatio });
+            newNodes.push({ id: `F${i}`, group: 'front', x: leftXRatio, y: yRatio });
+            newNodes.push({ id: `B${i}`, group: 'back', x: rightXRatio, y: yRatio });
         }
 
         setNodes(newNodes);
@@ -198,15 +198,6 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
     };
 
     const saveLashing = async () => {
-        const lineList = document.getElementsByTagName('line');
-        if (!lineList.length) {
-            setSnackbar({
-                open: true,
-                message: '연결된 라인이 없습니다!',
-                severity: 'warning',
-            });
-            return;
-        }
         try {
             const lashingPageData: lashingPageDataProps = {
                 pckOrdSeq: pckOrdSeq,
@@ -248,7 +239,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
 
     return (
         <>
-            <Dialog open={isOpen ?? false} onClose={onClose} fullWidth maxWidth="sm">
+            <Dialog open={isOpen ?? false} onClose={onClose} fullWidth maxWidth="md">
                 <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white' }}>
                     <strong>Lashing</strong> [PckOrdSeq: {pckOrdSeq}, ClpNo: {clpNo}, Tpsz: {tpsz}]
                     <IconButton

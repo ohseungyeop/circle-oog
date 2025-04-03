@@ -115,8 +115,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     });
 
     const openModal = (pckOrdSeq: number, clpNo: number, tpsz: string, xCount?: number, yCount?: number) => {
-        xCount = xCount ?? 3;
-        yCount = yCount ?? 13;
+        xCount = xCount ?? 13;
+        yCount = yCount ?? 3;
         setModalData({ pckOrdSeq, clpNo, tpsz, xCount, yCount });
         setIsDialogOpen(true);
     };
