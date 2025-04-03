@@ -239,9 +239,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
 
             setCalculatorData(updatedData); // 상태 업데이트
         }
-        else if (tabValue === 0) {
-            setCalculatorData([]); // 탭이 변경되면 calculatorData 초기화
-        }
+
     }, [oogData, tabValue]); // tabValue와 oogData가 변경될 때만 실행
 
     return (
