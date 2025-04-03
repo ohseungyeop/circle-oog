@@ -59,26 +59,6 @@ const TabPanel = ({ children, value, index }: any) => {
         </div>
     );
 };
-
-const handleExportToExcel = async () => {
-    // HTML 테이블을 선택
-    const table = document.getElementById('oogDataTable');
-
-    if (table) {
-        // 테이블을 엑셀 시트로 변환
-        const ws = XLSX.utils.table_to_sheet(table);
-
-        // 워크북 생성
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'OOG Data');
-
-        // 엑셀 파일로 저장
-        XLSX.writeFile(wb, 'OOGList.xlsx');
-    } else {
-        alert('테이블을 찾을 수 없습니다!');
-    }
-};
-
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq, selectionModel, oogData }) => {
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
@@ -113,6 +93,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         xCount: 0,
         yCount: 0,
     });
+
+
 
     const openModal = (pckOrdSeq: number, clpNo: number, tpsz: string, xCount?: number, yCount?: number) => {
         xCount = xCount ?? 13;
@@ -514,4 +496,4 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     );
 };
 
-export { ExcelDataGrid, handleExportToExcel };
+export { ExcelDataGrid, oogColumns };

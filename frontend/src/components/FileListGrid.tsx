@@ -4,7 +4,7 @@ import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import FileList from './FileList';
-import { ExcelDataGrid, handleExportToExcel } from './ExcelDataGrid';
+import { ExcelDataGrid } from './ExcelDataGrid';
 import {
     fetchData,
     handleFileUpload,
@@ -12,6 +12,7 @@ import {
     handleDeleteRows,
     handleSelectionChange,
     fetchExcelData,
+    handleExportToExcel
 } from './FileListHandlers';
 
 interface ExcelRow {
@@ -103,7 +104,7 @@ const FileListGrid = () => {
             </button>
 
             <button
-                onClick={() => handleExportToExcel()}
+                onClick={() => handleExportToExcel(calculatorData)}
                 style={{
                     marginBottom: '10px',
                     margin: '15px',

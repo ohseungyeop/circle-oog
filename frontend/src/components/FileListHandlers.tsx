@@ -1,5 +1,8 @@
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
+import { oogColumns } from './ExcelDataGrid';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 interface Cookies {
     authToken: string;
@@ -135,7 +138,7 @@ export const handleFileUpload = async (
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -296,6 +299,9 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
+            const calculatorData = await fetchOogCalcData(selectedRow.pckOrdSeq, apiUrl, cookies);
+            setCalculatorData(calculatorData);
+
             await handleExcelChk(
                 selectedRow.pckOrdSeq,
                 setExcelRows,
@@ -387,6 +393,160 @@ export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies:
     }
 };
 
+
+export const handleExportToExcel = (calculatorData: any[]) => {
+    try {
+        if (!calculatorData || calculatorData.length === 0) {
+            alert('내보낼 데이터가 없습니다.');
+            return;
+        }
+
+        // 1️⃣ RowSpan 계산
+        const rowSpanMap = calculateRowSpan(calculatorData);
+
+        // 2️⃣ HTML 테이블 생성 (스타일 포함)
+        let tableHTML = `
+            <style>
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid black; padding: 5px; text-align: center; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .subTotal { background-color: yellow; font-weight: bold; }
+                .over { color: red; font-weight: bold; }
+                .remarkColumn { color: blue; }
+            </style>
+    <table>
+            <body>
+                <table>
+                    <thead>
+                        <tr>
+                            ${oogColumns
+                .filter((col) => col.field !== 'pckOrdSeq') // 'pckOrdSeq' 필드는 제외
+                .map((col) => `<th>${col.headerName || ''}</th>`)
+                .join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        // 3️⃣ 데이터 행 생성
+        calculatorData.forEach((item, index, array) => {
+            const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
+
+            tableHTML += `<tr${item.Item === 'SUM' ? ' class="subTotal"' : ''}>`;
+
+            // 🔹 clpNo (병합 처리)
+            if (isFirstOccurrence) {
+                const rowSpan = rowSpanMap[item.clpNo] ?? 1;
+                tableHTML += `<td align="center" rowspan="${rowSpan}">${item.clpNo ?? ''}</td>`;
+            }
+
+            // 🔹 일반 데이터
+            if (item.Item === 'SUM') {
+                tableHTML += `<td colspan="2"></td>`; // ✅ SUM 행에서 빠지는 열 개수 맞춤
+            } else {
+                tableHTML += `
+                    <td align="center">${item.boxNo ?? ''}</td>
+                    <td>${item.Item ?? ''}</td>
+                `;
+            }
+
+            tableHTML += `
+                <td align="right" class="${item.isOverLen ? 'over' : ''}">${(item.boxLen ?? 0).toFixed(2)}</td>
+                <td align="right" class="${item.isOverWdt ? 'over' : ''}">${(item.boxWdt ?? 0).toFixed(2)}</td>
+                <td align="right" class="${item.isOverHgt ? 'over' : ''}">${(item.boxHgt ?? 0).toFixed(2)}</td>
+                <td align="right">${item.qty ?? '0'}</td>
+                <td align="right">${(item.cbm ?? 0).toFixed(2)}</td>
+                <td align="center">${item.type ?? ''}</td>
+                <td align="right">${(item.nw ?? 0).toFixed(2)}</td>
+                <td align="right" class="${item.isOverWgt ? 'over' : ''}">${(item.gw ?? 0).toFixed(2)}</td>
+                <td class="remarkColumn">${item.rmks ?? ''}</td>
+            `;
+
+            // 🔹 displayTpsz (병합 처리)
+            if (isFirstOccurrence) {
+                const rowSpan = rowSpanMap[item.clpNo] ?? 1;
+                tableHTML += `<td rowspan="${rowSpan}">${item.displayTpsz ?? ''}</td>`;
+            }
+
+            tableHTML += `</tr>`;
+        });
+
+        // 4️⃣ tfoot 섹션 추가
+        const totalQty = calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((sum, item) => sum + item.qty, 0)
+            .toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+        const totalCbm = calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((sum, item) => sum + item.cbm, 0)
+            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const totalNw = calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((sum, item) => sum + item.nw, 0)
+            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const totalGw = calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((sum, item) => sum + item.gw, 0)
+            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const tpszSummary = Object.entries(
+            calculatorData.reduce((countMap, item) => {
+                const tpsz = item.tpsz;
+                if (tpsz) {
+                    const clpNo = item.clpNo;
+                    if (!countMap[tpsz]) {
+                        countMap[tpsz] = new Set();
+                    }
+                    countMap[tpsz].add(clpNo);
+                }
+                return countMap;
+            }, {}),
+        )
+            .map(([tpsz, clpNoSet]) => `${tpsz}×<span class="totalNumColor">${(clpNoSet as Set<string>).size}</span>`)
+            .join(', ');
+
+        tableHTML += `
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th><strong>Total</strong></th>
+                                <td colspan="5">${tpszSummary}</td>
+                                <td align="right">${totalQty}</td>
+                                <td align="right">${totalCbm}</td>
+                                <td></td>
+                                <td align="right">${totalNw}</td>
+                                <td align="right">${totalGw}</td>
+                                <td></td>
+                                <th colspan="1"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
+
+        // tableHTML += `</tbody></table></body></html>`;
+
+        // 4️⃣ Blob을 생성하여 엑셀 파일 다운로드
+        const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'OOGList.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('엑셀 내보내기 오류:', error);
+        alert('엑셀 내보내기에 실패했습니다.');
+    }
+};
+
+
 export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => {
     console.log('🔍 Calling API with:', apiUrl, pckOrdSeq, cookies);
     try {
@@ -448,15 +608,15 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                  (group.hasOverWgtYn
-                      ? '(Weight)'
-                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                      ? '(O' +
+                (group.hasOverWgtYn
+                    ? '(Weight)'
+                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                        ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                      : '')
+                        : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -613,7 +773,7 @@ export const handleCalculator = async (
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
 
         const rowSpanMap = calculateRowSpan(calculatorData);
-        const updatedData = calculatorData.map((item: { clpNo: string; [key: string]: any }) => ({
+        const updatedData = calculatorData.map((item: { clpNo: string;[key: string]: any }) => ({
             ...item,
             rowSpan: rowSpanMap[item.clpNo], // clpNo 기준으로 rowSpan 값 추가
         }));
