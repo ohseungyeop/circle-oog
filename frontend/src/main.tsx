@@ -1,4 +1,3 @@
-import * as React from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { StyledEngineProvider } from '@mui/material/styles';
@@ -11,7 +10,6 @@ const ProtectedFileListPage = withAuth(FileListPage);
 const root = ReactDOM.createRoot(document.querySelector('#root')!);
 
 root.render(
-    //<React.StrictMode>
     <StyledEngineProvider injectFirst>
         <Router>
             <Routes>
@@ -21,5 +19,4 @@ root.render(
             </Routes>
         </Router>
     </StyledEngineProvider>,
-    // </React.StrictMode>
 );
