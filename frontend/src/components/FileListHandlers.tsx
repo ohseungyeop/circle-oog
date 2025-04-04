@@ -748,11 +748,6 @@ export const handleCalculator = async (
     selectionModel: number[],
     setCalculatorData: (data: any[]) => void,
 ) => {
-    console.log('-------------------------------------');
-    console.log(cookies);
-    console.log(cookies.authToken);
-    console.log('-------------------------------------');
-
     if (!selectionModel || selectionModel.length === 0) {
         setSnackbar({
             open: true,

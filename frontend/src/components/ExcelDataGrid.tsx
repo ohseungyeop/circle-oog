@@ -43,6 +43,26 @@ const TabPanel = ({ children, value, index }: any) => {
         </div>
     );
 };
+
+export function getOogColumns(selectedLengthUnit: string, selectedWeightUnit: string): GridColDef[] {
+    return [
+        { field: 'pckOrdSeq', headerName: 'PCK_ORD_SEQ', width: 0 },
+        { field: 'clpNo', headerName: 'CLP No.', width: 100 },
+        { field: 'boxNo', headerName: 'Box No.', width: 100 },
+        { field: 'Item', headerName: ' Item', width: 100 },
+        { field: 'boxLen', headerName: `Box Length(${selectedLengthUnit.toUpperCase()})`, width: 100 },
+        { field: 'boxWdt', headerName: `Box Width(${selectedLengthUnit.toUpperCase()})`, width: 100 },
+        { field: 'boxHgt', headerName: `Box Height(${selectedLengthUnit.toUpperCase()})`, width: 100 },
+        { field: 'qty', headerName: "Q'ty", width: 100 },
+        { field: 'cbm', headerName: 'CBM', width: 100 },
+        { field: 'type', headerName: 'Type', width: 100 },
+        { field: 'nw', headerName: `N/W(${selectedWeightUnit.toUpperCase()})`, width: 100 },
+        { field: 'gw', headerName: `G/W(${selectedWeightUnit.toUpperCase()})`, width: 100 },
+        { field: 'rmks', headerName: 'Remarks', width: 100 },
+        { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
+    ];
+}
+
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq, selectionModel, oogData }) => {
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
@@ -69,22 +89,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     const [isUnitModalOpen, setIsUnitModalOpen] = React.useState(false);
     const [selectedLengthUnit, setSelectedLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [selectedWeightUnit, setSelectedWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
-    const oogColumns: GridColDef[] = [
-        { field: 'pckOrdSeq', headerName: 'PCK_ORD_SEQ', width: 0 },
-        { field: 'clpNo', headerName: 'CLP No.', width: 100 },
-        { field: 'boxNo', headerName: 'Box No.', width: 100 },
-        { field: 'Item', headerName: ' Item', width: 100 },
-        { field: 'boxLen', headerName: `Box Length(${selectedLengthUnit.toUpperCase()})`, width: 100 },
-        { field: 'boxWdt', headerName: `Box Width(${selectedLengthUnit.toUpperCase()})`, width: 100 },
-        { field: 'boxHgt', headerName: `Box Height(${selectedLengthUnit.toUpperCase()})`, width: 100 },
-        { field: 'qty', headerName: "Q'ty", width: 100 },
-        { field: 'cbm', headerName: 'CBM', width: 100 },
-        { field: 'type', headerName: 'Type', width: 100 },
-        { field: 'nw', headerName: `N/W(${selectedWeightUnit.toUpperCase()})`, width: 100 },
-        { field: 'gw', headerName: `G/W(${selectedWeightUnit.toUpperCase()})`, width: 100 },
-        { field: 'rmks', headerName: 'Remarks', width: 100 },
-        { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
-    ];
+    const oogColumns: GridColDef[] = getOogColumns(selectedLengthUnit, selectedWeightUnit);
 
     const handleApply = async (lengthUnit: keyof typeof lengthUnits, weightUnit: keyof typeof weightUnits) => {
         setSelectedLengthUnit(lengthUnit);
