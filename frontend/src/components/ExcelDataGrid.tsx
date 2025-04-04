@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, AppBar, Tabs, Tab, Button } from '@mui/material';
+import { Box, AppBar, Tabs, Tab, Button, Typography, Stack } from '@mui/material';
 import * as XLSX from 'xlsx';
 import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
@@ -8,6 +8,8 @@ import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
 import LashingPage from '../pages/LashingPage.tsx';
+import UnitConverterModal from './UnitConverterModal';
+import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
 
 interface ExcelDataGridProps {
     rows: any[];
@@ -33,23 +35,6 @@ const excelColumns: GridColDef[] = [
     { field: 'itmTpNm', headerName: 'Item Type', width: 100 },
     { field: 'grsWgt', headerName: 'Gross Weight', width: 100 },
     { field: 'rmks', headerName: 'Remarks', width: 100 },
-];
-
-const oogColumns: GridColDef[] = [
-    { field: 'pckOrdSeq', headerName: 'PCK_ORD_SEQ', width: 0 },
-    { field: 'clpNo', headerName: 'CLP No.', width: 100 },
-    { field: 'boxNo', headerName: 'Box No.', width: 100 },
-    { field: 'Item', headerName: ' Item', width: 100 },
-    { field: 'boxLen', headerName: 'Box Length(㎜)', width: 100 },
-    { field: 'boxWdt', headerName: 'Box Width(㎜)', width: 100 },
-    { field: 'boxHgt', headerName: 'Box Height(㎜)', width: 100 },
-    { field: 'qty', headerName: "Q'ty", width: 100 },
-    { field: 'cbm', headerName: 'CBM', width: 100 },
-    { field: 'type', headerName: 'Type', width: 100 },
-    { field: 'nw', headerName: 'N/W(㎏)', width: 100 },
-    { field: 'gw', headerName: 'G/W(㎏)', width: 100 },
-    { field: 'rmks', headerName: 'Remarks', width: 100 },
-    { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
 ];
 
 const TabPanel = ({ children, value, index }: any) => {
@@ -82,10 +67,37 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
             open: false,
         }));
     };
+    const [isUnitModalOpen, setIsUnitModalOpen] = React.useState(false);
+    const [selectedLengthUnit, setSelectedLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
+    const [selectedWeightUnit, setSelectedWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
+    const oogColumns: GridColDef[] = [
+        { field: 'pckOrdSeq', headerName: 'PCK_ORD_SEQ', width: 0 },
+        { field: 'clpNo', headerName: 'CLP No.', width: 100 },
+        { field: 'boxNo', headerName: 'Box No.', width: 100 },
+        { field: 'Item', headerName: ' Item', width: 100 },
+        { field: 'boxLen', headerName: `Box Length(${selectedLengthUnit.toUpperCase()})`, width: 100 },
+        { field: 'boxWdt', headerName: `Box Width(${selectedLengthUnit.toUpperCase()})`, width: 100 },
+        { field: 'boxHgt', headerName: `Box Height(${selectedLengthUnit.toUpperCase()})`, width: 100 },
+        { field: 'qty', headerName: "Q'ty", width: 100 },
+        { field: 'cbm', headerName: 'CBM', width: 100 },
+        { field: 'type', headerName: 'Type', width: 100 },
+        { field: 'nw', headerName: `N/W(${selectedWeightUnit.toUpperCase()})`, width: 100 },
+        { field: 'gw', headerName: `G/W(${selectedWeightUnit.toUpperCase()})`, width: 100 },
+        { field: 'rmks', headerName: 'Remarks', width: 100 },
+        { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
+    ];
 
-    const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+    const handleApply = async (lengthUnit: keyof typeof lengthUnits, weightUnit: keyof typeof weightUnits) => {
+        setSelectedLengthUnit(lengthUnit);
+        setSelectedWeightUnit(weightUnit);
+    };
+    React.useEffect(() => {
+        if (selectedLengthUnit && selectedWeightUnit) {
+            getContainerMaster(CRR_CD);
+        }
+    }, [selectedLengthUnit, selectedWeightUnit]); // selectedLengthUnit, selectedWeightUnit 변경 시 실행
 
-    // const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isLashingModalOpen, setIsDialogOpen] = React.useState(false);
     const [modalData, setModalData] = React.useState({
         pckOrdSeq: 0,
         clpNo: 0,
@@ -93,8 +105,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         xCount: 0,
         yCount: 0,
     });
-
-
 
     const openModal = (pckOrdSeq: number, clpNo: number, tpsz: string, xCount?: number, yCount?: number) => {
         xCount = xCount ?? 13;
@@ -136,7 +146,9 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                     const { value, percentage } = thMappings[key];
                     th.insertAdjacentHTML(
                         'beforeend',
-                        `<br/><b>${value.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${percentage}%)</b>`,
+                        `<br/><b>${convertLength(value, selectedLengthUnit).toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                        })} (${percentage}%)</b>`,
                     );
                 }
             }
@@ -261,13 +273,32 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                         <Tab label="OOG System Data" />
                     </Tabs>
                 </AppBar>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleCalculator(apiUrl, pckOrdSeq, cookies, setSnackbar, selectionModel, setCalculatorData)}
-                >
-                    Calculator
-                </Button>
+                {tabValue === 1 && oogData.length > 0 ? (
+                    <Stack direction="row" spacing={2} alignItems="center">
+                        <Button variant="contained" color="primary" onClick={() => setIsUnitModalOpen(true)}>
+                            단위 변환
+                        </Button>
+                        <Typography>길이 ( {selectedLengthUnit.toUpperCase()} )</Typography>
+                        <Typography>무게 ( {selectedWeightUnit.toUpperCase()} )</Typography>
+                    </Stack>
+                ) : (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() =>
+                            handleCalculator(
+                                apiUrl,
+                                Number(pckOrdSeq),
+                                cookies.authToken,
+                                setSnackbar,
+                                selectionModel.filter((id): id is number => typeof id === 'number'),
+                                setCalculatorData,
+                            )
+                        }
+                    >
+                        Calculator
+                    </Button>
+                )}
             </Box>
 
             <TabPanel value={tabValue} index={0}>
@@ -278,13 +309,10 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                     rowCount={rows?.length ?? 0}
                     columns={excelColumns}
                     paginationMode="server"
-                    // pageSize={10} //
                     pageSizeOptions={[5, 10, 20, 50]}
                     paginationModel={paginationModel || { page: 0, pageSize: 10 }}
-                    // onPaginationModelChange={handlePaginationChange} // ✅ 스크롤 시 자동 로드
                     disableRowSelectionOnClick
                     rowSelectionModel={selectionModel || []}
-                    //loading={loading} // ✅ 로딩 상태 표시
                     sx={{
                         '& .MuiDataGrid-footerContainer': {
                             display: 'none', // 푸터 숨기기
@@ -293,7 +321,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 />
             </TabPanel>
 
-            {/* TabPanel: 두 번째 탭 (File List) */}
+            {/* TabPanel: 두 번째 탭 (OOG System Data) */}
             <TabPanel value={tabValue} index={1}>
                 <div className={styles.oogTableContainer}>
                     <table id="oogDataTable" className={styles.oogDataTable}>
@@ -331,19 +359,19 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                             </>
                                         )}
                                         <td align="right" className={item.isOverLen ? styles.over : 'normal'}>
-                                            {item.boxLen.toLocaleString(undefined, {
+                                            {convertLength(item.boxLen, selectedLengthUnit).toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
                                             })}
                                         </td>
                                         <td align="right" className={item.isOverWdt ? styles.over : 'normal'}>
-                                            {item.boxWdt.toLocaleString(undefined, {
+                                            {convertLength(item.boxWdt, selectedLengthUnit).toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
                                             })}
                                         </td>
                                         <td align="right" className={item.isOverHgt ? styles.over : 'normal'}>
-                                            {item.boxHgt.toLocaleString(undefined, {
+                                            {convertLength(item.boxHgt, selectedLengthUnit).toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
                                             })}
@@ -357,13 +385,13 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                         </td>
                                         <td align="center">{item.type}</td>
                                         <td align="right">
-                                            {item.nw.toLocaleString(undefined, {
+                                            {convertWeight(item.nw, selectedWeightUnit).toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
                                             })}
                                         </td>
                                         <td align="right" className={item.isOverWgt ? styles.over : 'normal'}>
-                                            {item.gw.toLocaleString(undefined, {
+                                            {convertWeight(item.gw, selectedWeightUnit).toLocaleString(undefined, {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
                                             })}
@@ -452,22 +480,26 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                 </td>
                                 <td></td>
                                 <td align="right">
-                                    {calculatorData
-                                        .filter((item) => item.Item === 'SUM')
-                                        .reduce((sum, item) => sum + item.nw, 0)
-                                        .toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
+                                    {convertWeight(
+                                        calculatorData
+                                            .filter((item) => item.Item === 'SUM')
+                                            .reduce((sum, item) => sum + item.nw, 0),
+                                        selectedWeightUnit,
+                                    ).toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </td>
                                 <td align="right">
-                                    {calculatorData
-                                        .filter((item) => item.Item === 'SUM')
-                                        .reduce((sum, item) => sum + item.gw, 0)
-                                        .toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
+                                    {convertWeight(
+                                        calculatorData
+                                            .filter((item) => item.Item === 'SUM')
+                                            .reduce((sum, item) => sum + item.gw, 0),
+                                        selectedWeightUnit,
+                                    ).toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                                 </td>
                                 <td></td>
                                 <th colSpan={2}></th>
@@ -484,7 +516,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
             </Snackbar>
 
             <LashingPage
-                isOpen={isDialogOpen}
+                isOpen={isLashingModalOpen}
                 onClose={closeModal}
                 pckOrdSeq={modalData.pckOrdSeq}
                 clpNo={modalData.clpNo}
@@ -492,6 +524,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 xCount={modalData.xCount}
                 yCount={modalData.yCount}
             />
+            <UnitConverterModal isOpen={isUnitModalOpen} onClose={() => setIsUnitModalOpen(false)} onApply={handleApply} />
         </Box>
     );
 };
