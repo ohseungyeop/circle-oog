@@ -5,7 +5,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
 interface Cookies {
-    authToken: string;
+    authToken?: string;
 }
 
 export const fetchData = async (cookies: Cookies, apiUrl: string, setRows: (rows: any[]) => void) => {
@@ -138,7 +138,7 @@ export const handleFileUpload = async (
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -204,6 +204,9 @@ export const handleFileUpload = async (
 const importExcel = async (file: File, cookies: Cookies, apiUrl: string, setSnackbar: any) => {
     let email = '';
     try {
+        if (!cookies.authToken) {
+            throw new Error('Auth token is undefined');
+        }
         const decoded: any = jwtDecode(cookies.authToken);
         email = decoded.email;
     } catch (error) {
@@ -405,7 +408,7 @@ export const handleExportToExcel = async (calculatorData: any[]) => {
         { header: 'Box Length(MM)', key: 'boxLen', width: 15 },
         { header: 'Box Width(MM)', key: 'boxWdt', width: 15 },
         { header: 'Box Height(MM)', key: 'boxHgt', width: 15 },
-        { header: 'Q\'ty', key: 'qty', width: 8 },
+        { header: "Q'ty", key: 'qty', width: 8 },
         { header: 'CBM', key: 'cbm', width: 10 },
         { header: 'Type', key: 'type', width: 8 },
         { header: 'N.W(KG)', key: 'nw', width: 10 },
@@ -437,7 +440,7 @@ export const handleExportToExcel = async (calculatorData: any[]) => {
 
         // ✅ 스타일 지정
         if (item.Item === 'SUM') {
-            row.eachCell(cell => {
+            row.eachCell((cell) => {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };
                 cell.font = { bold: true };
             });
@@ -478,7 +481,7 @@ export const handleExportToExcel = async (calculatorData: any[]) => {
                 countMap[tpsz].add(clpNo);
             }
             return countMap;
-        }, {} as Record<string, Set<string>>)
+        }, {} as Record<string, Set<string>>),
     ).map(([tpsz, clpNoSet]) => `${tpsz}×${clpNoSet.size}`);
 
     // ✅ RichText 스타일 적용 (숫자는 빨간색)
@@ -487,18 +490,32 @@ export const handleExportToExcel = async (calculatorData: any[]) => {
         return [
             index > 0 ? { text: ', ', font: { color: { argb: '000000' } } } : null,
             { text: `${type}×`, font: { color: { argb: '000000' } } },
-            { text: count, font: { color: { argb: 'FF0000' }, bold: true } }
+            { text: count, font: { color: { argb: 'FF0000' }, bold: true } },
         ].filter(Boolean);
     });
 
     // ✅ 마지막 Total 행 추가
     const totalRow = worksheet.addRow([
-        'Total', '', '', '', '', '',
-        calculatorData.filter(item => item.Item === 'SUM').reduce((a, b) => a + (b.qty ?? 0), 0),
-        calculatorData.filter(item => item.Item === 'SUM').reduce((a, b) => a + (b.cbm ?? 0), 0).toFixed(3),
+        'Total',
         '',
-        calculatorData.filter(item => item.Item === 'SUM').reduce((a, b) => a + (b.nw ?? 0), 0).toFixed(3),
-        calculatorData.filter(item => item.Item === 'SUM').reduce((a, b) => a + (b.gw ?? 0), 0).toFixed(3),
+        '',
+        '',
+        '',
+        '',
+        calculatorData.filter((item) => item.Item === 'SUM').reduce((a, b) => a + (b.qty ?? 0), 0),
+        calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((a, b) => a + (b.cbm ?? 0), 0)
+            .toFixed(3),
+        '',
+        calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((a, b) => a + (b.nw ?? 0), 0)
+            .toFixed(3),
+        calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((a, b) => a + (b.gw ?? 0), 0)
+            .toFixed(3),
         '',
         '',
     ]);
@@ -581,15 +598,15 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                (group.hasOverWgtYn
-                    ? '(Weight)'
-                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                        ? '(O' +
+                  (group.hasOverWgtYn
+                      ? '(Weight)'
+                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                      ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                        : '')
+                      : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -623,8 +640,8 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
                 image:
                     null !== item.TPSZ
                         ? '/images/' +
-                        (group.hasOverWgtYn || 'Y' === item.OVER_LEN_YN ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) +
-                        '.png'
+                          (group.hasOverWgtYn || 'Y' === item.OVER_LEN_YN ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) +
+                          '.png'
                         : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
@@ -716,6 +733,11 @@ export const handleCalculator = async (
     selectionModel: number[],
     setCalculatorData: (data: any[]) => void,
 ) => {
+    console.log('-------------------------------------');
+    console.log(cookies);
+    console.log(cookies.authToken);
+    console.log('-------------------------------------');
+
     if (!selectionModel || selectionModel.length === 0) {
         setSnackbar({
             open: true,
@@ -748,7 +770,7 @@ export const handleCalculator = async (
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
 
         const rowSpanMap = calculateRowSpan(calculatorData);
-        const updatedData = calculatorData.map((item: { clpNo: string;[key: string]: any }) => ({
+        const updatedData = calculatorData.map((item: { clpNo: string; [key: string]: any }) => ({
             ...item,
             rowSpan: rowSpanMap[item.clpNo], // clpNo 기준으로 rowSpan 값 추가
         }));

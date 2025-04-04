@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Box, AppBar, Tabs, Tab, Button, Typography, Stack } from '@mui/material';
-import * as XLSX from 'xlsx';
 import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -289,7 +288,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                             handleCalculator(
                                 apiUrl,
                                 Number(pckOrdSeq),
-                                cookies.authToken,
+                                cookies,
                                 setSnackbar,
                                 selectionModel.filter((id): id is number => typeof id === 'number'),
                                 setCalculatorData,

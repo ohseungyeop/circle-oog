@@ -12,7 +12,7 @@ import {
     handleDeleteRows,
     handleSelectionChange,
     fetchExcelData,
-    handleExportToExcel
+    handleExportToExcel,
 } from './FileListHandlers';
 
 interface ExcelRow {
@@ -50,7 +50,7 @@ const FileListGrid = () => {
 
     React.useEffect(() => {
         if (cookies.authToken) {
-            fetchData({ authToken: cookies.authToken }, apiUrl, setRows);
+            fetchData(cookies, apiUrl, setRows);
         }
     }, [cookies.authToken]);
 
@@ -81,9 +81,7 @@ const FileListGrid = () => {
             <input
                 ref={fileInputRef}
                 type="file"
-                onChange={(event) =>
-                    handleFileUpload(event, { authToken: cookies.authToken }, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)
-                }
+                onChange={(event) => handleFileUpload(event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)}
                 hidden
             />
             <button
@@ -122,17 +120,7 @@ const FileListGrid = () => {
             </button>
 
             <button
-                onClick={() =>
-                    handleDeleteRows(
-                        apiUrl,
-                        { authToken: cookies.authToken },
-                        selectionModel,
-                        rows,
-                        setSnackbar,
-                        fetchData,
-                        setRows,
-                    )
-                }
+                onClick={() => handleDeleteRows(apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows)}
                 style={{
                     marginBottom: '10px',
                     padding: '10px 20px',
@@ -161,7 +149,7 @@ const FileListGrid = () => {
                         setCalculatorData,
                         fetchExcelData,
                         apiUrl,
-                        { authToken: cookies.authToken },
+                        cookies,
                     )
                 }
             />
