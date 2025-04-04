@@ -529,4 +529,4 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     );
 };
 
-export { ExcelDataGrid, oogColumns };
+export { ExcelDataGrid };
