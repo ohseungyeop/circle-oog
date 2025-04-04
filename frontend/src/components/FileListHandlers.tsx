@@ -1,6 +1,6 @@
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
-import { oogColumns } from './ExcelDataGrid';
+import { getOogColumns } from './ExcelDataGrid';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
 //import ExcelJS from 'exceljs';
 //import { saveAs } from 'file-saver';
@@ -454,12 +454,15 @@ export const handleExportToExcel = (calculatorData: any[]) => {
             }
 
             tableHTML += `
-                <td align="right" class="${item.isOverLen ? 'over' : ''}">${convertLength(item.boxLen, selectedLengthUnit).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })}</td>
-                <td align="right" class="${item.isOverWdt ? 'over' : ''}">${(item.boxWdt ?? 0).toFixed(2)}</td>
-                <td align="right" class="${item.isOverHgt ? 'over' : ''}">${(item.boxHgt ?? 0).toFixed(2)}</td>
+                <td align="right" class="${item.isOverLen ? 'over' : ''}">
+                ${(item.boxLen ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                </td>
+                <td align="right" class="${item.isOverWdt ? 'over' : ''}">
+                    ${(item.boxWdt ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                </td>
+                <td align="right" class="${item.isOverHgt ? 'over' : ''}">
+                    ${(item.boxHgt ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                </td>
                 <td align="right">${item.qty ?? '0'}</td>
                 <td align="right">${(item.cbm ?? 0).toFixed(2)}</td>
                 <td align="center">${item.type ?? ''}</td>
