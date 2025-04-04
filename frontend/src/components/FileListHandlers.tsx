@@ -400,7 +400,7 @@ export const handleExportToExcel = async (calculatorData: any[]) => {
     // ✅ 컬럼 정의
     worksheet.columns = [
         { header: 'CLP No', key: 'clpNo', width: 8 },
-        { header: 'Box No', key: 'boxNo', width: 10 },
+        { header: 'Box No', key: 'boxNo', width: 20 },
         { header: 'Item', key: 'item', width: 20 },
         { header: 'Box Length(MM)', key: 'boxLen', width: 15 },
         { header: 'Box Width(MM)', key: 'boxWdt', width: 15 },
@@ -449,6 +449,8 @@ export const handleExportToExcel = async (calculatorData: any[]) => {
         if (item.isOverWgt) row.getCell('gw').font = { color: { argb: 'FF0000' }, bold: true };
 
         row.getCell('rmks').font = { color: { argb: '0000FF' } };
+        row.getCell('clpNo').alignment = { horizontal: 'center' };
+        row.getCell('boxNo').alignment = { horizontal: 'center' };
 
         // ✅ 병합 처리 (CLP No, Container Type/Size)
         const isGroupEnd = index === calculatorData.length - 1 || calculatorData[index + 1].clpNo !== item.clpNo;
