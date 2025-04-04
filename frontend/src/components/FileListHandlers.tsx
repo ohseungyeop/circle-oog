@@ -1,8 +1,9 @@
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
-// import { oogColumns } from './ExcelDataGrid';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import { oogColumns } from './ExcelDataGrid';
+import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
+//import ExcelJS from 'exceljs';
+//import { saveAs } from 'file-saver';
 
 interface Cookies {
     authToken?: string;
@@ -138,7 +139,7 @@ export const handleFileUpload = async (
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number; [key: string]: any } = {
+                const result: { id: number;[key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -396,145 +397,159 @@ export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies:
     }
 };
 
-export const handleExportToExcel = async (calculatorData: any[]) => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('OOGList');
+export const handleExportToExcel = (calculatorData: any[]) => {
+    try {
+        if (!calculatorData || calculatorData.length === 0) {
+            alert('내보낼 데이터가 없습니다.');
+            return;
+        }
 
-    // ✅ 컬럼 정의
-    worksheet.columns = [
-        { header: 'CLP No', key: 'clpNo', width: 8 },
-        { header: 'Box No', key: 'boxNo', width: 20 },
-        { header: 'Item', key: 'item', width: 20 },
-        { header: 'Box Length(MM)', key: 'boxLen', width: 15 },
-        { header: 'Box Width(MM)', key: 'boxWdt', width: 15 },
-        { header: 'Box Height(MM)', key: 'boxHgt', width: 15 },
-        { header: "Q'ty", key: 'qty', width: 8 },
-        { header: 'CBM', key: 'cbm', width: 10 },
-        { header: 'Type', key: 'type', width: 8 },
-        { header: 'N.W(KG)', key: 'nw', width: 10 },
-        { header: 'G.W(KG)', key: 'gw', width: 10 },
-        { header: 'Remarks', key: 'rmks', width: 15 },
-        { header: 'Container Type/Size', key: 'displayTpsz', width: 18 },
-    ];
+        // 1️⃣ RowSpan 계산
+        const rowSpanMap = calculateRowSpan(calculatorData);
 
-    let currentRow = 2;
-    let startRow = currentRow;
-    let prevClpNo = '';
+        // 2️⃣ HTML 테이블 생성 (스타일 포함)
+        let tableHTML = `
+            <style>
+                table { border-collapse: collapse; width: 100%; }
+                th, td { border: 1px solid black; padding: 5px; text-align: center; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .subTotal { background-color: yellow; font-weight: bold; }
+                .over { color: red; font-weight: bold; }
+                .remarkColumn { color: blue; }
+            </style>
+    <table>
+            <body>
+                <table>
+                    <thead>
+                        <tr>
+                            ${getOogColumns
+                .filter((col) => col.field !== 'pckOrdSeq') // 'pckOrdSeq' 필드는 제외
+                .map((col) => `<th>${col.headerName || ''}</th>`)
+                .join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
-    calculatorData.forEach((item, index) => {
-        const row = worksheet.addRow({
-            clpNo: item.clpNo,
-            boxNo: item.Item === 'SUM' ? '' : item.boxNo,
-            item: item.Item === 'SUM' ? '' : item.Item,
-            boxLen: item.boxLen?.toFixed(2),
-            boxWdt: item.boxWdt.toFixed(2),
-            boxHgt: item.boxHgt.toFixed(2),
-            qty: item.qty,
-            cbm: item.cbm.toFixed(2),
-            type: item.type,
-            nw: item.nw.toFixed(2),
-            gw: item.gw.toFixed(2),
-            rmks: item.rmks,
-            displayTpsz: item.displayTpsz,
+        // 3️⃣ 데이터 행 생성
+        calculatorData.forEach((item, index, array) => {
+            const isFirstOccurrence = index === 0 || array[index - 1].clpNo !== item.clpNo;
+
+            tableHTML += `<tr${item.Item === 'SUM' ? ' class="subTotal"' : ''}>`;
+
+            // 🔹 clpNo (병합 처리)
+            if (isFirstOccurrence) {
+                const rowSpan = rowSpanMap[item.clpNo] ?? 1;
+                tableHTML += `<td align="center" rowspan="${rowSpan}">${item.clpNo ?? ''}</td>`;
+            }
+
+            // 🔹 일반 데이터
+            if (item.Item === 'SUM') {
+                tableHTML += `<td colspan="2"></td>`; // ✅ SUM 행에서 빠지는 열 개수 맞춤
+            } else {
+                tableHTML += `
+                    <td align="center">${item.boxNo ?? ''}</td>
+                    <td>${item.Item ?? ''}</td>
+                `;
+            }
+
+            tableHTML += `
+                <td align="right" class="${item.isOverLen ? 'over' : ''}">${convertLength(item.boxLen, selectedLengthUnit).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            })}</td>
+                <td align="right" class="${item.isOverWdt ? 'over' : ''}">${(item.boxWdt ?? 0).toFixed(2)}</td>
+                <td align="right" class="${item.isOverHgt ? 'over' : ''}">${(item.boxHgt ?? 0).toFixed(2)}</td>
+                <td align="right">${item.qty ?? '0'}</td>
+                <td align="right">${(item.cbm ?? 0).toFixed(2)}</td>
+                <td align="center">${item.type ?? ''}</td>
+                <td align="right">${(item.nw ?? 0).toFixed(2)}</td>
+                <td align="right" class="${item.isOverWgt ? 'over' : ''}">${(item.gw ?? 0).toFixed(2)}</td>
+                <td class="remarkColumn">${item.rmks ?? ''}</td>
+            `;
+
+            // 🔹 displayTpsz (병합 처리)
+            if (isFirstOccurrence) {
+                const rowSpan = rowSpanMap[item.clpNo] ?? 1;
+                tableHTML += `<td rowspan="${rowSpan}">${item.displayTpsz ?? ''}</td>`;
+            }
+
+            tableHTML += `</tr>`;
         });
 
-        // ✅ 스타일 지정
-        if (item.Item === 'SUM') {
-            row.eachCell((cell) => {
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF00' } };
-                cell.font = { bold: true };
-            });
-        }
-
-        if (item.isOverLen) row.getCell('boxLen').font = { color: { argb: 'FF0000' }, bold: true };
-        if (item.isOverWdt) row.getCell('boxWdt').font = { color: { argb: 'FF0000' }, bold: true };
-        if (item.isOverHgt) row.getCell('boxHgt').font = { color: { argb: 'FF0000' }, bold: true };
-        if (item.isOverWgt) row.getCell('gw').font = { color: { argb: 'FF0000' }, bold: true };
-
-        row.getCell('rmks').font = { color: { argb: '0000FF' } };
-        row.getCell('clpNo').alignment = { horizontal: 'center' };
-        row.getCell('boxNo').alignment = { horizontal: 'center' };
-
-        // ✅ 병합 처리 (CLP No, Container Type/Size)
-        const isGroupEnd = index === calculatorData.length - 1 || calculatorData[index + 1].clpNo !== item.clpNo;
-
-        if (prevClpNo !== item.clpNo) {
-            startRow = currentRow;
-            prevClpNo = item.clpNo;
-        }
-
-        if (isGroupEnd && startRow !== currentRow) {
-            worksheet.mergeCells(`A${startRow}:A${currentRow}`);
-            worksheet.mergeCells(`M${startRow}:M${currentRow}`);
-        }
-
-        currentRow++;
-    });
-
-    // ✅ 컨테이너별 합계 계산
-    const containerCounts = Object.entries(
-        calculatorData.reduce((countMap, item) => {
-            const tpsz = item.tpsz;
-            if (tpsz) {
-                const clpNo = item.clpNo;
-                if (!countMap[tpsz]) countMap[tpsz] = new Set();
-                countMap[tpsz].add(clpNo);
-            }
-            return countMap;
-        }, {} as Record<string, Set<string>>),
-    ).map(([tpsz, clpNoSet]) => `${tpsz}×${clpNoSet.size}`);
-
-    // ✅ RichText 스타일 적용 (숫자는 빨간색)
-    const richTextContainer = containerCounts.flatMap((text, index) => {
-        const [type, count] = text.split('×');
-        return [
-            index > 0 ? { text: ', ', font: { color: { argb: '000000' } } } : null,
-            { text: `${type}×`, font: { color: { argb: '000000' } } },
-            { text: count, font: { color: { argb: 'FF0000' }, bold: true } },
-        ].filter(Boolean);
-    });
-
-    // ✅ 마지막 Total 행 추가
-    const totalRow = worksheet.addRow([
-        'Total',
-        '',
-        '',
-        '',
-        '',
-        '',
-        calculatorData.filter((item) => item.Item === 'SUM').reduce((a, b) => a + (b.qty ?? 0), 0),
-        calculatorData
+        // 4️⃣ tfoot 섹션 추가
+        const totalQty = calculatorData
             .filter((item) => item.Item === 'SUM')
-            .reduce((a, b) => a + (b.cbm ?? 0), 0)
-            .toFixed(3),
-        '',
-        calculatorData
+            .reduce((sum, item) => sum + item.qty, 0)
+            .toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+        const totalCbm = calculatorData
             .filter((item) => item.Item === 'SUM')
-            .reduce((a, b) => a + (b.nw ?? 0), 0)
-            .toFixed(3),
-        calculatorData
+            .reduce((sum, item) => sum + item.cbm, 0)
+            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        const totalNw = calculatorData
             .filter((item) => item.Item === 'SUM')
-            .reduce((a, b) => a + (b.gw ?? 0), 0)
-            .toFixed(3),
-        '',
-        '',
-    ]);
+            .reduce((sum, item) => sum + item.nw, 0)
+            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    totalRow.getCell(2).value = { richText: richTextContainer };
+        const totalGw = calculatorData
+            .filter((item) => item.Item === 'SUM')
+            .reduce((sum, item) => sum + item.gw, 0)
+            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // ✅ 스타일 적용
-    totalRow.eachCell((cell, colNumber) => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFA500' } };
-        cell.font = { bold: true };
+        const tpszSummary = Object.entries(
+            calculatorData.reduce((countMap, item) => {
+                const tpsz = item.tpsz;
+                if (tpsz) {
+                    const clpNo = item.clpNo;
+                    if (!countMap[tpsz]) {
+                        countMap[tpsz] = new Set();
+                    }
+                    countMap[tpsz].add(clpNo);
+                }
+                return countMap;
+            }, {}),
+        )
+            .map(([tpsz, clpNoSet]) => `${tpsz}×<span class="totalNumColor">${(clpNoSet as Set<string>).size}</span>`)
+            .join(', ');
 
-        if ([7, 8, 10, 11].includes(colNumber)) {
-            cell.alignment = { horizontal: 'right' };
-        }
-    });
+        tableHTML += `
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th><strong>Total</strong></th>
+                                <td colspan="5">${tpszSummary}</td>
+                                <td align="right">${totalQty}</td>
+                                <td align="right">${totalCbm}</td>
+                                <td></td>
+                                <td align="right">${totalNw}</td>
+                                <td align="right">${totalGw}</td>
+                                <td></td>
+                                <th colspan="1"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </body>
+                </html>
+            `;
 
-    // ✅ 엑셀 파일 저장
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), 'OOGList.xlsx');
+        // tableHTML += `</tbody></table></body></html>`;
+
+        // 4️⃣ Blob을 생성하여 엑셀 파일 다운로드
+        const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'OOGList.xls';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('엑셀 내보내기 오류:', error);
+        alert('엑셀 내보내기에 실패했습니다.');
+    }
 };
 
 export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => {
@@ -598,15 +613,15 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                  (group.hasOverWgtYn
-                      ? '(Weight)'
-                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                      ? '(O' +
+                (group.hasOverWgtYn
+                    ? '(Weight)'
+                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                        ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                      : '')
+                        : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -640,8 +655,8 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
                 image:
                     null !== item.TPSZ
                         ? '/images/' +
-                          (group.hasOverWgtYn || 'Y' === item.OVER_LEN_YN ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) +
-                          '.png'
+                        (group.hasOverWgtYn || 'Y' === item.OVER_LEN_YN ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) +
+                        '.png'
                         : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
@@ -770,7 +785,7 @@ export const handleCalculator = async (
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
 
         const rowSpanMap = calculateRowSpan(calculatorData);
-        const updatedData = calculatorData.map((item: { clpNo: string; [key: string]: any }) => ({
+        const updatedData = calculatorData.map((item: { clpNo: string;[key: string]: any }) => ({
             ...item,
             rowSpan: rowSpanMap[item.clpNo], // clpNo 기준으로 rowSpan 값 추가
         }));
