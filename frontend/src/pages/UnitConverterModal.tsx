@@ -10,7 +10,7 @@ const UnitConverterModal = ({
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onApply: (lengthUnit: string, weightUnit: string) => void;
+    onApply: (lengthUnit: keyof typeof lengthUnits, weightUnit: keyof typeof weightUnits) => void;
 }) => {
     const [lengthUnit, setLengthUnit] = useState<keyof typeof lengthUnits>('mm');
     const [weightUnit, setWeightUnit] = useState<keyof typeof weightUnits>('kg');

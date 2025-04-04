@@ -1,4 +1,5 @@
 import replyHelper from '../utils/replyHelper.js';
+import authMiddleware from '../utils/authMiddleware.js';
 
 const CRR_CD = 'VOS';
 // const REF_CNTR_TPSZ = ['D2', '4H'];
@@ -17,6 +18,9 @@ const getPackageList = async (fastify, options) => {
 const getContainerMaster = async (fastify, options) => {
     fastify.get(
         '/',
+        {
+            preHandler: [authMiddleware],
+        },
         replyHelper(async (request, reply) => {
             const { crrCd } = request.params || CRR_CD;
 

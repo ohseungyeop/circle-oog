@@ -7,7 +7,8 @@ import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
 import LashingPage from '../pages/LashingPage.tsx';
-import UnitConverterModal from './UnitConverterModal';
+import UnitConverterModal from '../pages/UnitConverterModal.tsx';
+import ContainerTpszModal from '../pages/ContainerTpszModal.tsx';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
 
 interface ExcelDataGridProps {
@@ -90,16 +91,12 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     const [selectedLengthUnit, setSelectedLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [selectedWeightUnit, setSelectedWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
     const oogColumns: GridColDef[] = getOogColumns(selectedLengthUnit, selectedWeightUnit);
-
     const handleApply = async (lengthUnit: keyof typeof lengthUnits, weightUnit: keyof typeof weightUnits) => {
         setSelectedLengthUnit(lengthUnit);
         setSelectedWeightUnit(weightUnit);
     };
-    React.useEffect(() => {
-        if (selectedLengthUnit && selectedWeightUnit) {
-            getContainerMaster(CRR_CD);
-        }
-    }, [selectedLengthUnit, selectedWeightUnit]); // selectedLengthUnit, selectedWeightUnit 변경 시 실행
+
+    const [isTpszModalOpen, setIsTpszModalOpen] = React.useState(false);
 
     const [isLashingModalOpen, setIsDialogOpen] = React.useState(false);
     const [modalData, setModalData] = React.useState({
@@ -217,8 +214,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                     setCalculatorData(updatedData);
                     console.log('OOG Data:', updatedData);
                 }
-                // 추가 작업 실행 (예: 컨테이너 데이터 가져오기)
-                await getContainerMaster(CRR_CD);
             } catch (error) {
                 console.error('OOG 데이터를 가져오는 중 에러 발생:', error);
                 setSnackbar({ open: true, message: 'OOG 데이터를 가져오는 중 에러 발생', severity: 'error' });
@@ -279,6 +274,9 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 </AppBar>
                 {tabValue === 1 && oogData.length > 0 ? (
                     <Stack direction="row" spacing={2} alignItems="center">
+                        <Button variant="contained" color="primary" onClick={() => setIsTpszModalOpen(true)}>
+                            Type/Size 확인
+                        </Button>
                         <Button variant="contained" color="primary" onClick={() => setIsUnitModalOpen(true)}>
                             단위 변환
                         </Button>
@@ -519,6 +517,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 </Alert>
             </Snackbar>
 
+            <ContainerTpszModal isOpen={isTpszModalOpen} onClose={() => setIsTpszModalOpen(false)} />
+            <UnitConverterModal isOpen={isUnitModalOpen} onClose={() => setIsUnitModalOpen(false)} onApply={handleApply} />
             <LashingPage
                 isOpen={isLashingModalOpen}
                 onClose={closeModal}
@@ -528,7 +528,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 xCount={modalData.xCount}
                 yCount={modalData.yCount}
             />
-            <UnitConverterModal isOpen={isUnitModalOpen} onClose={() => setIsUnitModalOpen(false)} onApply={handleApply} />
         </Box>
     );
 };
