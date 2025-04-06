@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, IconButton, Box, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { DataGrid, GridColDef, GridValueFormatterParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useCookies } from 'react-cookie';
 
 interface ContainerTpszModalProps {
@@ -22,7 +22,7 @@ interface TpszData {
 }
 
 const columns: GridColDef[] = [
-    { field: 'CNTR_TPSZ_CD', headerName: 'Type/Szie Code', width: 180 },
+    { field: 'CNTR_TPSZ_CD', headerName: 'Type/Size Code', width: 180 },
     { field: 'CNTR_LEN', headerName: 'Length', width: 120 },
     { field: 'CNTR_LEN_PCTG', headerName: 'Length Percentage', width: 120 },
     { field: 'CNTR_WDT', headerName: 'Width', width: 120 },
