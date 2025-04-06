@@ -1,13 +1,26 @@
+import * as React from 'react';
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
 import { getOogColumns } from './ExcelDataGrid';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
 //import ExcelJS from 'exceljs';
 //import { saveAs } from 'file-saver';
+import { useOogColumns } from '../context/OogColumnsContext';
+import { GridColDef } from '@mui/x-data-grid';
 
 interface Cookies {
     authToken?: string;
 }
+
+let latestOogColumns: GridColDef[] = [];
+
+export const FileListHandlers = () => {
+    const { oogColumns } = useOogColumns();
+    React.useEffect(() => {
+        latestOogColumns = oogColumns; // 컴포넌트 외부에서 참조 가능하게 저장
+    }, [oogColumns]);
+    return null;
+};
 
 export const fetchData = async (cookies: Cookies, apiUrl: string, setRows: (rows: any[]) => void) => {
     if (!cookies.authToken) {
@@ -139,7 +152,7 @@ export const handleFileUpload = async (
 
                 const excelRowObject = Object.fromEntries(excelRow);
 
-                const result: { id: number;[key: string]: any } = {
+                const result: { id: number; [key: string]: any } = {
                     id: index + 1,
                 };
 
@@ -422,10 +435,10 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                 <table>
                     <thead>
                         <tr>
-                            ${getOogColumns
-                .filter((col) => col.field !== 'pckOrdSeq') // 'pckOrdSeq' 필드는 제외
-                .map((col) => `<th>${col.headerName || ''}</th>`)
-                .join('')}
+                            ${latestOogColumns
+                                .filter((col) => col.field !== 'pckOrdSeq') // 'pckOrdSeq' 필드는 제외
+                                .map((col) => `<th>${col.headerName || ''}</th>`)
+                                .join('')}
                         </tr>
                     </thead>
                     <tbody>
@@ -616,15 +629,15 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
             // tpsz 값을 계산
             const tpsz = item.TPSZ
                 ? item.TPSZ +
-                (group.hasOverWgtYn
-                    ? '(Weight)'
-                    : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                        ? '(O' +
+                  (group.hasOverWgtYn
+                      ? '(Weight)'
+                      : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
+                      ? '(O' +
                         (group.hasOverLenYn ? 'L' : '') +
                         (group.hasOverWdtYn ? 'W' : '') +
                         (group.hasOverHgtYn ? 'H' : '') +
                         ')'
-                        : '')
+                      : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -658,8 +671,8 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
                 image:
                     null !== item.TPSZ
                         ? '/images/' +
-                        (group.hasOverWgtYn || 'Y' === item.OVER_LEN_YN ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) +
-                        '.png'
+                          (group.hasOverWgtYn || 'Y' === item.OVER_LEN_YN ? '40p' : item.TPSZ.replace("'", '').toLowerCase()) +
+                          '.png'
                         : null,
                 isOverWgt: 'Y' === item.OVER_WGT_YN,
                 isOverLen: 'Y' === item.OVER_LEN_YN,
@@ -783,7 +796,7 @@ export const handleCalculator = async (
         const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
 
         const rowSpanMap = calculateRowSpan(calculatorData);
-        const updatedData = calculatorData.map((item: { clpNo: string;[key: string]: any }) => ({
+        const updatedData = calculatorData.map((item: { clpNo: string; [key: string]: any }) => ({
             ...item,
             rowSpan: rowSpanMap[item.clpNo], // clpNo 기준으로 rowSpan 값 추가
         }));

@@ -10,7 +10,8 @@ import LashingPage from '../pages/LashingPage.tsx';
 import UnitConverterModal from '../pages/UnitConverterModal.tsx';
 import ContainerTpszModal from '../pages/ContainerTpszModal.tsx';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
-
+import { useOogColumns } from '../context/OogColumnsContext';
+import { excelColumns } from './FileListGrid.tsx';
 interface ExcelDataGridProps {
     rows: any[];
     setRows: React.Dispatch<React.SetStateAction<any[]>>; // 부모로부터 전달받은 setRows
@@ -19,23 +20,23 @@ interface ExcelDataGridProps {
     selectionModel: GridRowSelectionModel;
 }
 
-const excelColumns: GridColDef[] = [
-    { field: 'id', headerName: 'NO.', width: 100 },
-    { field: 'pckNo', headerName: 'Item No', width: 100 },
-    { field: 'itmNm', headerName: 'Item Name', width: 100 },
-    { field: 'itmLen', headerName: 'Package Length', width: 100 },
-    { field: 'itmWdt', headerName: 'Package Width', width: 100 },
-    { field: 'itmHgt', headerName: 'Package Height', width: 100 },
-    { field: 'itmQty', headerName: "Q'ty", width: 100 },
-    { field: 'netWgt', headerName: 'Net Weight', width: 100 },
-    { field: 'boxLen', headerName: 'Box Length', width: 100 },
-    { field: 'boxWdt', headerName: 'Box Width', width: 100 },
-    { field: 'boxHgt', headerName: 'Box Height', width: 100 },
-    { field: 'itmCbm', headerName: 'CBM', width: 100 },
-    { field: 'itmTpNm', headerName: 'Item Type', width: 100 },
-    { field: 'grsWgt', headerName: 'Gross Weight', width: 100 },
-    { field: 'rmks', headerName: 'Remarks', width: 100 },
-];
+// const excelColumns: GridColDef[] = [
+//     { field: 'id', headerName: 'NO.', width: 100 },
+//     { field: 'pckNo', headerName: 'Item No', width: 100 },
+//     { field: 'itmNm', headerName: 'Item Name', width: 100 },
+//     { field: 'itmLen', headerName: 'Package Length', width: 100 },
+//     { field: 'itmWdt', headerName: 'Package Width', width: 100 },
+//     { field: 'itmHgt', headerName: 'Package Height', width: 100 },
+//     { field: 'itmQty', headerName: "Q'ty", width: 100 },
+//     { field: 'netWgt', headerName: 'Net Weight', width: 100 },
+//     { field: 'boxLen', headerName: 'Box Length', width: 100 },
+//     { field: 'boxWdt', headerName: 'Box Width', width: 100 },
+//     { field: 'boxHgt', headerName: 'Box Height', width: 100 },
+//     { field: 'itmCbm', headerName: 'CBM', width: 100 },
+//     { field: 'itmTpNm', headerName: 'Item Type', width: 100 },
+//     { field: 'grsWgt', headerName: 'Gross Weight', width: 100 },
+//     { field: 'rmks', headerName: 'Remarks', width: 100 },
+// ];
 
 const TabPanel = ({ children, value, index }: any) => {
     return (
@@ -90,11 +91,15 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     const [isUnitModalOpen, setIsUnitModalOpen] = React.useState(false);
     const [selectedLengthUnit, setSelectedLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [selectedWeightUnit, setSelectedWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
+    const { setOogColumns } = useOogColumns();
     const oogColumns: GridColDef[] = getOogColumns(selectedLengthUnit, selectedWeightUnit);
     const handleApply = async (lengthUnit: keyof typeof lengthUnits, weightUnit: keyof typeof weightUnits) => {
         setSelectedLengthUnit(lengthUnit);
         setSelectedWeightUnit(weightUnit);
     };
+    React.useEffect(() => {
+        setOogColumns(oogColumns);
+    }, [oogColumns]);
 
     const [isTpszModalOpen, setIsTpszModalOpen] = React.useState(false);
 
