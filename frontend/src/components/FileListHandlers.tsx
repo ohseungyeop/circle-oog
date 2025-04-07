@@ -1,10 +1,7 @@
 import * as React from 'react';
 import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
-import { getOogColumns } from './ExcelDataGrid';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
-//import ExcelJS from 'exceljs';
-//import { saveAs } from 'file-saver';
 import { useOogColumns } from '../context/OogColumnsContext';
 import { GridColDef } from '@mui/x-data-grid';
 
@@ -22,7 +19,7 @@ export const FileListHandlers = () => {
         latestOogColumns = oogColumns; // 컴포넌트 외부에서 참조 가능하게 저장
         latestLengthUnit = lengthUnit; // 컴포넌트 외부에서 참조 가능하게 저장
         latestWeightUnit = weightUnit; // 컴포넌트 외부에서 참조 가능하게 저장
-    }, [oogColumns]);
+    }, [oogColumns, lengthUnit, weightUnit]);
     return null;
 };
 
