@@ -64,6 +64,13 @@ export function getOogColumns(selectedLengthUnit: string, selectedWeightUnit: st
         { field: 'tpsz', headerName: 'Container Type/Size', width: 100 },
     ];
 }
+export function getSelectedLengthUnit(selectedLengthUnit: keyof typeof lengthUnits) {
+    return selectedLengthUnit;
+}
+
+export function getSelectedWeightUnit(selectedWeightUnit: keyof typeof weightUnits) {
+    return selectedWeightUnit;
+}
 
 const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq, selectionModel, oogData }) => {
     if (!rows || rows.length === 0) {
@@ -91,7 +98,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     const [isUnitModalOpen, setIsUnitModalOpen] = React.useState(false);
     const [selectedLengthUnit, setSelectedLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [selectedWeightUnit, setSelectedWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
-    const { setOogColumns } = useOogColumns();
+    const { setOogColumns, setLengthUnit, setWeightUnit } = useOogColumns();
     const oogColumns: GridColDef[] = getOogColumns(selectedLengthUnit, selectedWeightUnit);
     const handleApply = async (lengthUnit: keyof typeof lengthUnits, weightUnit: keyof typeof weightUnits) => {
         setSelectedLengthUnit(lengthUnit);
@@ -99,7 +106,9 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     };
     React.useEffect(() => {
         setOogColumns(oogColumns);
-    }, [oogColumns]);
+        setLengthUnit(selectedLengthUnit);
+        setWeightUnit(selectedWeightUnit);
+    }, [oogColumns, selectedLengthUnit, selectedWeightUnit]);
 
     const [isTpszModalOpen, setIsTpszModalOpen] = React.useState(false);
 

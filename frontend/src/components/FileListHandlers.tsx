@@ -13,11 +13,15 @@ interface Cookies {
 }
 
 let latestOogColumns: GridColDef[] = [];
+let latestLengthUnit: keyof typeof lengthUnits = 'mm';
+let latestWeightUnit: keyof typeof weightUnits = 'kg';
 
 export const FileListHandlers = () => {
-    const { oogColumns } = useOogColumns();
+    const { oogColumns, lengthUnit, weightUnit } = useOogColumns();
     React.useEffect(() => {
         latestOogColumns = oogColumns; // 컴포넌트 외부에서 참조 가능하게 저장
+        latestLengthUnit = lengthUnit; // 컴포넌트 외부에서 참조 가능하게 저장
+        latestWeightUnit = weightUnit; // 컴포넌트 외부에서 참조 가능하게 저장
     }, [oogColumns]);
     return null;
 };
@@ -430,7 +434,8 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                 .over { color: red; font-weight: bold; }
                 .remarkColumn { color: blue; }
             </style>
-    <table>
+
+            <table>
             <body>
                 <table>
                     <thead>
@@ -468,19 +473,38 @@ export const handleExportToExcel = (calculatorData: any[]) => {
 
             tableHTML += `
                 <td align="right" class="${item.isOverLen ? 'over' : ''}">
-                ${(item.boxLen ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                    ${convertLength(item.boxLen, latestLengthUnit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
                 </td>
                 <td align="right" class="${item.isOverWdt ? 'over' : ''}">
-                    ${(item.boxWdt ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                    ${convertLength(item.boxWdt, latestLengthUnit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
                 </td>
                 <td align="right" class="${item.isOverHgt ? 'over' : ''}">
-                    ${(item.boxHgt ?? 0).toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                    ${convertLength(item.boxHgt, latestLengthUnit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
                 </td>
                 <td align="right">${item.qty ?? '0'}</td>
                 <td align="right">${(item.cbm ?? 0).toFixed(2)}</td>
                 <td align="center">${item.type ?? ''}</td>
-                <td align="right">${(item.nw ?? 0).toFixed(2)}</td>
-                <td align="right" class="${item.isOverWgt ? 'over' : ''}">${(item.gw ?? 0).toFixed(2)}</td>
+                <td align="right">
+                    ${convertWeight(item.nw, latestWeightUnit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
+                </td>
+                <td align="right" class="${item.isOverWgt ? 'over' : ''}">
+                    ${convertWeight(item.gw, latestWeightUnit).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })}
+                </td>
                 <td class="remarkColumn">${item.rmks ?? ''}</td>
             `;
 
@@ -504,15 +528,15 @@ export const handleExportToExcel = (calculatorData: any[]) => {
             .reduce((sum, item) => sum + item.cbm, 0)
             .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        const totalNw = calculatorData
-            .filter((item) => item.Item === 'SUM')
-            .reduce((sum, item) => sum + item.nw, 0)
-            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const totalNw = convertWeight(
+            calculatorData.filter((item) => item.Item === 'SUM').reduce((sum, item) => sum + item.nw, 0),
+            latestWeightUnit,
+        ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        const totalGw = calculatorData
-            .filter((item) => item.Item === 'SUM')
-            .reduce((sum, item) => sum + item.gw, 0)
-            .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const totalGw = convertWeight(
+            calculatorData.filter((item) => item.Item === 'SUM').reduce((sum, item) => sum + item.gw, 0),
+            latestWeightUnit,
+        ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         const tpszSummary = Object.entries(
             calculatorData.reduce((countMap, item) => {

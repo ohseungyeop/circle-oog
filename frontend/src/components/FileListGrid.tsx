@@ -17,6 +17,7 @@ import {
 import { OogColumnsContext } from '../context/OogColumnsContext';
 import { GridColDef } from '@mui/x-data-grid';
 import { FileListHandlers } from './FileListHandlers.tsx';
+import { lengthUnits, weightUnits } from '../utils/UnitConverter.tsx';
 
 interface ExcelRow {
     pckOrdSeq: string;
@@ -65,6 +66,8 @@ const FileListGrid = () => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
     const [oogColumns, setOogColumns] = React.useState<GridColDef[]>([]);
+    const [lengthUnit, setLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
+    const [weightUnit, setWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
 
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
@@ -83,7 +86,16 @@ const FileListGrid = () => {
     }, [excelRows]);
 
     return (
-        <OogColumnsContext.Provider value={{ oogColumns, setOogColumns }}>
+        <OogColumnsContext.Provider
+            value={{
+                oogColumns,
+                setOogColumns,
+                lengthUnit,
+                setLengthUnit,
+                weightUnit,
+                setWeightUnit,
+            }}
+        >
             <Box sx={{ height: 400, width: '100%' }}>
                 <button
                     onClick={() => handleTemplateDownload(apiUrl)}
