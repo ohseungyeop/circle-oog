@@ -537,7 +537,7 @@ export const handleExportToExcel = (calculatorData: any[]) => {
 
         const tpszSummary = Object.entries(
             calculatorData.reduce((countMap, item) => {
-                const tpsz = item.tpsz;
+                const tpsz = item.groupTpsz;
                 if (tpsz) {
                     const clpNo = item.clpNo;
                     if (!countMap[tpsz]) {

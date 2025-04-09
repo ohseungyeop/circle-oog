@@ -24,13 +24,13 @@ interface TpszData {
 const columns: GridColDef[] = [
     { field: 'CNTR_TPSZ_CD', headerName: 'Type/Size Code', width: 180 },
     { field: 'CNTR_LEN', headerName: 'Length', width: 120 },
-    { field: 'CNTR_LEN_PCTG', headerName: 'Length Percentage', width: 120 },
+    { field: 'CNTR_LEN_PCTG', headerName: 'Length %', width: 120 },
     { field: 'CNTR_WDT', headerName: 'Width', width: 120 },
-    { field: 'CNTR_WDT_PCTG', headerName: 'Width Percentage', width: 120 },
+    { field: 'CNTR_WDT_PCTG', headerName: 'Width %', width: 120 },
     { field: 'CNTR_HGT', headerName: 'Height', width: 120 },
-    { field: 'CNTR_HGT_PCTG', headerName: 'Height Percentage', width: 120 },
+    { field: 'CNTR_HGT_PCTG', headerName: 'Height %', width: 120 },
     { field: 'CNTR_WGT', headerName: 'Weight', width: 120 },
-    { field: 'CNTR_WGT_PCTG', headerName: 'Weight Percentage', width: 120 },
+    { field: 'CNTR_WGT_PCTG', headerName: 'Weight %', width: 120 },
 ];
 
 const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose }) => {

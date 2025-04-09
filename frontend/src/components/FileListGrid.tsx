@@ -189,13 +189,7 @@ const FileListGrid = () => {
                     }
                 />
 
-                <ExcelDataGrid
-                    rows={excelRows}
-                    setRows={setRows}
-                    pckOrdSeq={pckOrdSeq}
-                    selectionModel={selectionModel}
-                    oogData={calculatorData}
-                />
+                <ExcelDataGrid rows={excelRows} pckOrdSeq={pckOrdSeq} selectionModel={selectionModel} oogData={calculatorData} />
 
                 <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
                     <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>

@@ -81,3 +81,11 @@
 .oogDataTable tfoot th {
     background-color: #ee9;
 }
+
+.oogDataTable tfoot span.masterTotalCount {
+    background-color: #69f;
+}
+
+.oogDataTable tfoot span.detailTotalCount {
+    background-color: #96f;
+}

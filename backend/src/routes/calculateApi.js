@@ -273,6 +273,9 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
 };
 
 const processStep3 = async (trx, pckOrdSeq) => {
+    console.log('------------------------------');
+    console.log('3️⃣ 최종 OOG 데이터(VOS_OOG_CLP) 결과 저장');
+
     await trx('vos_oog_clp').where('PCK_ORD_SEQ', pckOrdSeq).del();
     await trx.raw(`
         INSERT INTO VOS_OOG_CLP(
@@ -330,18 +333,21 @@ const processStep3 = async (trx, pckOrdSeq) => {
         SELECT ${pckOrdSeq} as pck_ord_seq
             , pck_grp_no
             , NULL
-            , 'SUM' as itm_nm
+            , 'SUM'
             , NULL, NULL, NULL
-            , SUM(box_len) as box_len
-            , MAX(box_wdt) as box_wdt
-            , MAX(box_hgt) as box_hgt
-            , SUM(itm_qty) as itm_qty
-            , SUM(calc_cbm) as calc_cbm
+            , SUM(box_len)
+            , MAX(box_wdt)
+            , MAX(box_hgt)
+            , SUM(itm_qty)
+            , SUM(calc_cbm)
             , NULL
-            , SUM(net_wgt) as net_wgt
-            , SUM(grs_wgt) as grs_wgt
+            , SUM(net_wgt)
+            , SUM(grs_wgt)
             , NULL, NULL
-            , NULL, NULL, NULL, NULL
+            , max(over_wgt_yn)
+            , max(over_len_yn)
+            , max(over_wdt_yn)
+            , max(over_hgt4_yn)
         FROM vos_oog_calc_step2
         WHERE pck_ord_seq = ${pckOrdSeq}
         GROUP BY pck_grp_no

@@ -12,31 +12,13 @@ import ContainerTpszModal from '../pages/ContainerTpszModal.tsx';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
 import { useOogColumns } from '../context/OogColumnsContext';
 import { excelColumns } from './FileListGrid.tsx';
+
 interface ExcelDataGridProps {
     rows: any[];
-    setRows: React.Dispatch<React.SetStateAction<any[]>>; // 부모로부터 전달받은 setRows
     oogData: any[];
     pckOrdSeq: string;
     selectionModel: GridRowSelectionModel;
 }
-
-// const excelColumns: GridColDef[] = [
-//     { field: 'id', headerName: 'NO.', width: 100 },
-//     { field: 'pckNo', headerName: 'Item No', width: 100 },
-//     { field: 'itmNm', headerName: 'Item Name', width: 100 },
-//     { field: 'itmLen', headerName: 'Package Length', width: 100 },
-//     { field: 'itmWdt', headerName: 'Package Width', width: 100 },
-//     { field: 'itmHgt', headerName: 'Package Height', width: 100 },
-//     { field: 'itmQty', headerName: "Q'ty", width: 100 },
-//     { field: 'netWgt', headerName: 'Net Weight', width: 100 },
-//     { field: 'boxLen', headerName: 'Box Length', width: 100 },
-//     { field: 'boxWdt', headerName: 'Box Width', width: 100 },
-//     { field: 'boxHgt', headerName: 'Box Height', width: 100 },
-//     { field: 'itmCbm', headerName: 'CBM', width: 100 },
-//     { field: 'itmTpNm', headerName: 'Item Type', width: 100 },
-//     { field: 'grsWgt', headerName: 'Gross Weight', width: 100 },
-//     { field: 'rmks', headerName: 'Remarks', width: 100 },
-// ];
 
 const TabPanel = ({ children, value, index }: any) => {
     return (
@@ -72,11 +54,10 @@ export function getSelectedWeightUnit(selectedWeightUnit: keyof typeof weightUni
     return selectedWeightUnit;
 }
 
-const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq, selectionModel, oogData }) => {
+const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectionModel, oogData }) => {
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
-    const CRR_CD = 'VOS';
     const apiUrl = import.meta.env.VITE_BACKEND_URL;
     const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{
@@ -86,8 +67,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
     }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
     const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
-    const [loading, setLoading] = React.useState(false);
-    const [containerData, setContainerData] = React.useState<any[]>([]);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const handleCloseSnackbar = () => {
         setSnackbar((prevState) => ({
@@ -132,66 +111,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         setIsDialogOpen(false);
     };
 
-    const getContainerMaster = async (crrCd: string) => {
-        try {
-            const response = await fetch(`${apiUrl}/vos/oog/v1/container/spec/${crrCd}`);
-            const newData = await response.json();
-            setContainerData(newData?.data);
-
-            const d40Data = newData?.data?.find((item: { CNTR_TPSZ_CD: string }) => item.CNTR_TPSZ_CD === '4H');
-            if (!d40Data) {
-                console.warn('No container data found for CNTR_TPSZ_CD = 4H');
-                return;
-            }
-
-            console.log('Container Master Data2:', d40Data);
-
-            const table = document.getElementById('oogDataTable');
-            if (!table) return;
-
-            const thMappings: Record<string, { value: number; percentage: number }> = {
-                boxLen: { value: d40Data.CNTR_LEN, percentage: Number(d40Data.CNTR_LEN_PCTG) },
-                boxWdt: { value: d40Data.CNTR_WDT, percentage: Number(d40Data.CNTR_WDT_PCTG) },
-                boxHgt: { value: d40Data.CNTR_HGT, percentage: Number(d40Data.CNTR_HGT_PCTG) },
-            };
-
-            for (const th of table.querySelectorAll('thead th')) {
-                const key = th.getAttribute('data-key');
-                if (key && thMappings[key]) {
-                    const { value, percentage } = thMappings[key];
-                    th.insertAdjacentHTML(
-                        'beforeend',
-                        `<br/><b>${convertLength(value, selectedLengthUnit).toLocaleString(undefined, {
-                            maximumFractionDigits: 2,
-                        })} (${percentage}%)</b>`,
-                    );
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchMoreData = async () => {
-        if (loading) return; // 이미 로딩 중이면 중복 요청 방지
-        setLoading(true);
-
-        try {
-            const response = await fetch(`${apiUrl}/data?page=${paginationModel.page + 1}&size=${paginationModel.pageSize}`);
-            const newData = await response.json();
-
-            setRows((prevRows: any[]) => [...prevRows, ...newData]); // 기존 데이터에 추가
-            setPaginationModel((prev) => ({ ...prev, page: prev.page + 1 }));
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // // ✅ CLP_NO 병합을 위한 데이터 가공 함수
+    // ✅ CLP_NO 병합을 위한 데이터 가공 함수
     const calculateRowSpan = (data: any[]) => {
         const rowSpanMap: Record<string, number> = {};
 
@@ -204,13 +124,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
         });
 
         return rowSpanMap;
-    };
-    // 📌 페이지 변경 시 자동으로 `fetchMoreData` 호출
-    const handlePaginationChange = (newModel: { page: number; pageSize: number }) => {
-        if (newModel.page > paginationModel.page) {
-            fetchMoreData(); // 스크롤하여 다음 페이지 요청
-        }
-        setPaginationModel(newModel);
     };
 
     const handleTabChange = async (event: React.SyntheticEvent, newValue: number) => {
@@ -289,7 +202,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                 {tabValue === 1 && oogData.length > 0 ? (
                     <Stack direction="row" spacing={2} alignItems="center">
                         <Button variant="contained" color="primary" onClick={() => setIsTpszModalOpen(true)}>
-                            Type/Size 확인
+                            Container Spec
                         </Button>
                         <Button variant="contained" color="primary" onClick={() => setIsUnitModalOpen(true)}>
                             단위 변환
@@ -450,10 +363,37 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, setRows, pckOrdSeq,
                                     <strong>Total</strong>
                                 </th>
                                 <td colSpan={5}>
-                                    <span>
+                                    <span className={styles.masterTotalCount}>
                                         {Object.entries(
                                             calculatorData.reduce((countMap, item) => {
                                                 const tpsz = item.tpsz; // tpsz 값 가져오기
+                                                if (tpsz) {
+                                                    const clpNo = item.clpNo;
+                                                    // 이미 해당 tpsz가 countMap에 없으면 배열로 초기화
+                                                    if (!countMap[tpsz]) {
+                                                        countMap[tpsz] = new Set(); // 중복을 제거하기 위해 Set 사용
+                                                    }
+                                                    // clpNo가 중복되지 않도록 Set에 추가
+                                                    countMap[tpsz].add(clpNo);
+                                                }
+
+                                                return countMap;
+                                            }, {}),
+                                        ).map(([tpsz, clpNoSet], index) => {
+                                            const count = (clpNoSet as Set<string>).size; // Set의 크기
+                                            return (
+                                                <span key={tpsz}>
+                                                    {index > 0 && ', '}
+                                                    {tpsz}×<span className={styles.totalNumColor}>{count}</span>
+                                                </span>
+                                            );
+                                        })}
+                                    </span>
+                                    &emsp;→&emsp;
+                                    <span className={styles.detailTotalCount}>
+                                        {Object.entries(
+                                            calculatorData.reduce((countMap, item) => {
+                                                const tpsz = item.groupTpsz; // tpsz 값 가져오기
                                                 if (tpsz) {
                                                     const clpNo = item.clpNo;
                                                     // 이미 해당 tpsz가 countMap에 없으면 배열로 초기화
