@@ -689,7 +689,6 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
                 displayTpsz: tpsz + ' ' + tpszCount[tpsz],
                 tpsz: item.TPSZ,
                 groupTpsz: tpsz,
-                // tpsz: tpsz,
                 image:
                     null !== item.TPSZ
                         ? '/images/' +
