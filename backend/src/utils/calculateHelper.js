@@ -1,20 +1,43 @@
-// const estimateBoxSize = async (fastify, lwhTpCd, lwhValue) => {
-//     const estmBxSz = await fastify
-//         .knex('VOS_OOG_ESTM_BX_SZ')
-//         .where({ LEN_WDT_TY_CD: lwhTpCd })
-//         .andWhere('PCK_FM_NUM', '<=', lwhValue)
-//         .andWhere('PCK_TO_NUM', '>=', lwhValue)
-//         .select('PCK_BX_NUM')
-//         .limit(1);
-//     if (estmBxSz.length > 0) {
-//         return estmBxSz[0].PCK_BX_NUM;
-//     } else {
-//         return null;
-//     }
-// };
+const calculateBoxSize = (sourceList) => {
+    return sourceList.map((item) => {
+        const { ITM_LEN, ITM_WDT, ITM_HGT, BOX_LEN, BOX_WDT, BOX_HGT } = item;
 
-const calculateCBM = (length, width, height) => {
-    return (length * width * height) / 1000000000;
+        // 조건: BOX_* 값이 0이거나 null이거나 빈 문자열인 경우
+        const isBoxLenInvalid = !BOX_LEN || BOX_LEN === 0;
+        const isBoxWdtInvalid = !BOX_WDT || BOX_WDT === 0;
+        const isBoxHgtInvalid = !BOX_HGT || BOX_HGT === 0;
+
+        let additionalHeight = 0;
+        const hgtFactor = (ITM_HGT * 40) / 1000;
+        if (hgtFactor <= 10) {
+            additionalHeight = 30;
+        } else if (hgtFactor <= 20) {
+            additionalHeight = 25;
+        } else if (hgtFactor <= 30) {
+            additionalHeight = 20;
+        } else {
+            additionalHeight = 10;
+        }
+
+        return {
+            ...item,
+            BOX_LEN: isBoxLenInvalid ? ITM_LEN + 30 : BOX_LEN,
+            BOX_WDT: isBoxWdtInvalid ? ITM_WDT + 30 : BOX_WDT,
+            BOX_HGT: isBoxHgtInvalid ? ITM_HGT + additionalHeight : BOX_HGT,
+        };
+    });
+};
+
+const calculateCBM = (sourceList) => {
+    return sourceList.map(async (item) => {
+        const len = item.BOX_LEN && item.BOX_LEN !== 0 ? item.BOX_LEN : item.ITM_LEN;
+        const wdt = item.BOX_WDT && item.BOX_WDT !== 0 ? item.BOX_WDT : item.ITM_WDT;
+        const hgt = item.BOX_HGT && item.BOX_HGT !== 0 ? item.BOX_HGT : item.ITM_HGT;
+        return {
+            ...item,
+            CALC_CBM: (len * wdt * hgt) / 1000000000,
+        };
+    });
 };
 
 /**
@@ -254,6 +277,7 @@ const regroupItemList = (itemList) => {
 };
 
 export {
+    calculateBoxSize,
     calculateCBM,
     filterListByWeight,
     filterListByLength,

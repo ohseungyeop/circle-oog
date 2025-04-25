@@ -1,6 +1,7 @@
 import replyHelper from '../utils/replyHelper.js';
 import authMiddleware from '../utils/authMiddleware.js';
 import {
+    calculateBoxSize,
     calculateCBM,
     filterListByWeight,
     filterListByLength,
@@ -116,8 +117,17 @@ const processStep1 = async (fastify, trx, pckOrdSeq) => {
     // 1️⃣ VOS_OOG_UPLD_DTL 조회
     console.log('------------------------------');
     console.log('1️⃣ VOS_OOG_UPLD_DTL 조회');
-    const sourceList = await fastify.knex('VOS_OOG_UPLD_DTL').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
+    let sourceList = await fastify.knex('VOS_OOG_UPLD_DTL').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
     console.log('소스 item size:', sourceList.length);
+
+    // CBM 넣기(없으면 Item Size 이용)
+    sourceList = await Promise.all(calculateCBM(sourceList));
+
+    // BOX Size 넣기
+    sourceList = await Promise.all(calculateBoxSize(sourceList));
+
+    // CBM 다시 한번 넣기(Box Size 이용)
+    sourceList = await Promise.all(calculateCBM(sourceList));
 
     // 2️⃣ QTY만큼 해당 item 복제
     console.log('------------------------------');
@@ -202,7 +212,6 @@ const processStep1 = async (fastify, trx, pckOrdSeq) => {
                         ? 1
                         : 0,
                 FR2_CNT: step9List.includes(item) ? 1 : 0,
-                CALC_CBM: calculateCBM(item.BOX_LEN, item.BOX_WDT, item.BOX_HGT),
             };
         }),
     );
