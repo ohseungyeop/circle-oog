@@ -1,4 +1,4 @@
-export const lengthUnits = { mm: 1, cm: 10, m: 1000, inch: 25.4 };
+export const lengthUnits = { mm: 1, cm: 10, m: 1000, inch: 25.4, feet: 304.8, yard: 914.4, mile: 1609344 };
 export const weightUnits = { kg: 1, lbs: 2.20462 };
 
 export const convertLength = (value: number, toUnit: keyof typeof lengthUnits) => {
