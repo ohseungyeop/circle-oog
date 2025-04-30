@@ -58,7 +58,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
     if (!rows || rows.length === 0) {
         return <div>데이터가 없습니다.</div>;
     }
-    const apiUrl = import.meta.env.VITE_BACKEND_URL;
+    const apiUrl = import.meta.env.VITE_API_URL;
     const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;

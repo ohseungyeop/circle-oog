@@ -35,7 +35,7 @@ const columns: GridColDef[] = [
 
 const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose }) => {
     const CRR_CD = 'VOS';
-    const apiUrl = import.meta.env.VITE_BACKEND_URL;
+    const apiUrl = import.meta.env.VITE_API_URL;
     const [cookies] = useCookies(['authToken']);
 
     const [data, setData] = useState<TpszData[]>([]);

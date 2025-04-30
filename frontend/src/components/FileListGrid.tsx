@@ -53,7 +53,7 @@ const FileListGrid = () => {
     const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
     const [cookies, setCookie, removeCookie] = useCookies(['authToken']);
-    const apiUrl = import.meta.env.VITE_BACKEND_URL;
+    const apiUrl = import.meta.env.VITE_API_URL;
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
         message: string;

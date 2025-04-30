@@ -5,13 +5,17 @@ const corsPlugin = async (fastify, options) => {
     console.log('🌐 CORS 플러그인 등록');
     console.log('🔗 허용 Origin:', process.env.FRONTEND_URL);
 
-    fastify.register(fastifyCors, {
-        credentials: true, // 자격 증명 허용
+    // 환경별 CORS 설정
+    const corsOptions = {
+        credentials: true,
         origin: [process.env.FRONTEND_URL],
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 허용할 HTTP 메서드
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
         exposedHeaders: ['Set-Cookie'],
-    });
+        maxAge: 3600,
+        preflightContinue: false
+    };
+    fastify.register(fastifyCors, corsOptions);
 };
 
 export default fp(corsPlugin);

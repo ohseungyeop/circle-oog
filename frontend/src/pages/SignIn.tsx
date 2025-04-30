@@ -37,7 +37,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
     }),
 }));
 
-const apiUrl = import.meta.env.VITE_BACKEND_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const SignInContainer = styled(Stack)(({ theme }) => ({
     height: 'calc((1 - var(--template-frame-height, 0)) * 100dvh)',
@@ -64,7 +64,6 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 
 const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
     const navigate = useNavigate();
-    const [navigateToGrid, setNavigateToGrid] = React.useState(false);
     const [emailError, setEmailError] = React.useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
     const [open, setOpen] = React.useState(false);
@@ -110,7 +109,6 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
             const result = await response.json();
             console.log('서버 응답:', result);
             if ('S' === result.code) {
-                setNavigateToGrid(true);
                 setDialogMessage('로그인 성공');
                 setOpen(true);
                 navigate('/mainPage');

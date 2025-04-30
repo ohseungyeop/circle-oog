@@ -34,7 +34,7 @@ interface lashingLinkProps {
 }
 
 const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, clpNo, tpsz, xCount, yCount }) => {
-    const apiUrl = import.meta.env.VITE_BACKEND_URL;
+    const apiUrl = import.meta.env.VITE_API_URL;
     const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
