@@ -273,6 +273,23 @@ const regroupItemList = (itemList) => {
         lastType = item.CNTR_TP_CD;
     });
 
+//20DR을 위한 추가 로직(일단 킵)
+// 마지막 그룹의 BOX_LEN 합계 계산
+//     const lastGroupNo = Math.max(...itemList.map(item => item.PCK_GRP_NO));
+//     const totalBoxLen = itemList.filter(item => item.PCK_GRP_NO === lastGroupNo)
+//         .reduce((sum, item) => sum + Number(item.BOX_LEN), 0);
+// console.log("totalBoxLen", totalBoxLen);
+// console.log("REF_LEN_20", REF_LEN_20);
+// console.log("lastGroupNo", lastGroupNo);
+//     // 마지막 그룹의 BOX_LEN 합계가 REF_LEN_20보다 작으면 CNTR_TP_CD를 '20DR'로 변경
+//     if (totalBoxLen <= REF_LEN_20) {
+//         itemList.forEach(item => {
+//             if (item.PCK_GRP_NO === lastGroupNo) {
+//                 item.CNTR_TP_CD = '20DR';
+//             }
+//         });
+//     }
+
     return itemList;
 };
 
