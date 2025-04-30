@@ -250,7 +250,7 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
     });
 
     // 2️⃣ 그룹핑된 데이터를 단일 배열로 변환
-    const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG, REF_LEN_20 * REF_LEN_20_PCTG);
+    const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG);
     const flattenedGroupItemList = groupItemList.flat(); // 그룹 리스트를 하나의 배열로 변환
 
     // 3️⃣ 무게와 길이로 제외되었던 step2, step6, step4 항목들을 다시 합침(합치면서 CNTR_TP_CD와 PCK_GRP_NO속성을 추가함)
@@ -272,7 +272,7 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
     checkListByHeight(step2AndOverList, REF_HGT_40 * REF_HGT_40_PCTG);
 
     // 5️⃣ 정렬 및그룹 번호 재지정
-    const step2ItemList = regroupItemList(step2AndOverList);
+    const step2ItemList = regroupItemList(step2AndOverList, REF_LEN_20 * REF_LEN_20_PCTG);
 
     // 6️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();

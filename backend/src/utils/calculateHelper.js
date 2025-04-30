@@ -137,10 +137,9 @@ const checkListByHeight = (itemList, threshold) => {
  * "First-Fit Decreasing(FFD)" 또는 "Best-Fit" 알고리즘
  * @param {Array} target2List - 무게와 길이 초과건을 제외한 대상 아이템
  * @param {number} REF_LEN_40 - 40FT 기준 길이
- * @param {number} REF_LEN_20 - 20FT 기준 길이
  * @returns
  */
-const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
+const groupItemListByLength = (target2List, REF_LEN_40) => {
     const groupItemList = []; // 최종 그룹 리스트
 
     // 1. 그룹핑 시작
@@ -183,14 +182,6 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
         group.forEach((item) => {
             item.CNTR_TP_CD = defaultCNTR_TP_CD;
         });
-
-        // 마지막 그룹인 경우 REF_LEN_20 기준으로 마지막 아이템만 변경(기존에 그룹핑이 되지 않은 경우만)
-        if (isLastGroup) {
-            const lastItem = group[group.length - 1];
-            if (!lastItem.PCK_GRP_NO && Number(lastItem.BOX_LEN) <= REF_LEN_20) {
-                lastItem.CNTR_TP_CD = '20DR';
-            }
-        }
     });
 
     // 6. 결과 확인
@@ -217,7 +208,7 @@ const groupItemListByLength = (target2List, REF_LEN_40, REF_LEN_20) => {
     return groupItemList;
 };
 
-const regroupItemList = (itemList) => {
+const regroupItemList = (itemList, REF_LEN_20) => {
     // Step 1: CNTR_TP_CD 기준 정렬 (40FR(Weight→OLWH→OL→OWH→OH→OW) → 40HQ → 20DR)
     itemList.sort((a, b) => {
         const order = { '40FR': 1, '40HQ': 2, '20DR': 3 };
@@ -273,22 +264,22 @@ const regroupItemList = (itemList) => {
         lastType = item.CNTR_TP_CD;
     });
 
-//20DR을 위한 추가 로직(일단 킵)
+// 20DR을 위한 추가 로직(일단 킵)
 // 마지막 그룹의 BOX_LEN 합계 계산
-//     const lastGroupNo = Math.max(...itemList.map(item => item.PCK_GRP_NO));
-//     const totalBoxLen = itemList.filter(item => item.PCK_GRP_NO === lastGroupNo)
-//         .reduce((sum, item) => sum + Number(item.BOX_LEN), 0);
-// console.log("totalBoxLen", totalBoxLen);
-// console.log("REF_LEN_20", REF_LEN_20);
-// console.log("lastGroupNo", lastGroupNo);
-//     // 마지막 그룹의 BOX_LEN 합계가 REF_LEN_20보다 작으면 CNTR_TP_CD를 '20DR'로 변경
-//     if (totalBoxLen <= REF_LEN_20) {
-//         itemList.forEach(item => {
-//             if (item.PCK_GRP_NO === lastGroupNo) {
-//                 item.CNTR_TP_CD = '20DR';
-//             }
-//         });
-//     }
+    const lastGroupNo = Math.max(...itemList.map(item => item.PCK_GRP_NO));
+    const totalBoxLen = itemList.filter(item => item.PCK_GRP_NO === lastGroupNo)
+        .reduce((sum, item) => sum + Number(item.BOX_LEN), 0);
+console.log("totalBoxLen", totalBoxLen);
+console.log("REF_LEN_20", REF_LEN_20);
+console.log("lastGroupNo", lastGroupNo);
+    // 마지막 그룹의 BOX_LEN 합계가 REF_LEN_20보다 작으면 CNTR_TP_CD를 '20DR'로 변경
+    if (totalBoxLen <= REF_LEN_20) {
+        itemList.forEach(item => {
+            if (item.PCK_GRP_NO === lastGroupNo) {
+                item.CNTR_TP_CD = '20DR';
+            }
+        });
+    }
 
     return itemList;
 };
