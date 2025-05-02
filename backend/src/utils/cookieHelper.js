@@ -6,7 +6,7 @@ function setAuthToken(reply, email) {
     console.log(process.env.COOKIE_DOMAIN);
     console.log('-------------------');
 
-    const authToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, { expiresIn: '15m' });
+    const authToken = jwt.sign({ email }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
 
     console.log('Setting cookie with token:', authToken);
 
@@ -16,7 +16,7 @@ function setAuthToken(reply, email) {
         sameSite: process.env.NODE_ENV === 'prd' ? 'Lax' : 'Strict',
         // sameSite: 'Lax', // 모든 환경에서 Lax 사용
         path: '/',
-        maxAge: 60 * 15 // 15분 (JWT 토큰과 동일한 만료 시간)
+        maxAge: 60 * 60 * 24 * 7, // 7일 (선택 사항)
     };
 
     // 프로덕션 환경 설정
