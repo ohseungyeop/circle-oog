@@ -796,6 +796,7 @@ export const handleCalculator = async (
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 Authorization: `Bearer ${cookies.authToken}`,
             },

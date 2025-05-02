@@ -12,8 +12,9 @@ function setAuthToken(reply, email) {
 
     // 환경별 쿠키 설정
     const cookieOptions = {
-        httpOnly: true, // 모든 환경에서 보안 강화
-        sameSite: process.env.NODE_ENV === 'prd' ? 'Lax' : 'Strict', // 프로덕션에서는 Lax, 개발환경에서는 Strict
+        httpOnly: false, // 모든 환경에서 보안 강화
+        sameSite: process.env.NODE_ENV === 'prd' ? 'Lax' : 'Strict',
+        // sameSite: 'Lax', // 모든 환경에서 Lax 사용
         path: '/',
         maxAge: 60 * 15 // 15분 (JWT 토큰과 동일한 만료 시간)
     };

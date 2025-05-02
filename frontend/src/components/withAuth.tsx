@@ -15,8 +15,12 @@ const withAuth = (WrappedComponent: ComponentType) => {
                 return;
             }
 
+            console.log('Current cookies:', cookies);
+            console.log('Auth token:', cookies.authToken);
+
             const token = cookies.authToken;
             if (!token) {
+                console.log('No token found');
                 navigate('/'); // 토큰이 없으면 로그인 페이지로 이동
                 return;
             }
@@ -24,8 +28,9 @@ const withAuth = (WrappedComponent: ComponentType) => {
             isChecking.current = true;
             fetch(`${apiUrl}/vos/oog/v1/users/verify`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             })
             .then(response => {
@@ -33,8 +38,9 @@ const withAuth = (WrappedComponent: ComponentType) => {
                     // 토큰 만료 시 자동 재발급 시도
                     return fetch(`${apiUrl}/vos/oog/v1/users/refresh`, {
                         method: 'POST',
+                        credentials: 'include',
                         headers: {
-                            'Authorization': `Bearer ${token}`
+                            Authorization: `Bearer ${token}`
                         }
                     });
                 }

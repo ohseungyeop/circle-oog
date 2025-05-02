@@ -341,7 +341,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({ rows, pckOrdSeq, selectio
                                                         color: 'white', // 기본 색상을 그대로 사용
                                                     }}
                                                     onClick={() => openModal(item.pckOrdSeq, item.clpNo, item.tpsz)}
-                                                    disabled={!item.tpsz.includes('FR')} // 'FR'이 포함되지 않으면 비활성화
+                                                    disabled={!item.tpsz?.includes('FR')} // 'FR'이 포함되지 않으면 비활성화
                                                 >
                                                     {item.displayTpsz}
                                                 </Button>
