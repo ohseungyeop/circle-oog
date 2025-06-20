@@ -329,6 +329,7 @@ const processStep3 = async (trx, pckOrdSeq) => {
                 WHEN '40FR' = cntr_tp_cd THEN '40''FR'
                 WHEN '40HQ' = cntr_tp_cd THEN '40''HQ'
                 WHEN '20DR' = cntr_tp_cd THEN '20''DR'
+                WHEN '20FR' = cntr_tp_cd THEN '20''FR'
             END as tpsz
             , over_wgt_yn
             , over_len_yn

@@ -211,7 +211,7 @@ const groupItemListByLength = (target2List, REF_LEN_40) => {
 const regroupItemList = (itemList, REF_LEN_20) => {
     // Step 1: CNTR_TP_CD 기준 정렬 (40FR(Weight→OLWH→OL→OWH→OH→OW) → 40HQ → 20DR)
     itemList.sort((a, b) => {
-        const order = { '40FR': 1, '40HQ': 2, '20DR': 3 };
+        const order = { '40FR': 1, '40HQ': 2, '20DR': 3, '20FR': 4 };
 
         // 1. CNTR_TP_CD 기준으로 먼저 정렬
         const cntrTpCdComparison = order[a.CNTR_TP_CD] - order[b.CNTR_TP_CD];
@@ -266,14 +266,19 @@ const regroupItemList = (itemList, REF_LEN_20) => {
 
     // 20DR을 위한 추가 로직(일단 킵)
     // 마지막 그룹의 BOX_LEN 합계 계산
-    const lastGroupNo = Math.max(...itemList.map(item => item.PCK_GRP_NO));
-    const totalBoxLen = itemList.filter(item => item.PCK_GRP_NO === lastGroupNo)
+    const lastGroupNo = Math.max(...itemList.map((item) => item.PCK_GRP_NO));
+    const totalBoxLen = itemList
+        .filter((item) => item.PCK_GRP_NO === lastGroupNo)
         .reduce((sum, item) => sum + Number(item.BOX_LEN), 0);
     // 마지막 그룹의 BOX_LEN 합계가 REF_LEN_20보다 작으면 CNTR_TP_CD를 '20DR'로 변경
     if (totalBoxLen <= REF_LEN_20) {
-        itemList.forEach(item => {
+        itemList.forEach((item) => {
             if (item.PCK_GRP_NO === lastGroupNo) {
-                item.CNTR_TP_CD = '20DR';
+                if (item.OVER_HGT2_YN === 'Y' || item.OVER_WDT_YN === 'Y') {
+                    item.CNTR_TP_CD = '20FR';
+                } else {
+                    item.CNTR_TP_CD = '20DR';
+                }
             }
         });
     }
@@ -283,16 +288,16 @@ const regroupItemList = (itemList, REF_LEN_20) => {
     const groupStatuses = {};
 
     // 3. itemList를 순회하며 그룹별 상태 계산
-    itemList.forEach(item => {
+    itemList.forEach((item) => {
         const groupNo = item.PCK_GRP_NO;
 
         // 해당 그룹 번호가 처음 나타나면 상태 객체 초기화
         if (!groupStatuses[groupNo]) {
             groupStatuses[groupNo] = {
-            OVER_GRP_WGT_YN: 'N',
-            OVER_GRP_LEN_YN: 'N',
-            OVER_GRP_WDT_YN: 'N',
-            OVER_GRP_HGT_YN: 'N', // OVER_HGT4_YN 또는 OVER_HGT2_YN 중 하나라도 Y면 Y가 됨
+                OVER_GRP_WGT_YN: 'N',
+                OVER_GRP_LEN_YN: 'N',
+                OVER_GRP_WDT_YN: 'N',
+                OVER_GRP_HGT_YN: 'N', // OVER_HGT4_YN 또는 OVER_HGT2_YN 중 하나라도 Y면 Y가 됨
             };
         }
 
@@ -314,7 +319,7 @@ const regroupItemList = (itemList, REF_LEN_20) => {
     });
 
     // 4. itemList를 다시 순회하며 계산된 그룹 상태를 각 항목에 추가
-    itemList.forEach(item => {
+    itemList.forEach((item) => {
         const groupNo = item.PCK_GRP_NO;
         const statuses = groupStatuses[groupNo];
 
@@ -332,24 +337,24 @@ const regroupItemList = (itemList, REF_LEN_20) => {
     return itemList;
 };
 
-    /**
-     * itemList를 그룹별 정렬 기준에 따라 정렬하고,
-     * 정렬된 순서에 따라 PCK_GRP_NO를 1부터 순차적으로 재할당합니다.
-     * 중요: 이 함수는 itemList 배열 내 객체의 PCK_GRP_NO 값을 직접 수정합니다.
-     *       원본 데이터를 유지하려면 함수 호출 전에 배열 복사본을 사용하세요.
-     *
-     * @param {Array<Object>} itemList - 정렬 및 재할당할 객체들의 배열.
-     *                                  각 객체는 최소한 다음 속성을 포함해야 합니다:
-     *                                  - PCK_GRP_NO (Number) - 원본 그룹 번호
-     *                                  - CNTR_TP_CD (String)
-     *                                  - OVER_GRP_WGT_YN (String: 'Y' or 'N')
-     *                                  - OVER_GRP_LEN_YN (String: 'Y' or 'N')
-     *                                  - OVER_GRP_WDT_YN (String: 'Y' or 'N')
-     *                                  - OVER_GRP_HGT_YN (String: 'Y' or 'N')
-     */
-    function resortAndReassignGroupNumbers(itemList) {
+/**
+ * itemList를 그룹별 정렬 기준에 따라 정렬하고,
+ * 정렬된 순서에 따라 PCK_GRP_NO를 1부터 순차적으로 재할당합니다.
+ * 중요: 이 함수는 itemList 배열 내 객체의 PCK_GRP_NO 값을 직접 수정합니다.
+ *       원본 데이터를 유지하려면 함수 호출 전에 배열 복사본을 사용하세요.
+ *
+ * @param {Array<Object>} itemList - 정렬 및 재할당할 객체들의 배열.
+ *                                  각 객체는 최소한 다음 속성을 포함해야 합니다:
+ *                                  - PCK_GRP_NO (Number) - 원본 그룹 번호
+ *                                  - CNTR_TP_CD (String)
+ *                                  - OVER_GRP_WGT_YN (String: 'Y' or 'N')
+ *                                  - OVER_GRP_LEN_YN (String: 'Y' or 'N')
+ *                                  - OVER_GRP_WDT_YN (String: 'Y' or 'N')
+ *                                  - OVER_GRP_HGT_YN (String: 'Y' or 'N')
+ */
+function resortAndReassignGroupNumbers(itemList) {
     if (!itemList || itemList.length === 0) {
-        console.warn("itemList가 비어있거나 유효하지 않습니다.");
+        console.warn('itemList가 비어있거나 유효하지 않습니다.');
         return;
     }
 
@@ -358,25 +363,26 @@ const regroupItemList = (itemList, REF_LEN_20) => {
         '40FR': 1,
         '40HQ': 2,
         '20DR': 3,
+        '20FR': 4,
     };
     const ynToSortValue = (yn) => (yn === 'Y' ? 0 : 1);
-    const allYnToSortValue = (...yns) => (yns.every(yn => yn === 'Y') ? 0 : 1);
+    const allYnToSortValue = (...yns) => (yns.every((yn) => yn === 'Y') ? 0 : 1);
 
     // 1. 그룹별 정보 추출 (정렬 기준값 포함)
     const groups = new Map();
-    itemList.forEach(item => {
+    itemList.forEach((item) => {
         const groupNo = item.PCK_GRP_NO;
         if (!groups.has(groupNo)) {
-        // 각 그룹의 첫 번째 아이템 정보만으로 정렬 기준을 삼을 수 있음
-        // (OVER_GRP_*_YN 값은 그룹 내에서 동일하므로)
-        groups.set(groupNo, {
-            originalGroupNo: groupNo,
-            CNTR_TP_CD: item.CNTR_TP_CD,
-            OVER_GRP_WGT_YN: item.OVER_GRP_WGT_YN,
-            OVER_GRP_LEN_YN: item.OVER_GRP_LEN_YN,
-            OVER_GRP_WDT_YN: item.OVER_GRP_WDT_YN,
-            OVER_GRP_HGT_YN: item.OVER_GRP_HGT_YN,
-        });
+            // 각 그룹의 첫 번째 아이템 정보만으로 정렬 기준을 삼을 수 있음
+            // (OVER_GRP_*_YN 값은 그룹 내에서 동일하므로)
+            groups.set(groupNo, {
+                originalGroupNo: groupNo,
+                CNTR_TP_CD: item.CNTR_TP_CD,
+                OVER_GRP_WGT_YN: item.OVER_GRP_WGT_YN,
+                OVER_GRP_LEN_YN: item.OVER_GRP_LEN_YN,
+                OVER_GRP_WDT_YN: item.OVER_GRP_WDT_YN,
+                OVER_GRP_HGT_YN: item.OVER_GRP_HGT_YN,
+            });
         }
     });
 
@@ -439,13 +445,13 @@ const regroupItemList = (itemList, REF_LEN_20) => {
     });
 
     // 4. itemList의 각 항목에 새 그룹 번호 할당
-    itemList.forEach(item => {
+    itemList.forEach((item) => {
         const originalGroupNo = item.PCK_GRP_NO; // 원본 그룹 번호 참조
         if (groupNoMapping.has(originalGroupNo)) {
-        item.PCK_GRP_NO = groupNoMapping.get(originalGroupNo); // 새 그룹 번호로 업데이트
+            item.PCK_GRP_NO = groupNoMapping.get(originalGroupNo); // 새 그룹 번호로 업데이트
         } else {
-        // 이 경우는 발생하면 안 되지만, 방어적 코딩
-        console.error(`매핑 오류: 원본 그룹 번호 ${originalGroupNo}에 대한 새 그룹 번호를 찾을 수 없습니다.`);
+            // 이 경우는 발생하면 안 되지만, 방어적 코딩
+            console.error(`매핑 오류: 원본 그룹 번호 ${originalGroupNo}에 대한 새 그룹 번호를 찾을 수 없습니다.`);
         }
     });
 
