@@ -260,6 +260,8 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
         ...step1ItemList.reduce((acc, item) => {
             if (step2Set.has(item.PCK_NO) || step6Set.has(item.PCK_NO) || step4Set.has(item.PCK_NO)) {
                 acc.push({ ...item, CNTR_TP_CD: '40FR', PCK_GRP_NO: ++maxPckGrpNo });
+            } else if (step2Set.has(item.PCK_NO) || step6Set.has(item.PCK_NO)) {
+                acc.push({ ...item, CNTR_TP_CD: '20FR', PCK_GRP_NO: ++maxPckGrpNo });
             }
             return acc;
         }, []),

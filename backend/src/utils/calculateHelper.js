@@ -274,7 +274,12 @@ const regroupItemList = (itemList, REF_LEN_20) => {
     if (totalBoxLen <= REF_LEN_20) {
         itemList.forEach((item) => {
             if (item.PCK_GRP_NO === lastGroupNo) {
-                if (item.OVER_HGT2_YN === 'Y' || item.OVER_WDT_YN === 'Y') {
+                if (
+                    item.OVER_HGT_YN === 'Y' ||
+                    item.OVER_HGT4_YN === 'Y' ||
+                    item.OVER_HGT2_YN === 'Y' ||
+                    item.OVER_WDT_YN === 'Y'
+                ) {
                     item.CNTR_TP_CD = '20FR';
                 } else {
                     item.CNTR_TP_CD = '20DR';
