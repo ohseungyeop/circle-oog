@@ -16,7 +16,7 @@ import {
 } from '../utils/calculateHelper.js';
 
 const CRR_CD = 'VOS';
-const REF_CNTR_TPSZ = ['D2', '4H'];
+const REF_CNTR_TPSZ = ['D2', '4H', 'F2', 'F4'];
 const HARD_WGT_40 = 38000; //(kg) → 40t(38t)
 const HARD_WGT_60 = 60000; //(kg) → 60t
 const HARD_WGT_25 = 28000; //(kg) → 25t(28t)
@@ -29,6 +29,10 @@ let REF_LEN_40_PCTG = 0;
 let REF_LEN_20_PCTG = 0;
 let REF_WDT_40_PCTG = 0;
 let REF_HGT_40_PCTG = 0;
+let REF_FR_LEN_40 = 0;
+let REF_FR_LEN_40_PCTG = 0;
+let REF_FR_LEN_20 = 0;
+let REF_FR_LEN_20_PCTG = 0;
 let step1List;
 let step1Tail;
 let step2List;
@@ -90,14 +94,18 @@ const processStep1 = async (fastify, trx, pckOrdSeq) => {
     // 0️⃣ 컨테이너 기준(Dry) 정보 조회
     console.log('------------------------------');
     console.log('0️⃣ 컨테이너 기준(Dry) 정보 조회');
+
     const cntrInfo = await fastify
         .knex('VOS_OOG_CNTR_MST')
+        .select('*')
         .where({ CRR_CD: CRR_CD })
         .whereIn('CNTR_TPSZ_CD', REF_CNTR_TPSZ)
-        .select('*');
+        .orderByRaw(`FIELD(CNTR_TPSZ_CD, ${REF_CNTR_TPSZ.map(() => '?').join(', ')})`, REF_CNTR_TPSZ);
 
     const d2Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[0]);
     const d4Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[1]);
+    const f2Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[2]);
+    const f4Row = cntrInfo.find((row) => row.CNTR_TPSZ_CD === REF_CNTR_TPSZ[3]);
 
     REF_LEN_40 = d4Row.CNTR_LEN ?? 11300; //11.3m
     REF_LEN_20 = d2Row.CNTR_LEN ?? 5898; //5.898m
@@ -108,6 +116,12 @@ const processStep1 = async (fastify, trx, pckOrdSeq) => {
     REF_LEN_20_PCTG = d2Row.CNTR_LEN_PCTG / 100 ?? 0.85; //85%
     REF_WDT_40_PCTG = d4Row.CNTR_WDT_PCTG / 100 ?? 1; //100%
     REF_HGT_40_PCTG = d4Row.CNTR_HGT_PCTG / 100 ?? 1; //100%
+
+    REF_FR_LEN_40 = f4Row.CNTR_LEN ?? 11500;
+    REF_FR_LEN_40_PCTG = f4Row.CNTR_LEN_PCTG / 100 ?? 1;
+    REF_FR_LEN_20 = f2Row.CNTR_LEN ?? 5500;
+    REF_FR_LEN_20_PCTG = f2Row.CNTR_LEN_PCTG / 100 ?? 1;
+
     console.log('--길이 기준:', REF_LEN_40);
     console.log('--폭 기준:', REF_WDT_40);
     console.log('--40높이 기준:', REF_HGT_40);
@@ -250,7 +264,7 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
     });
 
     // 2️⃣ 그룹핑된 데이터를 단일 배열로 변환
-    const groupItemList = groupItemListByLength(target2List, REF_LEN_40 * REF_LEN_40_PCTG);
+    const groupItemList = groupItemListByLength(target2List, REF_FR_LEN_40 * REF_FR_LEN_40_PCTG);
     const flattenedGroupItemList = groupItemList.flat(); // 그룹 리스트를 하나의 배열로 변환
 
     // 3️⃣ 무게와 길이로 제외되었던 step2, step6, step4 항목들을 다시 합침(합치면서 CNTR_TP_CD와 PCK_GRP_NO속성을 추가함)
@@ -274,7 +288,7 @@ const processStep2 = async (trx, pckOrdSeq, step1ItemList) => {
     checkListByHeight(step2AndOverList, REF_HGT_40 * REF_HGT_40_PCTG);
 
     // 5️⃣ 정렬 및그룹 번호 재지정
-    const step2ItemList = regroupItemList(step2AndOverList, REF_LEN_20 * REF_LEN_20_PCTG);
+    const step2ItemList = regroupItemList(step2AndOverList, REF_FR_LEN_20 * REF_FR_LEN_20_PCTG);
 
     // 6️⃣ 기존 데이터 삭제 후 step2 저장
     await trx('vos_oog_calc_step2').where('PCK_ORD_SEQ', pckOrdSeq).del();
