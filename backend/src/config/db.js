@@ -13,6 +13,21 @@ const dbConnector = async (fastify, options) => {
             database: process.env.DB_NAME,
             decimalNumbers: true,
         },
+        debug: true, // 쿼리 디버그 모드 활성화
+        log: {
+            warn(message) {
+                console.log('⚠️ Knex Warning:', message);
+            },
+            error(message) {
+                console.error('❌ Knex Error:', message);
+            },
+            deprecate(message) {
+                console.log('🚨 Knex Deprecation:', message);
+            },
+            debug(message) {
+                console.log('🔍 Knex Query:', message);
+            },
+        },
     });
 
     fastify.decorate('knex', db);
