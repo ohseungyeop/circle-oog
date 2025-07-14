@@ -87,11 +87,10 @@ const FileListGrid = () => {
 
     const handleLogout = async () => {
         try {
-            // 1. 백엔드에 로그아웃 요청
+            // 1. 백엔드에 로그아웃 요청 (Content-Type 헤더 제거)
             const response = await fetch(`${apiUrl}/vos/oog/v1/users/logout`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${cookies.authToken}`,
                 },
                 credentials: 'include', // 쿠키 포함
