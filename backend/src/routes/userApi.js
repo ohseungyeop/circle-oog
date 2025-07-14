@@ -163,26 +163,14 @@ const verifyToken = async (fastify, options) => {
 const logout = async (fastify, options) => {
     fastify.post('/', async (request, reply) => {
         try {
-            // 환경별 쿠키 삭제 옵션 (setAuthToken과 동일한 옵션 사용)
-            const cookieOptions = {
-                httpOnly: false,
-                sameSite: process.env.NODE_ENV === 'prd' ? 'Lax' : 'Strict',
+            // 쿠키에서 authToken 제거 (생성 시와 동일한 옵션)
+            reply.clearCookie('authToken', {
                 path: '/',
-            };
-
-            // 프로덕션 환경 설정
-            if (process.env.NODE_ENV === 'prd') {
-                cookieOptions.secure = true;
-                cookieOptions.domain = process.env.COOKIE_DOMAIN;
-            }
-
-            // 로컬 환경에서는 도메인 설정 제거
-            if (process.env.NODE_ENV === 'local') {
-                delete cookieOptions.domain;
-            }
-
-            // 쿠키에서 authToken 제거
-            reply.clearCookie('authToken', cookieOptions);
+                domain: '.valueonsys.com',
+                httpOnly: true,
+                secure: true,
+                sameSite: 'Lax',
+            });
 
             return reply.send({
                 code: 'S',

@@ -104,25 +104,17 @@ const FileListGrid = () => {
             console.warn('Backend logout request failed:', error);
         }
 
-        // 2. 클라이언트 쿠키 삭제 - 서버 환경을 고려한 더 구체적인 옵션
-        removeCookie('authToken', {
-            path: '/',
-            domain: window.location.hostname,
-            secure: window.location.protocol === 'https:',
-            sameSite: 'strict',
-        });
-
-        // 3. 로컬 상태 초기화
+        // 2. 로컬 상태 초기화
         setRows([]);
         setExcelRows([]);
         setSelectionModel({ type: 'include', ids: new Set() });
         setCalculatorData([]);
 
-        // 4. 로컬 스토리지도 정리 (혹시 있을 경우)
+        // 3. 로컬 스토리지도 정리 (혹시 있을 경우)
         localStorage.clear();
         sessionStorage.clear();
 
-        // 5. 페이지 리다이렉트
+        // 4. 페이지 리다이렉트
         window.location.href = '/';
     };
     // 쿠키의 authToken이 변경될 때마다 데이터를 불러옵니다.
