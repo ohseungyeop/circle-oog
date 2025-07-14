@@ -1,5 +1,5 @@
 import { uploadFile, selectFileList, uploadDetail, deleteFile, downloadTemplate, selectDetails } from './fileApi.js';
-import { getPackageList, getContainerMaster } from './packageApi.js';
+import { getPackageList, getContainerMaster, updateDetails } from './packageApi.js';
 import calculate from './calculateApi.js';
 import { saveLashingInfo, getLashingInfo } from './lashingApi.js';
 import { registerUser, verifyToken, verifyEmail } from './userApi.js';
@@ -27,6 +27,7 @@ async function routes(fastify, options) {
 
     // 처리 결과
     fastify.register(getPackageList, { prefix: '/vos/oog/v1/packages/:pckOrdSeq([0-9]+)' }); // GET
+    fastify.register(updateDetails, { prefix: '/vos/oog/v1/packages/details' }); // PUT
 
     // Lashing 정보
     fastify.register(saveLashingInfo, { prefix: '/vos/oog/v1/lashing' }); // POST

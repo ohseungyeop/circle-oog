@@ -35,4 +35,37 @@ const getContainerMaster = async (fastify, options) => {
     );
 };
 
-export { getPackageList, getContainerMaster };
+const updateDetails = async (fastify, options) => {
+    fastify.put(
+        '/',
+        {
+            preHandler: [authMiddleware],
+        },
+        replyHelper(async (request) => {
+            const { data } = request.body;
+            console.log('📩 Received update request body:', data);
+
+            if (!Array.isArray(data) || data.length === 0) {
+                throw new Error('Data array is required and cannot be empty');
+            }
+
+            // 각 항목을 개별적으로 업데이트
+            for (const item of data) {
+                await fastify
+                    .knex('VOS_OOG_UPLD_DTL')
+                    .where({
+                        PCK_ORD_SEQ: item.pckOrdSeq,
+                        PCK_NO: item.pckNo,
+                    })
+                    .update({
+                        BOX_LEN: item.boxLen,
+                        BOX_WDT: item.boxWdt,
+                    });
+            }
+
+            return { message: 'Packing details updated successfully', updatedCount: data.length };
+        }),
+    );
+};
+
+export { getPackageList, getContainerMaster, updateDetails };

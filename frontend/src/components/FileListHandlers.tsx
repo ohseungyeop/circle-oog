@@ -390,17 +390,17 @@ export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies:
             pckOrdSeq: item.PCK_ORD_SEQ,
             pckNo: item.PCK_NO,
             itmNm: item.ITM_NM,
-            itmLen: Number(item.ITM_LEN).toFixed(2),
-            itmWdt: Number(item.ITM_WDT).toFixed(2),
-            itmHgt: Number(item.ITM_HGT).toFixed(2),
-            boxLen: Number(item.BOX_LEN).toFixed(2),
-            boxWdt: Number(item.BOX_WDT).toFixed(2),
-            boxHgt: Number(item.BOX_HGT).toFixed(2),
+            itmLen: Number(item.ITM_LEN),
+            itmWdt: Number(item.ITM_WDT),
+            itmHgt: Number(item.ITM_HGT),
+            boxLen: Number(item.BOX_LEN),
+            boxWdt: Number(item.BOX_WDT),
+            boxHgt: Number(item.BOX_HGT),
             itmQty: Number(item.ITM_QTY),
-            itmCbm: Number(item.ITM_CBM).toFixed(4),
+            itmCbm: Number(item.ITM_CBM),
             itmTpNm: item.ITM_TP_NM,
-            netWgt: Number(item.NET_WGT).toFixed(2),
-            grsWgt: Number(item.GRS_WGT).toFixed(2),
+            netWgt: Number(item.NET_WGT),
+            grsWgt: Number(item.GRS_WGT),
             rmks: item.RMKS,
         }));
 
@@ -408,6 +408,67 @@ export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies:
     } catch (error) {
         console.error('Error fetching Excel data:', error);
         return [];
+    }
+};
+
+export const handleSaveChanges = async (changedRows: any[], apiUrl: string, cookies: Cookies, setSnackbar: any) => {
+    try {
+        console.log('💾 Saving changes:', changedRows);
+
+        if (!changedRows || changedRows.length === 0) {
+            setSnackbar({
+                open: true,
+                message: '저장할 변경사항이 없습니다.',
+                severity: 'warning',
+            });
+            return;
+        }
+
+        // 백엔드로 전송할 데이터 형식으로 변환
+        const updateData = changedRows.map((row) => ({
+            pckOrdSeq: row.pckOrdSeq,
+            pckNo: row.pckNo,
+            boxLen: row.boxLen,
+            boxWdt: row.boxWdt,
+        }));
+
+        console.log('📤 Sending update data to backend:', updateData);
+
+        const response = await fetch(`${apiUrl}/vos/oog/v1/packages/details`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${cookies.authToken}`,
+            },
+            body: JSON.stringify({ data: updateData }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Save response:', result);
+
+        // replyHelper가 응답을 래핑하므로 data 필드에서 실제 결과를 가져옴
+        const actualResult = result.data || result;
+        const updatedCount = actualResult.updatedCount || 0;
+
+        setSnackbar({
+            open: true,
+            message: `성공적으로 ${updatedCount}개 항목이 저장되었습니다.`,
+            severity: 'success',
+        });
+
+        return result;
+    } catch (error) {
+        console.error('❌ Error saving changes:', error);
+        setSnackbar({
+            open: true,
+            message: '저장 중 오류가 발생했습니다.',
+            severity: 'error',
+        });
+        throw error;
     }
 };
 

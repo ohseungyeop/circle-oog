@@ -10,14 +10,15 @@ import {
     handleFileUpload,
     handleTemplateDownload,
     handleDeleteRows,
-    handleSelectionChange,
     fetchExcelData,
     handleExportToExcel,
 } from './FileListHandlers';
 import { OogColumnsContext } from '../context/OogColumnsContext';
-import { GridColDef } from '@mui/x-data-grid';
+import { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { FileListHandlers } from './FileListHandlers.tsx';
 import { lengthUnits, weightUnits } from '../utils/UnitConverter.tsx';
+import styles from './FileListGrid.module.css';
+import commonStyles from '../styles/common.module.css';
 
 interface ExcelRow {
     pckOrdSeq: string;
@@ -64,26 +65,61 @@ const FileListGrid = () => {
         severity: 'success',
     });
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [selectionModel, setSelectionModel] = React.useState<number[]>([]);
+    const [selectionModel, setSelectionModel] = React.useState<any>([]);
     const [oogColumns, setOogColumns] = React.useState<GridColDef[]>([]);
     const [lengthUnit, setLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [weightUnit, setWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
+    const [resetTab, setResetTab] = React.useState<boolean>(false);
 
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
     };
 
+    // 자동으로 스낵바 닫기
     React.useEffect(() => {
-        if (cookies.authToken) {
+        if (snackbar.open) {
+            const timer = setTimeout(() => {
+                handleCloseSnackbar();
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [snackbar.open]);
+
+    const handleLogout = () => {
+        // 1. 쿠키 삭제
+        removeCookie('authToken', { path: '/' });
+
+        // 2. 로컬 상태 초기화
+        setRows([]);
+        setExcelRows([]);
+        setSelectionModel([]);
+        setCalculatorData([]);
+
+        // 3. 페이지 리다이렉트
+        window.location.href = '/';
+    };
+    // 쿠키의 authToken이 변경될 때마다 데이터를 불러옵니다.
+    React.useEffect(() => {
+        if (cookies && cookies.authToken) {
             fetchData(cookies, apiUrl, setRows);
         }
-    }, [cookies.authToken]);
+    }, [cookies, apiUrl]);
 
     React.useEffect(() => {
         if (excelRows.length > 0 && excelRows[0]?.pckOrdSeq) {
             setPckOrdSeq(excelRows[0].pckOrdSeq);
         }
     }, [excelRows]);
+
+    // resetTab이 true로 설정된 후 다시 false로 리셋
+    React.useEffect(() => {
+        if (resetTab) {
+            const timer = setTimeout(() => {
+                setResetTab(false);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [resetTab]);
 
     return (
         <OogColumnsContext.Provider
@@ -96,106 +132,111 @@ const FileListGrid = () => {
                 setWeightUnit,
             }}
         >
-            <Box sx={{ height: 400, width: '100%' }}>
-                <button
-                    onClick={() => handleTemplateDownload(apiUrl)}
-                    style={{
-                        padding: '10px 20px',
-                        margin: '15px',
-                        backgroundColor: '#0E4491',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontFamily: 'sans-serif',
-                    }}
-                >
-                    Template Download
-                </button>
+            <Box sx={{ width: '100%' }}>
+                {/* 상단 버튼들 - 좌측: Import, Export, Delete, Template Download / 우측: Logout */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    {/* 좌측 버튼들 */}
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            onChange={(event) =>
+                                handleFileUpload(event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)
+                            }
+                            hidden
+                        />
+                        <button onClick={() => fileInputRef.current?.click()} className={styles.actionButton}>
+                            Import
+                        </button>
 
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={(event) => handleFileUpload(event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)}
-                    hidden
-                />
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                        marginBottom: '10px',
-                        padding: '10px 20px',
-                        backgroundColor: '#0E4491',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontFamily: 'sans-serif',
-                        fontSize: '15px',
-                    }}
-                >
-                    Import
-                </button>
+                        <button onClick={() => handleExportToExcel(calculatorData)} className={styles.actionButton}>
+                            Export
+                        </button>
 
-                <button
-                    onClick={() => handleExportToExcel(calculatorData)}
-                    style={{
-                        marginBottom: '10px',
-                        margin: '15px',
-                        padding: '10px 20px',
-                        backgroundColor: '#0E4491',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontFamily: 'sans-serif',
-                        fontSize: '15px',
-                    }}
-                >
-                    Export
-                </button>
+                        <button
+                            onClick={() => handleDeleteRows(apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows)}
+                            className={styles.actionButton}
+                        >
+                            Delete
+                        </button>
 
-                <button
-                    onClick={() => handleDeleteRows(apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows)}
-                    style={{
-                        marginBottom: '10px',
-                        padding: '10px 20px',
-                        backgroundColor: '#0E4491',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontFamily: 'sans-serif',
-                        fontSize: '15px',
-                    }}
-                >
-                    Delete
-                </button>
+                        <button onClick={() => handleTemplateDownload(apiUrl)} className={styles.actionButton}>
+                            Template Download
+                        </button>
+                    </Box>
+
+                    {/* 우측 Logout 버튼 */}
+                    <button onClick={handleLogout} className={styles.logoutButton}>
+                        Logout
+                    </button>
+                </Box>
 
                 <FileList
                     rows={rows}
                     columns={columns}
                     selectionModel={selectionModel}
-                    handleSelectionChange={(newSelection) =>
-                        handleSelectionChange(
-                            [...newSelection].filter((id): id is number => typeof id === 'number'),
-                            rows,
-                            setSelectionModel,
-                            setExcelRows,
-                            setCalculatorData,
-                            fetchExcelData,
-                            apiUrl,
-                            cookies,
-                        )
-                    }
+                    handleSelectionChange={async (newSelection: any) => {
+                        // GridRowSelectionModel이 배열이 아닐 수 있으므로, 배열로 변환
+                        let numberSelection: number[] = [];
+                        if (Array.isArray(newSelection)) {
+                            numberSelection = newSelection.filter((id): id is number => typeof id === 'number');
+                        } else if (typeof newSelection === 'object' && newSelection !== null && 'length' in newSelection) {
+                            // 혹시 iterable 객체일 경우
+                            numberSelection = Array.from(newSelection).filter((id): id is number => typeof id === 'number');
+                        } else if (typeof newSelection === 'object' && newSelection !== null && 'ids' in newSelection) {
+                            // MUI v6+의 selectionModel 구조 대응
+                            numberSelection = (newSelection.ids as any[]).filter((id): id is number => typeof id === 'number');
+                        }
+                        setSelectionModel(numberSelection);
+                        if (numberSelection.length === 1) {
+                            const selectedId = numberSelection[0];
+                            const selectedRow = rows.find((row) => row.id === selectedId);
+                            if (selectedRow) {
+                                const excelData = await fetchExcelData(selectedRow.pckOrdSeq, apiUrl, cookies);
+                                setExcelRows(excelData);
+                                // calculatorData 초기화 - 새로운 로우 선택 시 이전 데이터 제거
+                                setCalculatorData([]);
+                                // 탭 초기화 트리거
+                                setResetTab(true);
+                            }
+                        } else {
+                            // 선택 해제 시 ExcelDataGrid 완전 초기화
+                            setExcelRows([]);
+                            setCalculatorData([]);
+                            setPckOrdSeq('N/A');
+                            // 탭 초기화 트리거
+                            setResetTab(true);
+                        }
+                    }}
                 />
 
-                <ExcelDataGrid rows={excelRows} pckOrdSeq={pckOrdSeq} selectionModel={selectionModel} oogData={calculatorData} />
+                <ExcelDataGrid
+                    rows={excelRows}
+                    pckOrdSeq={pckOrdSeq}
+                    selectionModel={selectionModel}
+                    oogData={calculatorData}
+                    setCalculatorData={setCalculatorData}
+                    resetTab={resetTab}
+                />
 
-                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-                    <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-                        {snackbar.message}
-                    </Alert>
-                </Snackbar>
+                {snackbar.open && (
+                    <div
+                        className={`${commonStyles.snackbar} ${
+                            snackbar.severity === 'error'
+                                ? commonStyles.snackbarError
+                                : snackbar.severity === 'warning'
+                                ? commonStyles.snackbarWarning
+                                : snackbar.severity === 'info'
+                                ? commonStyles.snackbarInfo
+                                : commonStyles.snackbarSuccess
+                        }`}
+                    >
+                        <span>{snackbar.message}</span>
+                        <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton}>
+                            ×
+                        </button>
+                    </div>
+                )}
             </Box>
             <FileListHandlers />
         </OogColumnsContext.Provider>

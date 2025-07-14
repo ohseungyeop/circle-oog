@@ -3,6 +3,8 @@ import { useCookies } from 'react-cookie';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Snackbar from '@mui/material/Snackbar';
+import styles from './LashingPage.module.css';
+import commonStyles from '../styles/common.module.css';
 import Alert from '@mui/material/Alert';
 
 interface lashingPageProps {
@@ -47,6 +49,16 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
             open: false,
         }));
     };
+
+    // 자동으로 스낵바 닫기
+    React.useEffect(() => {
+        if (snackbar.open) {
+            const timer = setTimeout(() => {
+                handleCloseSnackbar();
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [snackbar.open]);
 
     const [nodes, setNodes] = useState<lashingPointProps[]>([]);
     const [connections, setConnections] = useState<lashingLinkProps[]>([]);
@@ -309,7 +321,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                                         fill="white"
                                         textAnchor="middle"
                                         pointerEvents="none"
-                                        style={{ userSelect: 'none' }}
+                                        className={styles.svgText}
                                     >
                                         {node.id}
                                     </text>
@@ -324,11 +336,24 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                     </Button>
                 </DialogActions>
             </Dialog>
-            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+            {snackbar.open && (
+                <div
+                    className={`${commonStyles.snackbar} ${
+                        snackbar.severity === 'error'
+                            ? commonStyles.snackbarError
+                            : snackbar.severity === 'warning'
+                            ? commonStyles.snackbarWarning
+                            : snackbar.severity === 'info'
+                            ? commonStyles.snackbarInfo
+                            : commonStyles.snackbarSuccess
+                    }`}
+                >
+                    <span>{snackbar.message}</span>
+                    <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton}>
+                        ×
+                    </button>
+                </div>
+            )}
         </>
     );
 };

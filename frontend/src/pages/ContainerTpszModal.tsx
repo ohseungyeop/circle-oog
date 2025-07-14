@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogTitle, IconButton, Box, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
@@ -41,11 +41,57 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
     const [data, setData] = useState<TpszData[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
 
+    // 드래그 관련 상태
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const dialogRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (isOpen) {
             fetchTpszData();
         }
     }, [isOpen]);
+
+    // 드래그 이벤트 핸들러
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (dialogRef.current) {
+            const rect = dialogRef.current.getBoundingClientRect();
+            setDragOffset({
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+            });
+            setIsDragging(true);
+        }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+        if (isDragging && dialogRef.current) {
+            const newX = e.clientX - dragOffset.x;
+            const newY = e.clientY - dragOffset.y;
+
+            // 화면 경계 체크
+            const maxX = window.innerWidth - dialogRef.current.offsetWidth;
+            const maxY = window.innerHeight - dialogRef.current.offsetHeight;
+
+            dialogRef.current.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
+            dialogRef.current.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    useEffect(() => {
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [isDragging, dragOffset]);
 
     // 포맷 함수
     function formatNumber(value: any) {
@@ -94,8 +140,32 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose} fullWidth maxWidth="lg">
-            <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white' }}>
+        <Dialog
+            open={isOpen}
+            onClose={onClose}
+            fullWidth
+            maxWidth="lg"
+            PaperProps={{
+                ref: dialogRef,
+                sx: {
+                    position: 'fixed',
+                    margin: 0,
+                    cursor: isDragging ? 'grabbing' : 'default',
+                },
+            }}
+        >
+            <DialogTitle
+                sx={{
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    cursor: 'grab',
+                    userSelect: 'none',
+                    '&:active': {
+                        cursor: 'grabbing',
+                    },
+                }}
+                onMouseDown={handleMouseDown}
+            >
                 <strong>Type/Size 확인</strong>
                 <IconButton
                     aria-label="close"
