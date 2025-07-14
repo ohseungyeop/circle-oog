@@ -65,7 +65,7 @@ const FileListGrid = () => {
         severity: 'success',
     });
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [selectionModel, setSelectionModel] = React.useState<any>([]);
+    const [selectionModel, setSelectionModel] = React.useState<GridRowSelectionModel>({ type: 'include', ids: new Set() });
     const [oogColumns, setOogColumns] = React.useState<GridColDef[]>([]);
     const [lengthUnit, setLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [weightUnit, setWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
@@ -92,7 +92,7 @@ const FileListGrid = () => {
         // 2. 로컬 상태 초기화
         setRows([]);
         setExcelRows([]);
-        setSelectionModel([]);
+        setSelectionModel({ type: 'include', ids: new Set() });
         setCalculatorData([]);
 
         // 3. 페이지 리다이렉트
@@ -154,7 +154,17 @@ const FileListGrid = () => {
                         </button>
 
                         <button
-                            onClick={() => handleDeleteRows(apiUrl, cookies, selectionModel, rows, setSnackbar, fetchData, setRows)}
+                            onClick={() =>
+                                handleDeleteRows(
+                                    apiUrl,
+                                    cookies,
+                                    Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
+                                    rows,
+                                    setSnackbar,
+                                    fetchData,
+                                    setRows,
+                                )
+                            }
                             className={styles.actionButton}
                         >
                             Delete
@@ -175,21 +185,14 @@ const FileListGrid = () => {
                     rows={rows}
                     columns={columns}
                     selectionModel={selectionModel}
-                    handleSelectionChange={async (newSelection: any) => {
-                        // GridRowSelectionModel이 배열이 아닐 수 있으므로, 배열로 변환
-                        let numberSelection: number[] = [];
-                        if (Array.isArray(newSelection)) {
-                            numberSelection = newSelection.filter((id): id is number => typeof id === 'number');
-                        } else if (typeof newSelection === 'object' && newSelection !== null && 'length' in newSelection) {
-                            // 혹시 iterable 객체일 경우
-                            numberSelection = Array.from(newSelection).filter((id): id is number => typeof id === 'number');
-                        } else if (typeof newSelection === 'object' && newSelection !== null && 'ids' in newSelection) {
-                            // MUI v6+의 selectionModel 구조 대응
-                            numberSelection = (newSelection.ids as any[]).filter((id): id is number => typeof id === 'number');
-                        }
-                        setSelectionModel(numberSelection);
-                        if (numberSelection.length === 1) {
-                            const selectedId = numberSelection[0];
+                    handleSelectionChange={async (newSelection: GridRowSelectionModel) => {
+                        setSelectionModel(newSelection);
+
+                        // 선택된 ID들을 배열로 변환
+                        const selectedIds = Array.from(newSelection.ids);
+
+                        if (selectedIds.length === 1) {
+                            const selectedId = selectedIds[0];
                             const selectedRow = rows.find((row) => row.id === selectedId);
                             if (selectedRow) {
                                 const excelData = await fetchExcelData(selectedRow.pckOrdSeq, apiUrl, cookies);

@@ -342,7 +342,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                                     Number(pckOrdSeq),
                                     cookies,
                                     setSnackbar,
-                                    selectionModel.filter((id): id is number => typeof id === 'number'),
+                                    Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
                                     setCalculatorData,
                                 )
                             }
@@ -378,7 +378,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                         pageSizeOptions={[5, 10, 20, 50]}
                         paginationModel={paginationModel || { page: 0, pageSize: 10 }}
                         disableRowSelectionOnClick
-                        rowSelectionModel={selectionModel || []}
+                        rowSelectionModel={selectionModel}
                         sx={{
                             '& .MuiDataGrid-footerContainer': {
                                 display: 'none',
