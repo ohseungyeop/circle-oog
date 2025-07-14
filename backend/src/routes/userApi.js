@@ -160,6 +160,46 @@ const verifyToken = async (fastify, options) => {
     });
 };
 
+const logout = async (fastify, options) => {
+    fastify.post('/', async (request, reply) => {
+        try {
+            // 환경별 쿠키 삭제 옵션 (setAuthToken과 동일한 옵션 사용)
+            const cookieOptions = {
+                httpOnly: false,
+                sameSite: process.env.NODE_ENV === 'prd' ? 'Lax' : 'Strict',
+                path: '/',
+            };
+
+            // 프로덕션 환경 설정
+            if (process.env.NODE_ENV === 'prd') {
+                cookieOptions.secure = true;
+                cookieOptions.domain = process.env.COOKIE_DOMAIN;
+            }
+
+            // 로컬 환경에서는 도메인 설정 제거
+            if (process.env.NODE_ENV === 'local') {
+                delete cookieOptions.domain;
+            }
+
+            // 쿠키에서 authToken 제거
+            reply.clearCookie('authToken', cookieOptions);
+
+            return reply.send({
+                code: 'S',
+                status: 'Success',
+                message: 'Logged out successfully',
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+            return reply.status(500).send({
+                code: 'E',
+                status: 'Error',
+                message: 'Logout failed',
+            });
+        }
+    });
+};
+
 const verifyEmail = async (fastify, options) => {
     fastify.get('/', async (request, reply) => {
         const emailToken = request.query.token;
@@ -210,4 +250,4 @@ const verifyEmail = async (fastify, options) => {
     });
 };
 
-export { registerUser, verifyToken, verifyEmail };
+export { registerUser, verifyToken, verifyEmail, logout };

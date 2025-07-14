@@ -2,7 +2,7 @@ import { uploadFile, selectFileList, uploadDetail, deleteFile, downloadTemplate,
 import { getPackageList, getContainerMaster, updateDetails } from './packageApi.js';
 import calculate from './calculateApi.js';
 import { saveLashingInfo, getLashingInfo } from './lashingApi.js';
-import { registerUser, verifyToken, verifyEmail } from './userApi.js';
+import { registerUser, verifyToken, verifyEmail, logout } from './userApi.js';
 
 // https://www.notion.so/OOG-175d5cf7a5cc8070b615dd7520403c8c?pvs=4#1acd5cf7a5cc809f9721de2f28f0c891
 async function routes(fastify, options) {
@@ -37,6 +37,7 @@ async function routes(fastify, options) {
     fastify.register(registerUser, { prefix: '/vos/oog/v1/users' }); // POST
     fastify.register(verifyToken, { prefix: '/vos/oog/v1/users/verify' }); // POST
     fastify.register(verifyEmail, { prefix: '/vos/oog/v1/emails/verify' }); // GET
+    fastify.register(logout, { prefix: '/vos/oog/v1/users/logout' }); // POST
 }
 
 export default routes;

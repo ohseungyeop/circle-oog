@@ -85,17 +85,44 @@ const FileListGrid = () => {
         }
     }, [snackbar.open]);
 
-    const handleLogout = () => {
-        // 1. 쿠키 삭제
-        removeCookie('authToken', { path: '/' });
+    const handleLogout = async () => {
+        try {
+            // 1. 백엔드에 로그아웃 요청
+            const response = await fetch(`${apiUrl}/vos/oog/v1/users/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${cookies.authToken}`,
+                },
+                credentials: 'include', // 쿠키 포함
+            });
 
-        // 2. 로컬 상태 초기화
+            if (!response.ok) {
+                console.warn('Backend logout failed, but continuing with client-side logout');
+            }
+        } catch (error) {
+            console.warn('Backend logout request failed:', error);
+        }
+
+        // 2. 클라이언트 쿠키 삭제 - 서버 환경을 고려한 더 구체적인 옵션
+        removeCookie('authToken', {
+            path: '/',
+            domain: window.location.hostname,
+            secure: window.location.protocol === 'https:',
+            sameSite: 'strict',
+        });
+
+        // 3. 로컬 상태 초기화
         setRows([]);
         setExcelRows([]);
         setSelectionModel({ type: 'include', ids: new Set() });
         setCalculatorData([]);
 
-        // 3. 페이지 리다이렉트
+        // 4. 로컬 스토리지도 정리 (혹시 있을 경우)
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // 5. 페이지 리다이렉트
         window.location.href = '/';
     };
     // 쿠키의 authToken이 변경될 때마다 데이터를 불러옵니다.
