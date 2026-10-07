@@ -20,11 +20,51 @@ export async function isAllowedEmail(fastify, email) {
     return 'A' === user?.USR_STS;
 }
 
-const STATUS_LABEL = { I: '재신청 (승인 대기 중)', S: '차단된 주소의 로그인 시도' };
+const METHOD_LABEL = { google: '구글 로그인', email: '이메일 링크' };
+
+/** 관리자 알림 메일. 신규 신청·재신청·차단 시도에 따라 제목과 안내가 다릅니다. */
+function accessMail(email, method, existing) {
+    const adminPage = `${process.env.FRONTEND_URL}/mainPage`;
+    const methodText = METHOD_LABEL[method] ?? method;
+
+    if ('S' === existing?.USR_STS) {
+        return {
+            subject: '[VOS OOG System] 차단된 주소의 로그인 시도',
+            text: [
+                `차단된 주소가 OOG System 로그인을 시도했습니다. 차단 상태는 그대로이며 로그인되지 않았습니다.`,
+                '',
+                `이메일: ${email}`,
+                `방법: ${methodText}`,
+                `차단일: ${existing.UPD_DT ?? existing.CRE_DT ?? '-'}`,
+                '',
+                `차단을 풀려면 관리자로 로그인한 뒤 Users 화면에서 "허용"을 누르세요: ${adminPage}`,
+                `시도한 사람에게는 신규 신청과 같은 안내만 보이고, 차단 사실은 알려지지 않습니다.`,
+            ].join('\n'),
+        };
+    }
+
+    const again = !!existing;
+    return {
+        subject: again ? '[VOS OOG System] 사용 재신청' : '[VOS OOG System] 사용 신청',
+        text: [
+            again
+                ? `승인 대기 중인 주소가 OOG System 로그인을 다시 시도했습니다.`
+                : `OOG System 사용 신청이 들어왔습니다.`,
+            '',
+            `이메일: ${email}`,
+            `방법: ${methodText}`,
+            again ? `최초 신청일: ${existing.CRE_DT ?? '-'}` : null,
+            '',
+            `관리자로 로그인한 뒤 Users 화면에서 "허용"을 누르면 로그인할 수 있습니다: ${adminPage}`,
+        ]
+            .filter((line) => line !== null)
+            .join('\n'),
+    };
+}
 
 /**
  * 목록에 없는 주소의 로그인 시도 = 사용 신청. 처음 신청이면 'I' 로 기록합니다.
- * 신규·승인 대기('I')·차단('S') 모두 관리자에게 메일로 알립니다.
+ * 신규·승인 대기('I')·차단('S') 모두 관리자에게 메일로 알립니다. 시도한 사람에게는 메일을 보내지 않습니다.
  * (같은 주소의 연속 요청은 호출하는 쪽의 60초 쿨다운으로 제한됩니다)
  */
 export async function requestAccess(fastify, email, method) {
@@ -39,17 +79,9 @@ export async function requestAccess(fastify, email, method) {
         fastify.log.warn(`⚠️ 사용 신청 (${email}) 알림을 보낼 ADMIN_EMAILS 가 없습니다.`);
         return;
     }
-    const text = [
-        `OOG System 사용 신청이 들어왔습니다.`,
-        '',
-        `이메일: ${email}`,
-        `방법: ${method}`,
-        `상태: ${existing ? STATUS_LABEL[existing.USR_STS] ?? existing.USR_STS : '신규'}`,
-        '',
-        `관리자로 로그인한 뒤 사용자 관리에서 승인할 수 있습니다: ${process.env.FRONTEND_URL}/mainPage`,
-    ].join('\n');
+    const { subject, text } = accessMail(email, method, existing);
     try {
-        await sendEmail(fastify, admins.join(','), '[VOS OOG System] 사용 신청', text);
+        await sendEmail(fastify, admins.join(','), subject, text);
     } catch (error) {
         fastify.log.error(`❌ 사용 신청 알림 메일 실패: ${error.message}`);
     }
