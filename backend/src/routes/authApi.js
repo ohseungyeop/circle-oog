@@ -97,8 +97,14 @@ const emailLinkCallback = async (fastify, options) => {
         const payload = verifyTyped(request.query.token, 'link');
         if (!payload || typeof payload.jti !== 'string') return redirectToLogin(reply, 'expired');
 
-        if (!(await isAllowedEmail(fastify, payload.email))) return redirectToLogin(reply, 'not_allowed');
-        if (!(await markLinkUsed(fastify, payload.jti, payload.email, payload.exp))) return redirectToLogin(reply, 'expired');
+        try {
+            if (!(await isAllowedEmail(fastify, payload.email))) return redirectToLogin(reply, 'not_allowed');
+            if (!(await markLinkUsed(fastify, payload.jti, payload.email, payload.exp))) return redirectToLogin(reply, 'expired');
+        } catch (error) {
+            // DB 오류 등. 브라우저에 오류 본문을 그대로 보여주지 않고 로그인 화면으로 돌려보냅니다.
+            fastify.log.error(`❌ email link callback error: ${error.message}`);
+            return redirectToLogin(reply, 'server');
+        }
 
         fastify.log.info(`✅ 로그인 (email): ${payload.email}`);
         setSessionCookie(reply, payload.email);

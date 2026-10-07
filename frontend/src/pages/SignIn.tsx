@@ -70,6 +70,7 @@ const ERRORS: Record<string, string> = {
     not_allowed: '이 주소는 아직 허용 목록에 없습니다. 관리자에게 사용 신청이 전달되었습니다. 승인 후 다시 로그인해 주세요.',
     google: '구글 로그인에 실패했습니다. 다시 시도해 주세요.',
     google_off: '구글 로그인이 설정되어 있지 않습니다. 이메일 링크로 로그인해 주세요.',
+    server: '서버 오류로 로그인하지 못했습니다. 잠시 후 다시 시도하거나 관리자에게 문의해 주세요.',
 };
 
 const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
