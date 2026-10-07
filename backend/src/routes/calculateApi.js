@@ -1,5 +1,5 @@
 import replyHelper from '../utils/replyHelper.js';
-import authMiddleware from '../utils/authMiddleware.js';
+import authMiddleware, { requireOwner, seqFromParams } from '../utils/authMiddleware.js';
 import {
     calculateBoxSize,
     calculateCBM,
@@ -54,7 +54,7 @@ const calculate = async (fastify, options) => {
     fastify.post(
         '/',
         {
-            preHandler: [authMiddleware],
+            preHandler: [authMiddleware, requireOwner(seqFromParams)],
         },
         replyHelper(async (request, reply) => {
             const { pckOrdSeq } = request.params;

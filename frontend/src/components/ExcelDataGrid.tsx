@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Box, AppBar, Tabs, Tab, Button, Typography, Stack } from '@mui/material';
-import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
@@ -67,7 +66,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
     resetTab = false,
 }) => {
     const apiUrl = import.meta.env.VITE_API_URL;
-    const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
         message: string;
@@ -167,7 +165,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                     setCalculatorData(updatedData);
                 } else if (pckOrdSeq && pckOrdSeq !== 'N/A') {
                     // 기존 데이터가 없고 pckOrdSeq가 있으면 백엔드에서 조회
-                    const fetchedData = await fetchOogCalcData(Number(pckOrdSeq), apiUrl, cookies);
+                    const fetchedData = await fetchOogCalcData(Number(pckOrdSeq), apiUrl);
 
                     if (fetchedData && fetchedData.length > 0) {
                         // rowSpan 계산 추가
@@ -316,7 +314,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                                 const changedRows = getChangedRows();
                                 if (changedRows.length > 0) {
                                     try {
-                                        await handleSaveChanges(changedRows, apiUrl, cookies, setSnackbar);
+                                        await handleSaveChanges(changedRows, apiUrl, setSnackbar);
                                         // 저장 성공 후 originalRows 업데이트
                                         setOriginalRows([...rows]);
                                     } catch (error) {
@@ -340,7 +338,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                                 handleCalculator(
                                     apiUrl,
                                     Number(pckOrdSeq),
-                                    cookies,
                                     setSnackbar,
                                     Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
                                     setCalculatorData,

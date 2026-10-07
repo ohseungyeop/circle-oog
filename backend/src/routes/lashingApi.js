@@ -1,11 +1,11 @@
 import replyHelper from '../utils/replyHelper.js';
-import authMiddleware from '../utils/authMiddleware.js';
+import authMiddleware, { requireOwner, seqFromParams } from '../utils/authMiddleware.js';
 
 const saveLashingInfo = async (fastify, options) => {
     fastify.post(
         '/',
         {
-            preHandler: [authMiddleware],
+            preHandler: [authMiddleware, requireOwner((request) => [request.body?.pckOrdSeq])],
         },
         replyHelper(async (request, reply) => {
             const { pckOrdSeq, clpNo, tpsz, xCount, yCount, data } = request.body;
@@ -41,7 +41,7 @@ const saveLashingInfo = async (fastify, options) => {
 };
 
 const getLashingInfo = async (fastify, options) => {
-    fastify.get('/', async (request, reply) => {
+    fastify.get('/', { preHandler: [authMiddleware, requireOwner(seqFromParams)] }, async (request, reply) => {
         const { pckOrdSeq, clpNo } = request.params;
         if (!pckOrdSeq || !clpNo) {
             return reply.code(400).send({ error: 'PCK_ORD_SEQ and CLP_NO are required' });

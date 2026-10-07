@@ -2,7 +2,8 @@ import { uploadFile, selectFileList, uploadDetail, deleteFile, downloadTemplate,
 import { getPackageList, getContainerMaster, updateDetails } from './packageApi.js';
 import calculate from './calculateApi.js';
 import { saveLashingInfo, getLashingInfo } from './lashingApi.js';
-import { registerUser, verifyToken, verifyEmail, logout } from './userApi.js';
+import { requestEmailLink, emailLinkCallback, googleLogin, googleCallback, me, logout } from './authApi.js';
+import { manageUsers } from './adminApi.js';
 
 // https://www.notion.so/OOG-175d5cf7a5cc8070b615dd7520403c8c?pvs=4#1acd5cf7a5cc809f9721de2f28f0c891
 async function routes(fastify, options) {
@@ -33,11 +34,16 @@ async function routes(fastify, options) {
     fastify.register(saveLashingInfo, { prefix: '/vos/oog/v1/lashing' }); // POST
     fastify.register(getLashingInfo, { prefix: '/vos/oog/v1/lashing/:pckOrdSeq([0-9]+)/:clpNo([0-9]+)' }); // GET
 
-    // 사용자 관리
-    fastify.register(registerUser, { prefix: '/vos/oog/v1/users' }); // POST
-    fastify.register(verifyToken, { prefix: '/vos/oog/v1/users/verify' }); // POST
-    fastify.register(verifyEmail, { prefix: '/vos/oog/v1/emails/verify' }); // GET
-    fastify.register(logout, { prefix: '/vos/oog/v1/users/logout' }); // POST
+    // 로그인
+    fastify.register(requestEmailLink, { prefix: '/vos/oog/v1/auth/email' }); // POST
+    fastify.register(emailLinkCallback, { prefix: '/vos/oog/v1/auth/email/callback' }); // GET
+    fastify.register(googleLogin, { prefix: '/vos/oog/v1/auth/google' }); // GET
+    fastify.register(googleCallback, { prefix: '/vos/oog/v1/auth/google/callback' }); // GET
+    fastify.register(me, { prefix: '/vos/oog/v1/auth/me' }); // GET
+    fastify.register(logout, { prefix: '/vos/oog/v1/auth/logout' }); // POST
+
+    // 사용자 관리 (관리자)
+    fastify.register(manageUsers, { prefix: '/vos/oog/v1/admin/users' }); // GET, PUT, DELETE
 }
 
 export default routes;

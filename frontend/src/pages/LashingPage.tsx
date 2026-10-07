@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useCookies } from 'react-cookie';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Snackbar from '@mui/material/Snackbar';
@@ -37,7 +36,6 @@ interface lashingLinkProps {
 
 const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, clpNo, tpsz, xCount, yCount }) => {
     const apiUrl = import.meta.env.VITE_API_URL;
-    const [cookies] = useCookies(['authToken']);
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
         message: string;
@@ -117,9 +115,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
             try {
                 const response = await fetch(`${apiUrl}/vos/oog/v1/lashing/${pckOrdSeq}/${clpNo}`, {
                     method: 'GET',
-                    headers: {
-                        Authorization: `Bearer ${cookies.authToken}`,
-                    },
+                    credentials: 'include',
                 });
 
                 if (!response.ok) {
@@ -222,9 +218,9 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
             console.log('lashingPageData:', JSON.stringify(lashingPageData));
             const response = await fetch(`${apiUrl}/vos/oog/v1/lashing`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${cookies.authToken}`,
                 },
                 body: JSON.stringify(lashingPageData),
             });

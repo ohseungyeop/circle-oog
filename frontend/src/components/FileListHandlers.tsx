@@ -1,13 +1,8 @@
 import * as React from 'react';
-import jwtDecode from 'jwt-decode';
 import * as XLSX from 'xlsx';
 import { lengthUnits, weightUnits, convertLength, convertWeight } from '../utils/UnitConverter.tsx';
 import { useOogColumns } from '../context/OogColumnsContext';
 import { GridColDef } from '@mui/x-data-grid';
-
-interface Cookies {
-    authToken?: string;
-}
 
 let latestOogColumns: GridColDef[] = [];
 let latestLengthUnit: keyof typeof lengthUnits = 'mm';
@@ -23,29 +18,12 @@ export const FileListHandlers = () => {
     return null;
 };
 
-export const fetchData = async (cookies: Cookies, apiUrl: string, setRows: (rows: any[]) => void) => {
-    if (!cookies.authToken) {
-        console.error('No auth token found');
-        return;
-    }
-
-    let email = '';
+export const fetchData = async (apiUrl: string, setRows: (rows: any[]) => void) => {
     try {
-        const decoded: any = jwtDecode(cookies.authToken);
-        email = decoded.email;
-    } catch (error) {
-        console.error('Error decoding JWT:', error);
-        return;
-    }
-
-    console.log('Fetching data for email:', email);
-
-    try {
-        const response = await fetch(`${apiUrl}/vos/oog/v1/files?email=${email}`, {
+        // 로그인한 사용자의 파일 목록 (사용자는 서버가 세션 쿠키로 판단)
+        const response = await fetch(`${apiUrl}/vos/oog/v1/files`, {
             method: 'GET',
-            headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
-            },
+            credentials: 'include',
         });
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
@@ -84,7 +62,6 @@ export const handleTemplateDownload = (apiUrl: string) => {
 
 export const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    cookies: Cookies,
     apiUrl: string,
     setSnackbar: any,
     setExcelRows: any,
@@ -176,7 +153,7 @@ export const handleFileUpload = async (
             setExcelRows(formattedData);
             console.log('Formatted Data:', formattedData);
 
-            const pckOrdSeq = await importExcel(file, cookies, apiUrl, setSnackbar);
+            const pckOrdSeq = await importExcel(file, apiUrl, setSnackbar);
             console.log('pckOrdSeq', pckOrdSeq);
 
             if (!pckOrdSeq) {
@@ -193,7 +170,7 @@ export const handleFileUpload = async (
                 pckOrdSeq,
             }));
 
-            await insertExcelData(updatedData, apiUrl, cookies, setSnackbar);
+            await insertExcelData(updatedData, apiUrl, setSnackbar);
 
             setSnackbar({
                 open: true,
@@ -201,7 +178,7 @@ export const handleFileUpload = async (
                 severity: 'success',
             });
 
-            fetchData(cookies, apiUrl, setRows);
+            fetchData(apiUrl, setRows);
         } catch (error) {
             console.error('파일 읽기 오류:', error);
             setSnackbar({
@@ -216,34 +193,20 @@ export const handleFileUpload = async (
     event.target.value = '';
 };
 
-const importExcel = async (file: File, cookies: Cookies, apiUrl: string, setSnackbar: any) => {
-    let email = '';
-    try {
-        if (!cookies.authToken) {
-            throw new Error('Auth token is undefined');
-        }
-        const decoded: any = jwtDecode(cookies.authToken);
-        email = decoded.email;
-    } catch (error) {
-        console.error('JWT 디코딩 오류:', error);
-        return null;
-    }
-
+const importExcel = async (file: File, apiUrl: string, setSnackbar: any) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('email', email);
 
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/files`, {
             method: 'POST',
-            headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
-            },
+            credentials: 'include',
             body: formData,
         });
 
         const result = await response.json();
         console.log('파일 업로드 결과:', result);
+        if (!response.ok) throw new Error('파일 업로드 실패');
         setSnackbar({
             open: true,
             message: '파일 업로드 성공!',
@@ -266,7 +229,7 @@ interface ExcelData {
     [key: string]: any; // Replace with specific keys and types if known
 }
 
-const insertExcelData = async (data: ExcelData[], apiUrl: string, cookies: Cookies, setSnackbar: any) => {
+const insertExcelData = async (data: ExcelData[], apiUrl: string, setSnackbar: any) => {
     if (data.length === 0) {
         setSnackbar({
             open: true,
@@ -279,8 +242,8 @@ const insertExcelData = async (data: ExcelData[], apiUrl: string, cookies: Cooki
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/files/details`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ data }),
@@ -304,9 +267,8 @@ export const handleSelectionChange = async (
     setSelectionModel: (selection: number[]) => void,
     setExcelRows: (rows: any[]) => void,
     setCalculatorData: (data: any[]) => void,
-    fetchExcelData: (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => Promise<any[]>,
+    fetchExcelData: (pckOrdSeq: number, apiUrl: string) => Promise<any[]>,
     apiUrl: string,
-    cookies: Cookies,
 ) => {
     if (newSelection.length > 1) {
         newSelection = [newSelection[newSelection.length - 1]];
@@ -317,7 +279,7 @@ export const handleSelectionChange = async (
         const selectedRow = rows.find((row) => row.id === selectedId);
 
         if (selectedRow) {
-            const calculatorData = await fetchOogCalcData(selectedRow.pckOrdSeq, apiUrl, cookies);
+            const calculatorData = await fetchOogCalcData(selectedRow.pckOrdSeq, apiUrl);
             setCalculatorData(calculatorData);
 
             await handleExcelChk(
@@ -327,7 +289,6 @@ export const handleSelectionChange = async (
                 fetchExcelData,
                 fetchOogCalcData,
                 apiUrl,
-                cookies,
             );
         }
     } else {
@@ -342,10 +303,9 @@ export const handleExcelChk = async (
     pckOrdSeq: number,
     setExcelRows: (rows: any[]) => void,
     setCalculatorData: (data: any[]) => void,
-    fetchExcelData: (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => Promise<any[]>,
-    fetchOogCalcData: (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => Promise<any[]>,
+    fetchExcelData: (pckOrdSeq: number, apiUrl: string) => Promise<any[]>,
+    fetchOogCalcData: (pckOrdSeq: number, apiUrl: string) => Promise<any[]>,
     apiUrl: string,
-    cookies: Cookies,
 ) => {
     if (!pckOrdSeq) return;
 
@@ -353,8 +313,8 @@ export const handleExcelChk = async (
 
     try {
         // 데이터 비동기적으로 가져오기
-        const excelData = await fetchExcelData(pckOrdSeq, apiUrl, cookies);
-        const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
+        const excelData = await fetchExcelData(pckOrdSeq, apiUrl);
+        const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl);
 
         console.log('📌 Excel Data:', excelData);
         console.log('📌 Calculator Data:', calculatorData);
@@ -366,13 +326,11 @@ export const handleExcelChk = async (
         console.error('Error fetching data:', error);
     }
 };
-export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => {
+export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string) => {
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/files/details/${pckOrdSeq}`, {
             method: 'GET',
-            headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
-            },
+            credentials: 'include',
         });
 
         if (!response.ok) throw new Error('데이터 불러오기 실패');
@@ -411,7 +369,7 @@ export const fetchExcelData = async (pckOrdSeq: number, apiUrl: string, cookies:
     }
 };
 
-export const handleSaveChanges = async (changedRows: any[], apiUrl: string, cookies: Cookies, setSnackbar: any) => {
+export const handleSaveChanges = async (changedRows: any[], apiUrl: string, setSnackbar: any) => {
     try {
         console.log('💾 Saving changes:', changedRows);
 
@@ -436,9 +394,9 @@ export const handleSaveChanges = async (changedRows: any[], apiUrl: string, cook
 
         const response = await fetch(`${apiUrl}/vos/oog/v1/packages/details`, {
             method: 'PUT',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${cookies.authToken}`,
             },
             body: JSON.stringify({ data: updateData }),
         });
@@ -650,14 +608,12 @@ export const handleExportToExcel = (calculatorData: any[]) => {
     }
 };
 
-export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookies: Cookies) => {
-    console.log('🔍 Calling API with:', apiUrl, pckOrdSeq, cookies);
+export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string) => {
+    console.log('🔍 Calling API with:', apiUrl, pckOrdSeq);
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/packages/${pckOrdSeq}`, {
             method: 'GET',
-            headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
-            },
+            credentials: 'include',
         });
         console.log('🔍 API Response Status:', response.status);
         // API 응답을 먼저 텍스트로 확인 (HTML인지 JSON인지 판별)
@@ -778,7 +734,6 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string, cookie
 
 export const handleDeleteRows = async (
     apiUrl: string,
-    cookies: Cookies,
     selectionModel: number[],
     rows: any[],
     setSnackbar: any,
@@ -799,9 +754,7 @@ export const handleDeleteRows = async (
     try {
         const response = await fetch(`${apiUrl}/vos/oog/v1/files/${selectedRow}`, {
             method: 'DELETE',
-            headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
-            },
+            credentials: 'include',
         });
 
         if (!response.ok) throw new Error('리스트 삭제 실패');
@@ -813,7 +766,7 @@ export const handleDeleteRows = async (
             severity: 'success',
         });
 
-        fetchData(cookies, apiUrl, setRows);
+        fetchData(apiUrl, setRows);
     } catch (error) {
         console.error('로우 삭제 오류:', error);
         setSnackbar({
@@ -841,7 +794,6 @@ const calculateRowSpan = (data: any[]) => {
 export const handleCalculator = async (
     apiUrl: string,
     pckOrdSeq: number,
-    cookies: Cookies,
     setSnackbar: any,
     selectionModel: number[],
     setCalculatorData: (data: any[]) => void,
@@ -858,9 +810,6 @@ export const handleCalculator = async (
         const response = await fetch(`${apiUrl}/vos/oog/v1/calculate/${pckOrdSeq}`, {
             method: 'POST',
             credentials: 'include',
-            headers: {
-                Authorization: `Bearer ${cookies.authToken}`,
-            },
         });
 
         // ✅ 응답이 정상인지 체크
@@ -875,8 +824,8 @@ export const handleCalculator = async (
             severity: 'success',
         });
         // ✅ 필요하면 fetchData() 호출 (현재는 주석 처리)
-        // fetchData(cookies, apiUrl)        // 된 로우에 대한 계산 데이터 가져오기
-        const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl, cookies);
+        // fetchData(apiUrl)        // 된 로우에 대한 계산 데이터 가져오기
+        const calculatorData = await fetchOogCalcData(pckOrdSeq, apiUrl);
 
         const rowSpanMap = calculateRowSpan(calculatorData);
         const updatedData = calculatorData.map((item: { clpNo: string; [key: string]: any }) => ({

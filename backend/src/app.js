@@ -51,11 +51,11 @@ const init = async () => {
         await fastifyInstance.register(corsPlugin); // ✅ CORS 추가
         await fastifyInstance.register(dbConnector); // ✅ DB 플러그인
         await fastifyInstance.register(mailer); // ✅ 메일러 플러그인 등록 (라우트보다 먼저)
-        await fastifyInstance.register(routes); // ✅ 기존 라우트
         await fastifyInstance.register(cookie, {
             // secret: process.env.COOKIE_SECRET, // 선택적 (서명된 쿠키에 사용)
             parseOptions: {}, // 쿠키 옵션 설정 가능
-        });
+        }); // ✅ 쿠키 플러그인 (라우트에서 request.cookies 를 쓰므로 라우트보다 먼저)
+        await fastifyInstance.register(routes); // ✅ 기존 라우트
 
         // 요청 로그 미들웨어
         fastifyInstance.addHook('onRequest', (request, reply, done) => {

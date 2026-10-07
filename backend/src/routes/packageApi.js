@@ -1,5 +1,5 @@
 import replyHelper from '../utils/replyHelper.js';
-import authMiddleware from '../utils/authMiddleware.js';
+import authMiddleware, { requireOwner, seqFromParams, seqsFromBodyData } from '../utils/authMiddleware.js';
 
 const CRR_CD = 'VOS';
 // const REF_CNTR_TPSZ = ['D2', '4H'];
@@ -7,6 +7,9 @@ const CRR_CD = 'VOS';
 const getPackageList = async (fastify, options) => {
     fastify.get(
         '/',
+        {
+            preHandler: [authMiddleware, requireOwner(seqFromParams)],
+        },
         replyHelper(async (request, reply) => {
             const { pckOrdSeq } = request.params;
             const pckList = await fastify.knex('vos_oog_clp').where({ PCK_ORD_SEQ: pckOrdSeq }).select('*');
@@ -39,7 +42,7 @@ const updateDetails = async (fastify, options) => {
     fastify.put(
         '/',
         {
-            preHandler: [authMiddleware],
+            preHandler: [authMiddleware, requireOwner(seqsFromBodyData)],
         },
         replyHelper(async (request) => {
             const { data } = request.body;

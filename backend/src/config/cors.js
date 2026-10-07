@@ -10,8 +10,7 @@ const corsPlugin = async (fastify, options) => {
         credentials: true,
         origin: [process.env.FRONTEND_URL],
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-        exposedHeaders: ['Set-Cookie'],
+        allowedHeaders: ['Content-Type', 'Accept'],
         maxAge: 3600,
         preflightContinue: false
     };

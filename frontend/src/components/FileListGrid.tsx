@@ -1,9 +1,10 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import { useCookies } from 'react-cookie';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import FileList from './FileList';
+import UserAdminDialog from './UserAdminDialog';
+import { useAuth } from './withAuth';
 import { ExcelDataGrid } from './ExcelDataGrid';
 import {
     fetchData,
@@ -53,7 +54,8 @@ const FileListGrid = () => {
     const [pckOrdSeq, setPckOrdSeq] = React.useState<string>('N/A');
     const [excelRows, setExcelRows] = React.useState<ExcelRow[]>([]);
     const [calculatorData, setCalculatorData] = React.useState<any[]>([]);
-    const [cookies, setCookie, removeCookie] = useCookies(['authToken']);
+    const user = useAuth();
+    const [userAdminOpen, setUserAdminOpen] = React.useState(false);
     const apiUrl = import.meta.env.VITE_API_URL;
     const [snackbar, setSnackbar] = React.useState<{
         open: boolean;
@@ -87,12 +89,9 @@ const FileListGrid = () => {
 
     const handleLogout = async () => {
         try {
-            // 1. 백엔드에 로그아웃 요청 (Content-Type 헤더 제거)
-            const response = await fetch(`${apiUrl}/vos/oog/v1/users/logout`, {
+            // 1. 백엔드에 로그아웃 요청 (세션 쿠키는 httpOnly 라 서버가 지움)
+            const response = await fetch(`${apiUrl}/vos/oog/v1/auth/logout`, {
                 method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${cookies.authToken}`,
-                },
                 credentials: 'include', // 쿠키 포함
             });
 
@@ -116,12 +115,10 @@ const FileListGrid = () => {
         // 4. 페이지 리다이렉트
         window.location.href = '/';
     };
-    // 쿠키의 authToken이 변경될 때마다 데이터를 불러옵니다.
+    // 로그인한 사용자의 파일 목록을 불러옵니다.
     React.useEffect(() => {
-        if (cookies && cookies.authToken) {
-            fetchData(cookies, apiUrl, setRows);
-        }
-    }, [cookies, apiUrl]);
+        fetchData(apiUrl, setRows);
+    }, [apiUrl]);
 
     React.useEffect(() => {
         if (excelRows.length > 0 && excelRows[0]?.pckOrdSeq) {
@@ -159,7 +156,7 @@ const FileListGrid = () => {
                             ref={fileInputRef}
                             type="file"
                             onChange={(event) =>
-                                handleFileUpload(event, cookies, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)
+                                handleFileUpload(event, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)
                             }
                             hidden
                         />
@@ -175,7 +172,6 @@ const FileListGrid = () => {
                             onClick={() =>
                                 handleDeleteRows(
                                     apiUrl,
-                                    cookies,
                                     Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
                                     rows,
                                     setSnackbar,
@@ -193,10 +189,18 @@ const FileListGrid = () => {
                         </button>
                     </Box>
 
-                    {/* 우측 Logout 버튼 */}
-                    <button onClick={handleLogout} className={styles.logoutButton}>
-                        Logout
-                    </button>
+                    {/* 우측: 로그인 사용자, 사용자 관리(관리자), Logout */}
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <span>{user?.email}</span>
+                        {user?.admin && (
+                            <button onClick={() => setUserAdminOpen(true)} className={styles.actionButton}>
+                                Users
+                            </button>
+                        )}
+                        <button onClick={handleLogout} className={styles.logoutButton}>
+                            Logout
+                        </button>
+                    </Box>
                 </Box>
 
                 <FileList
@@ -213,7 +217,7 @@ const FileListGrid = () => {
                             const selectedId = selectedIds[0];
                             const selectedRow = rows.find((row) => row.id === selectedId);
                             if (selectedRow) {
-                                const excelData = await fetchExcelData(selectedRow.pckOrdSeq, apiUrl, cookies);
+                                const excelData = await fetchExcelData(selectedRow.pckOrdSeq, apiUrl);
                                 setExcelRows(excelData);
                                 // calculatorData 초기화 - 새로운 로우 선택 시 이전 데이터 제거
                                 setCalculatorData([]);
@@ -259,6 +263,7 @@ const FileListGrid = () => {
                     </div>
                 )}
             </Box>
+            <UserAdminDialog open={userAdminOpen} onClose={() => setUserAdminOpen(false)} />
             <FileListHandlers />
         </OogColumnsContext.Provider>
     );

@@ -1,7 +1,8 @@
 import path from 'path';
 import fs from 'fs/promises';
 import replyHelper from '../utils/replyHelper.js';
-import authMiddleware from '../utils/authMiddleware.js';
+import authMiddleware, { requireOwner, seqFromParams, seqsFromBodyData } from '../utils/authMiddleware.js';
+import { SESSION_COOKIE } from '../utils/session.js';
 
 const uploadFile = async (fastify, options) => {
     // 파일 업로드 엔드포인트
@@ -26,17 +27,6 @@ const uploadFile = async (fastify, options) => {
 
                 if (!data) {
                     return reply.status(400).send({ error: 'No file uploaded' });
-                }
-
-                // Authorization 헤더에서 'Bearer ' 뒤의 토큰을 추출
-                const authHeader = req.headers['authorization'];
-                if (!authHeader) {
-                    return reply.status(401).send('Authorization header is required');
-                }
-
-                const authToken = authHeader.split(' ')[1]; // Bearer 뒤의 토큰을 추출
-                if (!authToken) {
-                    return reply.status(401).send('Token is missing');
                 }
 
                 // 저장할 경로 생성 (이메일 기준)
@@ -75,7 +65,7 @@ const uploadFile = async (fastify, options) => {
                     FILE_PATH: saveToPath, // 저장된 파일 경로
                     ORGN_FILE_NM: data.filename, // 원본 파일명
                     EMAIL: req.email, // 이메일
-                    ACCESS_TOKEN: authToken, //access token
+                    ACCESS_TOKEN: req.cookies[SESSION_COOKIE], // 업로드 당시 세션 토큰
                 });
 
                 const result = await fastify.knex.raw('SELECT LAST_INSERT_ID() AS PCK_ORD_SEQ');
@@ -107,6 +97,9 @@ const uploadFile = async (fastify, options) => {
 const uploadDetail = async (fastify, options) => {
     fastify.post(
         '/',
+        {
+            preHandler: [authMiddleware, requireOwner(seqsFromBodyData)],
+        },
         replyHelper(async (request) => {
             const { data } = request.body;
 
@@ -140,15 +133,13 @@ const uploadDetail = async (fastify, options) => {
 const selectFileList = async (fastify, options) => {
     fastify.get(
         '/',
+        {
+            preHandler: [authMiddleware],
+        },
         replyHelper(async (request, reply) => {
             try {
-                console.log('📩 Received request query:', request.query);
-
-                const { email } = request.query;
-                if (!email) {
-                    console.error('❌ Missing email in request');
-                    throw new Error('Email is required'); // 🚨 `reply.send()` 없이 예외 던지기
-                }
+                // 로그인한 사용자의 파일만 조회 (쿼리스트링의 email 은 쓰지 않음)
+                const { email } = request.user;
 
                 const fileList = await fastify.knex('VOS_OOG_UPLD_MST').where({ EMAIL: email }).select('*');
 
@@ -165,6 +156,9 @@ const selectFileList = async (fastify, options) => {
 const selectDetails = async (fastify, options) => {
     fastify.get(
         '/',
+        {
+            preHandler: [authMiddleware, requireOwner(seqFromParams)],
+        },
         replyHelper(async (request, reply) => {
             try {
                 const { pckOrdSeq } = request.params;
@@ -190,6 +184,9 @@ const selectDetails = async (fastify, options) => {
 const deleteFile = async (fastify, options) => {
     fastify.delete(
         '/',
+        {
+            preHandler: [authMiddleware, requireOwner(seqFromParams)],
+        },
         replyHelper(async (request) => {
             const { pckOrdSeq } = request.params;
             console.log('📦 Packing order sequence for deletion:', pckOrdSeq);

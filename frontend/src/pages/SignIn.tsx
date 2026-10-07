@@ -15,8 +15,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { useNavigate } from 'react-router-dom';
-import withAuth from '../components/withAuth';
+import Divider from '@mui/material/Divider';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { fetchMe } from '../components/withAuth';
+import { GoogleIcon } from '../components/CustomIcons';
 
 const Card = styled(MuiCard)(({ theme }) => ({
     display: 'flex',
@@ -62,8 +64,18 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
     },
 }));
 
+// 로그인 화면으로 돌아올 때 붙는 오류 코드 (백엔드 authApi.js 의 redirectToLogin)
+const ERRORS: Record<string, string> = {
+    expired: '로그인 링크가 만료되었거나 이미 사용되었습니다. 다시 요청해 주세요.',
+    not_allowed: '이 주소는 아직 허용 목록에 없습니다. 관리자에게 사용 신청이 전달되었습니다. 승인 후 다시 로그인해 주세요.',
+    google: '구글 로그인에 실패했습니다. 다시 시도해 주세요.',
+    google_off: '구글 로그인이 설정되어 있지 않습니다. 이메일 링크로 로그인해 주세요.',
+};
+
 const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const [busy, setBusy] = React.useState(false);
     const [emailError, setEmailError] = React.useState(false);
     const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
     const [open, setOpen] = React.useState(false);
@@ -81,6 +93,22 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
         };
     }, [open]);
 
+    // 이미 로그인되어 있으면 메인으로
+    React.useEffect(() => {
+        fetchMe(apiUrl).then((me) => {
+            if (me) navigate('/mainPage');
+        });
+    }, [navigate]);
+
+    // 로그인 링크·구글 로그인 실패로 돌아온 경우 안내
+    React.useEffect(() => {
+        const error = searchParams.get('error');
+        if (error) {
+            setDialogMessage(ERRORS[error] ?? '로그인에 실패했습니다.');
+            setOpen(true);
+        }
+    }, [searchParams]);
+
     const handleClose = () => {
         setOpen(false);
     };
@@ -92,37 +120,27 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
         }
         const data = new FormData(event.currentTarget);
         const email = data.get('email');
-        console.log('Form Data:', { email });
-        console.log(apiUrl);
 
+        setBusy(true);
         try {
-            const response = await fetch(`${apiUrl}/vos/oog/v1/users`, {
+            const response = await fetch(`${apiUrl}/vos/oog/v1/auth/email`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ email: email }),
-
             });
 
             const result = await response.json();
-            console.log('서버 응답:', result);
-            if ('S' === result.code) {
-                setDialogMessage('로그인 성공');
-                setOpen(true);
-                navigate('/mainPage');
-            } else if ('V' === result.code || 'N' === result.code) {
-                setDialogMessage('메일 인증을 완료해 주세요.');
-                setOpen(true);
-            } else if ('E' === result.code) {
-                setDialogMessage('서버 에러 입니다.');
-                setOpen(true);
-            }
+            setDialogMessage(result.message ?? '메일을 확인하세요.');
+            setOpen(true);
         } catch (error) {
             console.error('오류 발생:', error);
             setDialogMessage('오류가 발생했습니다. 다시 시도해주세요.');
             setOpen(true);
+        } finally {
+            setBusy(false);
         }
     };
 
@@ -160,6 +178,15 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
                     >
                         Out of Gauge System
                     </Typography>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        startIcon={<GoogleIcon />}
+                        href={`${apiUrl}/vos/oog/v1/auth/google`}
+                    >
+                        Google 계정으로 로그인
+                    </Button>
+                    <Divider>또는</Divider>
                     <Box
                         component="form"
                         onSubmit={handleSubmit}
@@ -188,9 +215,12 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
                                 color={emailError ? 'error' : 'primary'}
                             />
                         </FormControl>
-                        <Button type="submit" fullWidth variant="contained">
-                            Submit
+                        <Button type="submit" fullWidth variant="contained" disabled={busy}>
+                            {busy ? '보내는 중…' : '로그인 링크 받기'}
                         </Button>
+                        <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                            등록된 이메일로만 로그인할 수 있습니다. 처음이면 로그인을 시도하면 관리자에게 사용 신청이 전달됩니다.
+                        </Typography>
                     </Box>
                 </Card>
             </SignInContainer>
@@ -216,4 +246,4 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
     );
 };
 
-export default withAuth(SignIn);
+export default SignIn;

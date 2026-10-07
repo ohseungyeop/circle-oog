@@ -8,9 +8,10 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# 📌 환경 변수 파일
+# 📌 환경 변수 파일 (비밀값 포함 - 서버마다 직접 작성, 양식은 backend/.env.example)
 .env
-# .env.local
+.env.local
+.env.prd
 .env.development.local
 .env.test.local
 .env.production.local

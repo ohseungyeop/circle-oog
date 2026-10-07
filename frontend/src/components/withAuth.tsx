@@ -1,70 +1,57 @@
-import { useEffect, useState, useRef, ComponentType } from 'react';
+import { createContext, useContext, useEffect, useState, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCookies } from 'react-cookie';
 
-const withAuth = (WrappedComponent: ComponentType) => {
-    return function ProtectedComponent(props: any) {
+export interface AuthUser {
+    email: string;
+    admin: boolean;
+}
+
+const AuthContext = createContext<AuthUser | null>(null);
+
+/** withAuth 로 감싼 페이지 안에서 현재 로그인한 사용자 */
+export const useAuth = () => useContext(AuthContext);
+
+/** 현재 로그인한 사용자를 조회합니다. 로그인 안 되어 있으면 null */
+export const fetchMe = async (apiUrl: string): Promise<AuthUser | null> => {
+    try {
+        const response = await fetch(`${apiUrl}/vos/oog/v1/auth/me`, { credentials: 'include' });
+        if (!response.ok) return null;
+        const result = await response.json();
+        return result.code === 'S' ? result.data : null;
+    } catch {
+        return null;
+    }
+};
+
+// 세션은 httpOnly 쿠키라 브라우저에서 읽을 수 없으므로 서버(/auth/me)에 확인합니다.
+const withAuth = <P extends object>(WrappedComponent: ComponentType<P>) => {
+    return function ProtectedComponent(props: P) {
         const apiUrl = import.meta.env.VITE_API_URL;
         const navigate = useNavigate();
-        const [cookies] = useCookies(['authToken']);
-        const [isVerified, setIsVerified] = useState<boolean>(false); // 토큰 검증 상태
-        const isChecking = useRef<boolean>(false); // 검증 중인 상태 방지
+        const [user, setUser] = useState<AuthUser | null>(null);
 
         useEffect(() => {
-            if (isVerified || isChecking.current) {
-                return;
-            }
-
-            console.log('Current cookies:', cookies);
-            console.log('Auth token:', cookies.authToken);
-
-            const token = cookies.authToken;
-            if (!token) {
-                console.log('No token found');
-                navigate('/'); // 토큰이 없으면 로그인 페이지로 이동
-                return;
-            }
-
-            isChecking.current = true;
-            fetch(`${apiUrl}/vos/oog/v1/users/verify`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            .then(response => {
-                if (response.status === 401) {
-                    // 토큰 만료 시 자동 재발급 시도
-                    return fetch(`${apiUrl}/vos/oog/v1/users/refresh`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    });
-                }
-                return response;
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.code === 'S') {
-                    setIsVerified(true);
-                    navigate('/mainPage'); // 인증 성공 시 메인 페이지로 이동
+            let cancelled = false;
+            fetchMe(apiUrl).then((me) => {
+                if (cancelled) return;
+                if (me) {
+                    setUser(me);
                 } else {
-                    navigate('/'); // 인증 실패 시 로그인 페이지로 이동
+                    navigate('/'); // 로그인 안 되어 있으면 로그인 페이지로 이동
                 }
-            })
-            .catch(() => {
-                navigate('/'); // 요청 실패 시 로그인 페이지로 이동
-            })
-            .finally(() => {
-                isChecking.current = false;
             });
-        }, [cookies.authToken, apiUrl, isVerified]);
+            return () => {
+                cancelled = true;
+            };
+        }, [apiUrl, navigate]);
 
-        // 인증 여부와 상관없이 WrappedComponent를 렌더링
-        return <WrappedComponent {...props} />;
+        // 인증이 확인된 뒤에만 렌더링
+        if (!user) return null;
+        return (
+            <AuthContext.Provider value={user}>
+                <WrappedComponent {...props} />
+            </AuthContext.Provider>
+        );
     };
 };
 

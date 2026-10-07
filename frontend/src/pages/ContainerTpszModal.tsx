@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogTitle, IconButton, Box, CircularProgress } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useCookies } from 'react-cookie';
 
 interface ContainerTpszModalProps {
     isOpen: boolean;
@@ -36,7 +35,6 @@ const columns: GridColDef[] = [
 const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose }) => {
     const CRR_CD = 'VOS';
     const apiUrl = import.meta.env.VITE_API_URL;
-    const [cookies] = useCookies(['authToken']);
 
     const [data, setData] = useState<TpszData[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -109,9 +107,7 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
         try {
             const response = await fetch(`${apiUrl}/vos/oog/v1/container/spec/${CRR_CD}`, {
                 method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${cookies.authToken}`,
-                },
+                credentials: 'include',
             });
             if (!response.ok) {
                 throw new Error('Network response was not ok');
