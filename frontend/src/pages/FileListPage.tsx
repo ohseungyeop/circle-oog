@@ -7,6 +7,8 @@ const FileListPage: React.FC = () => {
             <object
                 data="https://www.valueonsys.com/logo.html?size=24&amp;option=1&amp;anim=yes&amp;bw=b&amp;t=1738630981328"
                 type="text/html"
+                title="ValueOnSys 로고"
+                aria-label="ValueOnSys 로고"
                 width="230"
                 height="35"
             ></object>

@@ -10,23 +10,17 @@ interface FileListProps {
     rows: any[];
     columns: GridColDef[];
     selectionModel: GridRowSelectionModel;
+    loading?: boolean;
     handleSelectionChange: (newSelection: GridRowSelectionModel) => void;
 }
 
-// 컬럼 정의
-const columns: GridColDef[] = [
-    { field: 'id', headerName: 'No', width: 90 },
-    { field: 'fileName', headerName: 'File name', width: 600, editable: true },
-    { field: 'fileDate', headerName: 'File Date', width: 350, editable: true },
-];
-
-const FileList: React.FC<FileListProps> = ({ rows, columns, selectionModel, handleSelectionChange }) => {
+const FileList: React.FC<FileListProps> = ({ rows, columns, selectionModel, loading, handleSelectionChange }) => {
     const [isExpanded, setIsExpanded] = React.useState(true);
     return (
         <Box sx={{ width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <h3>📂 File List</h3>
-                <IconButton onClick={() => setIsExpanded(!isExpanded)}>{isExpanded ? <ExpandLess /> : <ExpandMore />}</IconButton>
+                <IconButton aria-label={isExpanded ? '파일 목록 접기' : '파일 목록 펼치기'} onClick={() => setIsExpanded(!isExpanded)}>{isExpanded ? <ExpandLess /> : <ExpandMore />}</IconButton>
             </Box>
             {isExpanded && (
                 <DataGrid
@@ -37,9 +31,10 @@ const FileList: React.FC<FileListProps> = ({ rows, columns, selectionModel, hand
                             paginationModel: { pageSize: 5 },
                         },
                     }}
-                    rowCount={rows.length}
-                    paginationMode="server"
                     pagination
+                    pageSizeOptions={[5, 10, 20]}
+                    loading={loading}
+                    localeText={{ noRowsLabel: '업로드한 파일이 없습니다. Import 로 패킹 리스트를 올려 주세요.' }}
                     rowSelectionModel={selectionModel}
                     onRowSelectionModelChange={handleSelectionChange}
                 />

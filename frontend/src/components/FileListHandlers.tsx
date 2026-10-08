@@ -18,7 +18,9 @@ export const FileListHandlers = () => {
     return null;
 };
 
-export const fetchData = async (apiUrl: string, setRows: (rows: any[]) => void) => {
+type SetSnackbar = (snackbar: { open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }) => void;
+
+export const fetchData = async (apiUrl: string, setRows: (rows: any[]) => void, setSnackbar?: SetSnackbar) => {
     try {
         // 로그인한 사용자의 파일 목록 (사용자는 서버가 세션 쿠키로 판단)
         const response = await fetch(`${apiUrl}/vos/oog/v1/files`, {
@@ -50,6 +52,7 @@ export const fetchData = async (apiUrl: string, setRows: (rows: any[]) => void) 
     } catch (error) {
         console.error('Error fetching data:', error);
         setRows([]);
+        setSnackbar?.({ open: true, message: '파일 목록을 불러오지 못했습니다. 새로고침해 주세요.', severity: 'error' });
         return;
     }
 };
@@ -63,10 +66,10 @@ export const handleTemplateDownload = (apiUrl: string) => {
 export const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     apiUrl: string,
-    setSnackbar: any,
-    setExcelRows: any,
-    fetchData: any,
-    setRows: any,
+    setSnackbar: SetSnackbar,
+    setExcelRows: (rows: any[]) => void,
+    fetchData: (apiUrl: string, setRows: (rows: any[]) => void, setSnackbar?: SetSnackbar) => Promise<void>,
+    setRows: (rows: any[]) => void,
 ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -81,119 +84,121 @@ export const handleFileUpload = async (
     }
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const jsonData: any[] = XLSX.utils.sheet_to_json(sheet, {
-                header: 0,
-            });
-            console.log('jsonData', jsonData);
-
-            if (jsonData.length === 0) {
-                setSnackbar({
-                    open: true,
-                    message: '엑셀 파일이 비어 있습니다!',
-                    severity: 'error',
+    await new Promise<void>((resolve) => {
+        reader.onerror = () => {
+            setSnackbar({ open: true, message: '파일을 읽지 못했습니다. 다시 선택해 주세요.', severity: 'error' });
+            resolve();
+        };
+        reader.onload = async (e) => {
+            try {
+                const data = e.target?.result;
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData: any[] = XLSX.utils.sheet_to_json(sheet, {
+                    header: 0,
                 });
-                return;
-            }
+                console.log('jsonData', jsonData);
 
-            const columnMapping: { [key: string]: string } = {
-                No번호: 'pckNo',
-                'Item Name품목': 'itmNm',
-                'Package Dimension(㎜)': 'itmLen',
-                __EMPTY: 'itmWdt',
-                __EMPTY_1: 'itmHgt',
-                'Box Dimension(㎜)': 'boxLen',
-                __EMPTY_2: 'boxWdt',
-                __EMPTY_3: 'boxHgt',
-                "Q'ty수량": 'itmQty',
-                CBM입방미터: 'itmCbm',
-                'Item Type일반/진공': 'itmTpNm',
-                'Net Weight중량(㎏)': 'netWgt',
-                'Gross Weight중량(㎏)': 'grsWgt',
-                Remarks비고: 'rmks',
-            };
+                if (jsonData.length === 0) {
+                    setSnackbar({
+                        open: true,
+                        message: '엑셀 파일이 비어 있습니다!',
+                        severity: 'error',
+                    });
+                    return;
+                }
 
-            const formattedData = jsonData.slice(1).map((row, index) => {
-                const excelRow = Object.entries(row).map(([key, value]) => {
-                    const cleanedKey = key.replace(/[\r\n↵]+/g, '').trim();
-                    const cleanedValue = (value || '')
-                        .toString()
-                        .replace(/[\r\n↵]+/g, '')
-                        .trim();
-                    return [cleanedKey, cleanedValue];
-                });
-
-                const excelRowObject = Object.fromEntries(excelRow);
-
-                const result: { id: number; [key: string]: any } = {
-                    id: index + 1,
+                const columnMapping: { [key: string]: string } = {
+                    No번호: 'pckNo',
+                    'Item Name품목': 'itmNm',
+                    'Package Dimension(㎜)': 'itmLen',
+                    __EMPTY: 'itmWdt',
+                    __EMPTY_1: 'itmHgt',
+                    'Box Dimension(㎜)': 'boxLen',
+                    __EMPTY_2: 'boxWdt',
+                    __EMPTY_3: 'boxHgt',
+                    "Q'ty수량": 'itmQty',
+                    CBM입방미터: 'itmCbm',
+                    'Item Type일반/진공': 'itmTpNm',
+                    'Net Weight중량(㎏)': 'netWgt',
+                    'Gross Weight중량(㎏)': 'grsWgt',
+                    Remarks비고: 'rmks',
                 };
 
-                // Map each column based on columnMapping
-                Object.keys(columnMapping).forEach((excelColumn) => {
-                    const mappedKey: string = columnMapping[excelColumn];
-                    const excelValue = excelRowObject[excelColumn];
-                    if (mappedKey === 'rmks') {
-                        result[mappedKey] = excelValue !== undefined && excelValue !== null ? String(excelValue).trim() : '';
-                    } else if (typeof excelValue === 'string') {
-                        result[mappedKey] = String(excelValue).trim() || 0;
-                    } else {
-                        result[mappedKey] = Number(excelValue) || 0;
-                    }
+                const formattedData = jsonData.slice(1).map((row, index) => {
+                    const excelRow = Object.entries(row).map(([key, value]) => {
+                        const cleanedKey = key.replace(/[\r\n↵]+/g, '').trim();
+                        const cleanedValue = (value || '')
+                            .toString()
+                            .replace(/[\r\n↵]+/g, '')
+                            .trim();
+                        return [cleanedKey, cleanedValue];
+                    });
+
+                    const excelRowObject = Object.fromEntries(excelRow);
+
+                    const result: { id: number; [key: string]: any } = {
+                        id: index + 1,
+                    };
+
+                    // Map each column based on columnMapping
+                    Object.keys(columnMapping).forEach((excelColumn) => {
+                        const mappedKey: string = columnMapping[excelColumn];
+                        const excelValue = excelRowObject[excelColumn];
+                        if (mappedKey === 'rmks') {
+                            result[mappedKey] = excelValue !== undefined && excelValue !== null ? String(excelValue).trim() : '';
+                        } else if (typeof excelValue === 'string') {
+                            result[mappedKey] = String(excelValue).trim() || 0;
+                        } else {
+                            result[mappedKey] = Number(excelValue) || 0;
+                        }
+                    });
+
+                    return result;
                 });
 
-                return result;
-            });
+                console.log('Formatted Data:', formattedData);
 
-            setExcelRows(formattedData);
-            console.log('Formatted Data:', formattedData);
+                const pckOrdSeq = await importExcel(file, apiUrl, setSnackbar);
+                console.log('pckOrdSeq', pckOrdSeq);
 
-            const pckOrdSeq = await importExcel(file, apiUrl, setSnackbar);
-            console.log('pckOrdSeq', pckOrdSeq);
+                if (!pckOrdSeq) return; // importExcel 이 이미 실패를 알렸다
 
-            if (!pckOrdSeq) {
+                const updatedData = formattedData.map((item) => ({
+                    ...item,
+                    pckOrdSeq,
+                }));
+
+                const inserted = await insertExcelData(updatedData, apiUrl, setSnackbar);
+                if (!inserted) return;
+
+                setExcelRows(updatedData);
                 setSnackbar({
                     open: true,
-                    message: 'PCK_ORD_SEQ 찾을 수 없습니다',
+                    message: '파일을 올리고 패킹 리스트를 저장했습니다.',
+                    severity: 'success',
+                });
+
+                fetchData(apiUrl, setRows, setSnackbar);
+            } catch (error) {
+                console.error('파일 읽기 오류:', error);
+                setSnackbar({
+                    open: true,
+                    message: '엑셀을 읽는 중 오류가 났습니다. 템플릿 형식인지 확인해 주세요.',
                     severity: 'error',
                 });
-                return;
+            } finally {
+                resolve();
             }
+        };
 
-            const updatedData = formattedData.map((item) => ({
-                ...item,
-                pckOrdSeq,
-            }));
-
-            await insertExcelData(updatedData, apiUrl, setSnackbar);
-
-            setSnackbar({
-                open: true,
-                message: '파일 업로드 및 데이터 삽입 성공!',
-                severity: 'success',
-            });
-
-            fetchData(apiUrl, setRows);
-        } catch (error) {
-            console.error('파일 읽기 오류:', error);
-            setSnackbar({
-                open: true,
-                message: '파일 읽기 중 오류 발생!',
-                severity: 'error',
-            });
-        }
-    };
-
-    reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(file);
+    });
     event.target.value = '';
 };
 
-const importExcel = async (file: File, apiUrl: string, setSnackbar: any) => {
+const importExcel = async (file: File, apiUrl: string, setSnackbar: SetSnackbar) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -206,18 +211,13 @@ const importExcel = async (file: File, apiUrl: string, setSnackbar: any) => {
 
         const result = await response.json();
         console.log('파일 업로드 결과:', result);
-        if (!response.ok) throw new Error('파일 업로드 실패');
-        setSnackbar({
-            open: true,
-            message: '파일 업로드 성공!',
-            severity: 'success',
-        });
+        if (!response.ok) throw new Error(result.error ?? '파일 업로드 실패');
 
         return result.pckOrdSeq;
     } catch (error) {
         setSnackbar({
             open: true,
-            message: '파일 업로드 실패!',
+            message: error instanceof Error && error.message !== '파일 업로드 실패' ? error.message : '파일을 올리지 못했습니다. 다시 시도해 주세요.',
             severity: 'error',
         });
         return null;
@@ -229,14 +229,14 @@ interface ExcelData {
     [key: string]: any; // Replace with specific keys and types if known
 }
 
-const insertExcelData = async (data: ExcelData[], apiUrl: string, setSnackbar: any) => {
+const insertExcelData = async (data: ExcelData[], apiUrl: string, setSnackbar: SetSnackbar): Promise<boolean> => {
     if (data.length === 0) {
         setSnackbar({
             open: true,
             message: '업로드된 데이터가 없습니다!',
             severity: 'error',
         });
-        return;
+        return false;
     }
 
     try {
@@ -251,13 +251,15 @@ const insertExcelData = async (data: ExcelData[], apiUrl: string, setSnackbar: a
 
         if (!response.ok) throw new Error('데이터 저장 실패');
         console.log('데이터 삽입 성공!');
+        return true;
     } catch (error) {
         console.error('데이터 삽입 오류:', error);
         setSnackbar({
             open: true,
-            message: '데이터 저장 실패!',
+            message: '패킹 리스트를 저장하지 못했습니다. 파일을 다시 올려 주세요.',
             severity: 'error',
         });
+        return false;
     }
 };
 
@@ -282,14 +284,7 @@ export const handleSelectionChange = async (
             const calculatorData = await fetchOogCalcData(selectedRow.pckOrdSeq, apiUrl);
             setCalculatorData(calculatorData);
 
-            await handleExcelChk(
-                selectedRow.pckOrdSeq,
-                setExcelRows,
-                setCalculatorData,
-                fetchExcelData,
-                fetchOogCalcData,
-                apiUrl,
-            );
+            await handleExcelChk(selectedRow.pckOrdSeq, setExcelRows, setCalculatorData, fetchExcelData, fetchOogCalcData, apiUrl);
         }
     } else {
         setExcelRows([]);
@@ -430,10 +425,21 @@ export const handleSaveChanges = async (changedRows: any[], apiUrl: string, setS
     }
 };
 
-export const handleExportToExcel = (calculatorData: any[]) => {
+// 엑셀로 내보내는 HTML 에 품목명·비고 같은 업로드 값이 그대로 들어가므로 이스케이프한다
+const escapeHtml = (value: unknown) =>
+    String(value ?? '').replace(
+        /[&<>"']/g,
+        (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] ?? ch,
+    );
+
+export const handleExportToExcel = (calculatorData: any[], setSnackbar: SetSnackbar) => {
     try {
         if (!calculatorData || calculatorData.length === 0) {
-            alert('내보낼 데이터가 없습니다.');
+            setSnackbar({
+                open: true,
+                message: '내보낼 데이터가 없습니다. 먼저 Calculator 를 실행해 주세요.',
+                severity: 'warning',
+            });
             return;
         }
 
@@ -458,7 +464,7 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                         <tr>
                             ${latestOogColumns
                                 .filter((col) => col.field !== 'pckOrdSeq') // 'pckOrdSeq' 필드는 제외
-                                .map((col) => `<th>${col.headerName || ''}</th>`)
+                                .map((col) => `<th>${escapeHtml(col.headerName)}</th>`)
                                 .join('')}
                         </tr>
                     </thead>
@@ -474,7 +480,7 @@ export const handleExportToExcel = (calculatorData: any[]) => {
             // 🔹 clpNo (병합 처리)
             if (isFirstOccurrence) {
                 const rowSpan = rowSpanMap[item.clpNo] ?? 1;
-                tableHTML += `<td align="center" rowspan="${rowSpan}">${item.clpNo ?? ''}</td>`;
+                tableHTML += `<td align="center" rowspan="${rowSpan}">${escapeHtml(item.clpNo)}</td>`;
             }
 
             // 🔹 일반 데이터
@@ -482,8 +488,8 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                 tableHTML += `<td colspan="2"></td>`; // ✅ SUM 행에서 빠지는 열 개수 맞춤
             } else {
                 tableHTML += `
-                    <td align="center">${item.boxNo ?? ''}</td>
-                    <td>${item.Item ?? ''}</td>
+                    <td align="center">${escapeHtml(item.boxNo)}</td>
+                    <td>${escapeHtml(item.Item)}</td>
                 `;
             }
 
@@ -508,7 +514,7 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                 </td>
                 <td align="right">${item.qty ?? '0'}</td>
                 <td align="right">${(item.cbm ?? 0).toFixed(2)}</td>
-                <td align="center">${item.type ?? ''}</td>
+                <td align="center">${escapeHtml(item.type)}</td>
                 <td align="right">
                     ${convertWeight(item.nw, latestWeightUnit).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -521,13 +527,13 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                         maximumFractionDigits: 2,
                     })}
                 </td>
-                <td class="remarkColumn">${item.rmks ?? ''}</td>
+                <td class="remarkColumn">${escapeHtml(item.rmks)}</td>
             `;
 
             // 🔹 displayTpsz (병합 처리)
             if (isFirstOccurrence) {
                 const rowSpan = rowSpanMap[item.clpNo] ?? 1;
-                tableHTML += `<td rowspan="${rowSpan}">${item.displayTpsz ?? ''}</td>`;
+                tableHTML += `<td rowspan="${rowSpan}">${escapeHtml(item.displayTpsz)}</td>`;
             }
 
             tableHTML += `</tr>`;
@@ -567,7 +573,7 @@ export const handleExportToExcel = (calculatorData: any[]) => {
                 return countMap;
             }, {}),
         )
-            .map(([tpsz, clpNoSet]) => `${tpsz}×<span class="totalNumColor">${(clpNoSet as Set<string>).size}</span>`)
+            .map(([tpsz, clpNoSet]) => `${escapeHtml(tpsz)}×<span class="totalNumColor">${(clpNoSet as Set<string>).size}</span>`)
             .join(', ');
 
         tableHTML += `
@@ -604,7 +610,7 @@ export const handleExportToExcel = (calculatorData: any[]) => {
         URL.revokeObjectURL(url);
     } catch (error) {
         console.error('엑셀 내보내기 오류:', error);
-        alert('엑셀 내보내기에 실패했습니다.');
+        setSnackbar({ open: true, message: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.', severity: 'error' });
     }
 };
 
@@ -670,12 +676,12 @@ export const fetchOogCalcData = async (pckOrdSeq: number, apiUrl: string) => {
                   (group.hasOverWgtYn
                       ? '(Weight)'
                       : group.hasOverLenYn || group.hasOverWdtYn || group.hasOverHgtYn
-                      ? '(O' +
-                        (group.hasOverLenYn ? 'L' : '') +
-                        (group.hasOverWdtYn ? 'W' : '') +
-                        (group.hasOverHgtYn ? 'H' : '') +
-                        ')'
-                      : '')
+                        ? '(O' +
+                          (group.hasOverLenYn ? 'L' : '') +
+                          (group.hasOverWdtYn ? 'W' : '') +
+                          (group.hasOverHgtYn ? 'H' : '') +
+                          ')'
+                        : '')
                 : '';
 
             // tpsz별로 일련번호를 매기기 위해 count 객체 업데이트
@@ -740,9 +746,9 @@ export const handleDeleteRows = async (
     fetchData: any,
     setRows: any,
 ) => {
-    let selectedRow = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
+    const selectedSeqs: number[] = rows.filter((row) => selectionModel.includes(row.id)).map((row) => row.pckOrdSeq);
 
-    if (selectedRow.length === 0) {
+    if (selectedSeqs.length === 0) {
         setSnackbar({
             open: true,
             message: '선택된 로우가 없습니다!',
@@ -752,28 +758,27 @@ export const handleDeleteRows = async (
     }
 
     try {
-        const response = await fetch(`${apiUrl}/vos/oog/v1/files/${selectedRow}`, {
-            method: 'DELETE',
-            credentials: 'include',
-        });
-
-        if (!response.ok) throw new Error('리스트 삭제 실패');
-        console.log('리스트 삭제 성공!');
+        const responses = await Promise.all(
+            selectedSeqs.map((seq) => fetch(`${apiUrl}/vos/oog/v1/files/${seq}`, { method: 'DELETE', credentials: 'include' })),
+        );
+        const failed = responses.filter((response) => !response.ok).length;
+        if (failed > 0) throw new Error(`${failed}건 삭제 실패`);
 
         setSnackbar({
             open: true,
-            message: '리스트 삭제 성공!',
+            message: `${selectedSeqs.length}개 파일을 삭제했습니다.`,
             severity: 'success',
         });
 
-        fetchData(apiUrl, setRows);
+        fetchData(apiUrl, setRows, setSnackbar);
     } catch (error) {
         console.error('로우 삭제 오류:', error);
         setSnackbar({
             open: true,
-            message: '로우 삭제 실패!',
+            message: '일부 파일을 삭제하지 못했습니다. 목록을 확인하고 다시 시도해 주세요.',
             severity: 'error',
         });
+        fetchData(apiUrl, setRows, setSnackbar);
     }
 };
 
@@ -837,9 +842,10 @@ export const handleCalculator = async (
 
         console.log('Calculator Data:', calculatorData);
     } catch (error) {
+        console.error('계산 오류:', error);
         setSnackbar({
             open: true,
-            message: `계산에 실패했습니다 `,
+            message: '계산에 실패했습니다. 패킹 리스트 값을 확인한 뒤 다시 시도해 주세요.',
             severity: 'error',
         });
     }

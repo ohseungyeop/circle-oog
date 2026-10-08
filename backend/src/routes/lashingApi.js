@@ -54,9 +54,9 @@ const getLashingInfo = async (fastify, options) => {
                 .where('PCK_ORD_SEQ', pckOrdSeq)
                 .where('CLP_NO', clpNo);
 
-            // 데이터가 없다면 빈 배열 반환
+            // 데이터가 없으면 빈 배열. 프론트가 그대로 connections 상태에 넣는다
             if (!connections.length) {
-                return reply.code(200).send({ message: 'No connections found' });
+                return [];
             }
 
             return JSON.parse(connections[0]?.LASH_DATA);

@@ -1,4 +1,5 @@
 import path from 'path';
+import crypto from 'crypto';
 import fs from 'fs/promises';
 import replyHelper from '../utils/replyHelper.js';
 import authMiddleware, { requireOwner, seqFromParams, seqsFromBodyData } from '../utils/authMiddleware.js';
@@ -49,23 +50,32 @@ const uploadFile = async (fastify, options) => {
                     .replace('T', ' ')
                     .split('.')[0];
 
-                const filename = data.filename;
+                // 업로드 파일명은 신뢰하지 않는다: 디렉터리 부분을 떼고 확장자를 확인한 뒤, 최종 경로가 ATTACH_PATH 아래인지 본다
+                const filename = path.basename(data.filename ?? '');
+                if (!/\.xlsx?$/i.test(filename)) {
+                    return reply.status(400).send({ error: '엑셀 파일(.xlsx, .xls)만 업로드할 수 있습니다' });
+                }
                 const saveToPath = path.join(filePath, filename);
+                const attachRoot = path.resolve(process.env.ATTACH_PATH);
+                if (!path.resolve(saveToPath).startsWith(attachRoot + path.sep)) {
+                    return reply.status(400).send({ error: '허용되지 않은 파일 경로입니다' });
+                }
 
                 console.log('Final file path:', saveToPath);
 
                 // 파일 저장
                 const buffer = await data.toBuffer();
-                fs.writeFile(saveToPath, buffer);
+                await fs.writeFile(saveToPath, buffer);
                 console.log('File successfully saved!');
 
                 // DB 저장
                 await fastify.knex('VOS_OOG_UPLD_MST').insert({
                     UPLD_DT: timestamp, // 업로드 날짜
                     FILE_PATH: saveToPath, // 저장된 파일 경로
-                    ORGN_FILE_NM: data.filename, // 원본 파일명
+                    ORGN_FILE_NM: filename, // 원본 파일명
                     EMAIL: req.email, // 이메일
-                    ACCESS_TOKEN: req.cookies[SESSION_COOKIE], // 업로드 당시 세션 토큰
+                    // 세션 JWT 를 그대로 두면 DB 유출 시 세션을 재사용할 수 있어 해시만 남긴다 (컬럼이 NOT NULL)
+                    ACCESS_TOKEN: crypto.createHash('sha256').update(req.cookies[SESSION_COOKIE]).digest('hex'),
                 });
 
                 const result = await fastify.knex.raw('SELECT LAST_INSERT_ID() AS PCK_ORD_SEQ');
@@ -87,6 +97,9 @@ const uploadFile = async (fastify, options) => {
                     reply.status(500).send({ error: 'DB query failed' });
                 }
             } catch (err) {
+                if (err.code === 'FST_REQ_FILE_TOO_LARGE') {
+                    return reply.status(413).send({ error: '파일은 10MB 이하만 올릴 수 있습니다' });
+                }
                 console.error('File upload error:', err);
                 reply.status(500).send({ error: 'Error uploading file' });
             }

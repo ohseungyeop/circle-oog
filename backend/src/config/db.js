@@ -13,7 +13,7 @@ const dbConnector = async (fastify, options) => {
             database: process.env.DB_NAME,
             decimalNumbers: true,
         },
-        debug: true, // 쿼리 디버그 모드 활성화
+        debug: process.env.NODE_ENV !== 'prd', // 운영에서는 바인딩 값(이메일, 토큰)이 로그에 남지 않게 끈다
         log: {
             warn(message) {
                 console.log('⚠️ Knex Warning:', message);

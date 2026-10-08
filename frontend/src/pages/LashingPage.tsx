@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import Snackbar from '@mui/material/Snackbar';
 import styles from './LashingPage.module.css';
 import commonStyles from '../styles/common.module.css';
-import Alert from '@mui/material/Alert';
 
 interface lashingPageProps {
     isOpen?: boolean;
@@ -76,13 +74,13 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
         const L_X_POS = 50; // Left 시작 x 좌표
         const X_STEP = 50; // Front, Back 간격
         const Y_STEP = 50; // Left, Right 간격
-        let newNodes = [];
+        const newNodes = [];
 
         // Left, Right
         for (let i = 1; i <= X_CNT; i++) {
-            let xRatio = (FB_X_POS + X_STEP * (i - 1)) / SVG_WIDTH;
-            let frontYRatio = F_Y_POS / SVG_HEIGHT;
-            let backYRatio = (Y_CNT * Y_STEP + Y_STEP * 2) / SVG_HEIGHT;
+            const xRatio = (FB_X_POS + X_STEP * (i - 1)) / SVG_WIDTH;
+            const frontYRatio = F_Y_POS / SVG_HEIGHT;
+            const backYRatio = (Y_CNT * Y_STEP + Y_STEP * 2) / SVG_HEIGHT;
 
             newNodes.push({ id: `R${i}`, group: 'right', x: xRatio, y: frontYRatio });
             newNodes.push({ id: `L${i}`, group: 'left', x: xRatio, y: backYRatio });
@@ -90,9 +88,9 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
 
         // Front, Back
         for (let i = 1; i <= Y_CNT; i++) {
-            let yRatio = (Y_STEP + Y_STEP * (i - 1) + Y_STEP) / SVG_HEIGHT;
-            let leftXRatio = L_X_POS / SVG_WIDTH;
-            let rightXRatio = (X_CNT * X_STEP + L_X_POS * 2) / SVG_WIDTH;
+            const yRatio = (Y_STEP + Y_STEP * (i - 1) + Y_STEP) / SVG_HEIGHT;
+            const leftXRatio = L_X_POS / SVG_WIDTH;
+            const rightXRatio = (X_CNT * X_STEP + L_X_POS * 2) / SVG_WIDTH;
 
             newNodes.push({ id: `F${i}`, group: 'front', x: leftXRatio, y: yRatio });
             newNodes.push({ id: `B${i}`, group: 'back', x: rightXRatio, y: yRatio });
@@ -205,7 +203,10 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
         setHighlightedNode(null); // 마우스가 원을 벗어났을 때 강조를 해제
     };
 
+    const [saving, setSaving] = useState(false);
+
     const saveLashing = async () => {
+        setSaving(true);
         try {
             const lashingPageData: lashingPageDataProps = {
                 pckOrdSeq: pckOrdSeq,
@@ -236,12 +237,14 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                 message: '저장되었습니다.',
                 severity: 'success',
             });
-        } catch (error) {
+        } catch {
             setSnackbar({
                 open: true,
                 message: `저장을 실패했습니다.`,
                 severity: 'error',
             });
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -251,7 +254,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                 <DialogTitle sx={{ backgroundColor: '#1976d2', color: 'white' }}>
                     <strong>Lashing</strong> [PckOrdSeq: {pckOrdSeq}, ClpNo: {clpNo}, Tpsz: {tpsz}]
                     <IconButton
-                        aria-label="close"
+                        aria-label="닫기"
                         onClick={onClose}
                         sx={{
                             position: 'absolute',
@@ -327,13 +330,15 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                     </svg>
                 </DialogContent>
                 <DialogActions>
-                    <Button variant="contained" color="primary" onClick={() => saveLashing()}>
-                        Save
+                    <Button variant="contained" color="primary" onClick={() => saveLashing()} disabled={saving}>
+                        {saving ? '저장 중…' : 'Save'}
                     </Button>
                 </DialogActions>
             </Dialog>
             {snackbar.open && (
                 <div
+                    role={snackbar.severity === 'error' ? 'alert' : 'status'}
+                    aria-live={snackbar.severity === 'error' ? 'assertive' : 'polite'}
                     className={`${commonStyles.snackbar} ${
                         snackbar.severity === 'error'
                             ? commonStyles.snackbarError
@@ -345,7 +350,7 @@ const LashingPage: React.FC<lashingPageProps> = ({ isOpen, onClose, pckOrdSeq, c
                     }`}
                 >
                     <span>{snackbar.message}</span>
-                    <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton}>
+                    <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton} aria-label="알림 닫기">
                         ×
                     </button>
                 </div>

@@ -5,6 +5,7 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -38,6 +39,8 @@ const UserAdminDialog: React.FC<UserAdminDialogProps> = ({ open, onClose }) => {
     const [users, setUsers] = React.useState<UserRow[]>([]);
     const [newEmail, setNewEmail] = React.useState('');
     const [error, setError] = React.useState('');
+    const [busy, setBusy] = React.useState(false);
+    const [removeTarget, setRemoveTarget] = React.useState<string | null>(null);
 
     const request = async (method: string, query = '', body?: object) => {
         const response = await fetch(`${apiUrl}/vos/oog/v1/admin/users${query}`, {
@@ -65,16 +68,22 @@ const UserAdminDialog: React.FC<UserAdminDialogProps> = ({ open, onClose }) => {
     }, [open]);
 
     const run = async (action: () => Promise<unknown>) => {
+        setBusy(true);
         try {
             await action();
             await loadUsers();
         } catch (e) {
             setError(e instanceof Error ? e.message : String(e));
+        } finally {
+            setBusy(false);
         }
     };
 
     const setStatus = (email: string, status: UserRow['status']) => run(() => request('PUT', '', { email, status }));
-    const removeUser = (email: string) => run(() => request('DELETE', `?email=${encodeURIComponent(email)}`));
+    const removeUser = (email: string) => {
+        setRemoveTarget(null);
+        return run(() => request('DELETE', `?email=${encodeURIComponent(email)}`));
+    };
     const addUser = () =>
         run(async () => {
             await request('PUT', '', { email: newEmail, status: 'A' });
@@ -89,12 +98,13 @@ const UserAdminDialog: React.FC<UserAdminDialogProps> = ({ open, onClose }) => {
                     <TextField
                         size="small"
                         type="email"
+                        label="이메일"
                         placeholder="name@example.com"
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
                         sx={{ flex: 1 }}
                     />
-                    <Button variant="contained" onClick={addUser} disabled={!newEmail}>
+                    <Button variant="contained" onClick={addUser} disabled={!newEmail || busy}>
                         추가
                     </Button>
                 </Box>
@@ -113,6 +123,11 @@ const UserAdminDialog: React.FC<UserAdminDialogProps> = ({ open, onClose }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
+                        {users.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={4}>등록된 사용자가 없습니다.</TableCell>
+                            </TableRow>
+                        )}
                         {users.map((user) => (
                             <TableRow key={user.email}>
                                 <TableCell>{user.email}</TableCell>
@@ -128,16 +143,16 @@ const UserAdminDialog: React.FC<UserAdminDialogProps> = ({ open, onClose }) => {
                                     {!user.admin && (
                                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                                             {user.status !== 'A' && (
-                                                <Button size="small" onClick={() => setStatus(user.email, 'A')}>
+                                                <Button size="small" disabled={busy} onClick={() => setStatus(user.email, 'A')}>
                                                     허용
                                                 </Button>
                                             )}
                                             {user.status !== 'S' && (
-                                                <Button size="small" color="warning" onClick={() => setStatus(user.email, 'S')}>
+                                                <Button size="small" color="warning" disabled={busy} onClick={() => setStatus(user.email, 'S')}>
                                                     차단
                                                 </Button>
                                             )}
-                                            <Button size="small" color="error" onClick={() => removeUser(user.email)}>
+                                            <Button size="small" color="error" disabled={busy} onClick={() => setRemoveTarget(user.email)}>
                                                 삭제
                                             </Button>
                                         </Box>
@@ -151,6 +166,20 @@ const UserAdminDialog: React.FC<UserAdminDialogProps> = ({ open, onClose }) => {
             <DialogActions>
                 <Button onClick={onClose}>닫기</Button>
             </DialogActions>
+            <Dialog open={removeTarget !== null} onClose={() => setRemoveTarget(null)}>
+                <DialogTitle>사용자 삭제</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {removeTarget} 을(를) 목록에서 지웁니다. 다시 로그인을 시도하면 신규 신청으로 들어옵니다.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setRemoveTarget(null)}>취소</Button>
+                    <Button color="error" variant="contained" onClick={() => removeTarget && removeUser(removeTarget)}>
+                        삭제
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 };

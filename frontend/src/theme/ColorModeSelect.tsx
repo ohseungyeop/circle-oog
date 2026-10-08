@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { useColorScheme } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectProps } from '@mui/material/Select';
@@ -15,7 +14,7 @@ export default function ColorModeSelect(props: SelectProps) {
         setMode(event.target.value as 'system' | 'light' | 'dark')
       }
       SelectDisplayProps={{
-        // @ts-ignore
+        // @ts-expect-error data-* 속성은 SelectDisplayProps 타입에 없다
         'data-screenshot': 'toggle-mode',
       }}
       {...props}

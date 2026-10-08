@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { Box, AppBar, Tabs, Tab, Button, Typography, Stack } from '@mui/material';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { handleCalculator, fetchOogCalcData, handleSaveChanges } from './FileListHandlers';
 import styles from './ExcelDataGrid.module.css';
@@ -72,7 +70,9 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
         severity: 'success' | 'error' | 'warning' | 'info';
     }>({ open: false, message: '', severity: 'success' });
     const [tabValue, setTabValue] = React.useState(0);
-    const [paginationModel, setPaginationModel] = React.useState({ page: 0, pageSize: 10 });
+    const [saving, setSaving] = React.useState(false);
+    const [calculating, setCalculating] = React.useState(false);
+    const [paginationModel] = React.useState({ page: 0, pageSize: 10 });
     const handleCloseSnackbar = () => {
         setSnackbar((prevState) => ({
             ...prevState,
@@ -148,7 +148,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
         return rowSpanMap;
     };
 
-    const handleTabChange = async (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = async (_event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
 
         if (newValue === 1) {
@@ -170,7 +170,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                     if (fetchedData && fetchedData.length > 0) {
                         // rowSpan 계산 추가
                         const rowSpanMap = calculateRowSpan(fetchedData);
-                        const updatedData = fetchedData.map((item) => ({
+                        const updatedData = fetchedData.map((item: any) => ({
                             ...item,
                             rowSpan: rowSpanMap[item.clpNo],
                         }));
@@ -217,7 +217,6 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
             setOriginalRows(propsRows ?? []);
             prevPropsRowsRef.current = propsRows;
         }
-        // eslint-disable-next-line
     }, [propsRows]);
 
     const getChangedRows = () => {
@@ -310,15 +309,19 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                         <Button
                             variant="contained"
                             color="success"
+                            disabled={saving}
                             onClick={async () => {
                                 const changedRows = getChangedRows();
                                 if (changedRows.length > 0) {
+                                    setSaving(true);
                                     try {
                                         await handleSaveChanges(changedRows, apiUrl, setSnackbar);
                                         // 저장 성공 후 originalRows 업데이트
                                         setOriginalRows([...rows]);
                                     } catch (error) {
                                         console.error('Save failed:', error);
+                                    } finally {
+                                        setSaving(false);
                                     }
                                 } else {
                                     setSnackbar({
@@ -329,22 +332,28 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                                 }
                             }}
                         >
-                            SAVE
+                            {saving ? '저장 중…' : 'SAVE'}
                         </Button>
                         <Button
                             variant="contained"
                             color="primary"
-                            onClick={() =>
-                                handleCalculator(
-                                    apiUrl,
-                                    Number(pckOrdSeq),
-                                    setSnackbar,
-                                    Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
-                                    setCalculatorData,
-                                )
-                            }
+                            disabled={calculating}
+                            onClick={async () => {
+                                setCalculating(true);
+                                try {
+                                    await handleCalculator(
+                                        apiUrl,
+                                        Number(pckOrdSeq),
+                                        setSnackbar,
+                                        Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
+                                        setCalculatorData,
+                                    );
+                                } finally {
+                                    setCalculating(false);
+                                }
+                            }}
                         >
-                            Calculator
+                            {calculating ? '계산 중…' : 'Calculator'}
                         </Button>
                     </Stack>
                 ) : (
@@ -491,7 +500,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                                             {/* ✅ IMAGE 병합 */}
                                             {isFirstOccurrence ? (
                                                 <td align="center" rowSpan={item.rowSpan}>
-                                                    <img src={item.image} alt="container image" />
+                                                    <img src={item.image} alt={`${item.tpsz ?? ''} 컨테이너`} />
                                                 </td>
                                             ) : null}
                                         </tr>
@@ -605,6 +614,8 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
 
             {snackbar.open && (
                 <div
+                    role={snackbar.severity === 'error' ? 'alert' : 'status'}
+                    aria-live={snackbar.severity === 'error' ? 'assertive' : 'polite'}
                     className={`${commonStyles.snackbar} ${
                         snackbar.severity === 'error'
                             ? commonStyles.snackbarError
@@ -616,7 +627,7 @@ const ExcelDataGrid: React.FC<ExcelDataGridProps> = ({
                     }`}
                 >
                     <span>{snackbar.message}</span>
-                    <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton}>
+                    <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton} aria-label="알림 닫기">
                         ×
                     </button>
                 </div>

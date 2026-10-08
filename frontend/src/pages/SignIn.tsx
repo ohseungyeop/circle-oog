@@ -151,7 +151,7 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
 
         if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
             setEmailError(true);
-            setEmailErrorMessage('Please enter a valid email address.');
+            setEmailErrorMessage('올바른 이메일 주소를 입력해 주세요.');
             isValid = false;
         } else {
             setEmailError(false);
@@ -169,6 +169,8 @@ const SignIn: React.FC<{ disableCustomTheme?: boolean }> = (props) => {
                     <object
                         data="https://www.valueonsys.com/logo.html?size=24&amp;option=1&amp;anim=yes&amp;bw=b&amp;t=1738630981328"
                         type="text/html"
+                title="ValueOnSys 로고"
+                aria-label="ValueOnSys 로고"
                         width="230"
                         height="35"
                     ></object>

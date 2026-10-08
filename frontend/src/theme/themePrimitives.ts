@@ -5,7 +5,7 @@ declare module '@mui/material/Paper' {
     highlighted: true;
   }
 }
-declare module '@mui/material/styles/createPalette' {
+declare module '@mui/material/styles' {
   interface ColorRange {
     50: string;
     100: string;
@@ -19,6 +19,7 @@ declare module '@mui/material/styles/createPalette' {
     900: string;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- MUI 타입 보강(augmentation)
   interface PaletteColor extends ColorRange {}
 
   interface Palette {
@@ -394,7 +395,7 @@ export const shape = {
   borderRadius: 8,
 };
 
-// @ts-ignore
+// @ts-expect-error Shadows 는 고정 길이 튜플이라 spread 결과와 맞지 않는다
 const defaultShadows: Shadows = [
   'none',
   'var(--template-palette-baseShadow)',

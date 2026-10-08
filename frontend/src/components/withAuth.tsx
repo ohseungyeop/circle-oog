@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export interface AuthUser {
     email: string;
@@ -46,7 +47,7 @@ const withAuth = <P extends object>(WrappedComponent: ComponentType<P>) => {
         }, [apiUrl, navigate]);
 
         // 인증이 확인된 뒤에만 렌더링
-        if (!user) return null;
+        if (!user) return <CircularProgress aria-label="로그인 확인 중" sx={{ display: 'block', m: '20vh auto' }} />;
         return (
             <AuthContext.Provider value={user}>
                 <WrappedComponent {...props} />

@@ -45,7 +45,8 @@ const init = async () => {
     try {
         // Fastify에서 플러그인은 라우트보다 먼저 등록해야 합니다
         // ✅ 플러그인 등록 (라우트 등록 전에 해야 함)
-        await fastifyInstance.register(multipart);
+        // 파일 크기 상한. 없으면 toBuffer() 가 메모리를 무제한으로 쓴다 (bodyLimit 과 같은 10MB)
+        await fastifyInstance.register(multipart, { limits: { fileSize: 10485760, files: 1 } });
 
         // 플러그인 & 라우트 등록
         await fastifyInstance.register(corsPlugin); // ✅ CORS 추가

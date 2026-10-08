@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogTitle, IconButton, Box, CircularProgress } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle, IconButton, Box, CircularProgress, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
@@ -38,6 +38,7 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
 
     const [data, setData] = useState<TpszData[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState('');
 
     // 드래그 관련 상태
     const [isDragging, setIsDragging] = useState(false);
@@ -104,6 +105,7 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
 
     const fetchTpszData = async () => {
         setLoading(true);
+        setError('');
         try {
             const response = await fetch(`${apiUrl}/vos/oog/v1/container/spec/${CRR_CD}`, {
                 method: 'GET',
@@ -130,6 +132,7 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
             setData(withIds);
         } catch (error) {
             console.error('Fetch error:', error);
+            setError('컨테이너 기준 정보를 불러오지 못했습니다. 닫았다가 다시 열어 주세요.');
         } finally {
             setLoading(false);
         }
@@ -164,7 +167,7 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
             >
                 <strong>Type/Size 확인</strong>
                 <IconButton
-                    aria-label="close"
+                    aria-label="닫기"
                     onClick={onClose}
                     sx={{
                         position: 'absolute',
@@ -182,8 +185,10 @@ const ContainerTpszModal: React.FC<ContainerTpszModalProps> = ({ isOpen, onClose
                         <Box display="flex" justifyContent="center" alignItems="center" height="100%">
                             <CircularProgress />
                         </Box>
+                    ) : error ? (
+                        <Typography color="error">{error}</Typography>
                     ) : (
-                        <DataGrid rows={data} columns={columns} hideFooter />
+                        <DataGrid rows={data} columns={columns} hideFooter localeText={{ noRowsLabel: '등록된 컨테이너 기준이 없습니다' }} />
                     )}
                 </Box>
             </DialogContent>

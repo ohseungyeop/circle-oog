@@ -95,7 +95,7 @@ const UnitConverterModal = ({
             >
                 <strong>단위 변환</strong>
                 <IconButton
-                    aria-label="close"
+                    aria-label="닫기"
                     onClick={onClose}
                     sx={{
                         position: 'absolute',

@@ -1,7 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import FileList from './FileList';
 import UserAdminDialog from './UserAdminDialog';
 import { useAuth } from './withAuth';
@@ -72,6 +76,11 @@ const FileListGrid = () => {
     const [lengthUnit, setLengthUnit] = React.useState<keyof typeof lengthUnits>('mm');
     const [weightUnit, setWeightUnit] = React.useState<keyof typeof weightUnits>('kg');
     const [resetTab, setResetTab] = React.useState<boolean>(false);
+    const [listLoading, setListLoading] = React.useState(true);
+    const [uploading, setUploading] = React.useState(false);
+    const [deleting, setDeleting] = React.useState(false);
+    const [deleteOpen, setDeleteOpen] = React.useState(false);
+    const selectedIds = Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number');
 
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
@@ -117,8 +126,30 @@ const FileListGrid = () => {
     };
     // 로그인한 사용자의 파일 목록을 불러옵니다.
     React.useEffect(() => {
-        fetchData(apiUrl, setRows);
+        fetchData(apiUrl, setRows, setSnackbar).finally(() => setListLoading(false));
     }, [apiUrl]);
+
+    const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        setUploading(true);
+        try {
+            await handleFileUpload(event, apiUrl, setSnackbar, setExcelRows, fetchData, setRows);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        setDeleteOpen(false);
+        setDeleting(true);
+        try {
+            await handleDeleteRows(apiUrl, selectedIds, rows, setSnackbar, fetchData, setRows);
+            setSelectionModel({ type: 'include', ids: new Set() });
+            setExcelRows([]);
+            setCalculatorData([]);
+        } finally {
+            setDeleting(false);
+        }
+    };
 
     React.useEffect(() => {
         if (excelRows.length > 0 && excelRows[0]?.pckOrdSeq) {
@@ -155,33 +186,30 @@ const FileListGrid = () => {
                         <input
                             ref={fileInputRef}
                             type="file"
-                            onChange={(event) =>
-                                handleFileUpload(event, apiUrl, setSnackbar, setExcelRows, fetchData, setRows)
-                            }
+                            accept=".xlsx,.xls"
+                            onChange={handleUpload}
                             hidden
                         />
-                        <button onClick={() => fileInputRef.current?.click()} className={styles.actionButton}>
-                            Import
+                        <button onClick={() => fileInputRef.current?.click()} className={styles.actionButton} disabled={uploading}>
+                            {uploading ? '업로드 중…' : 'Import'}
                         </button>
 
-                        <button onClick={() => handleExportToExcel(calculatorData)} className={styles.actionButton}>
+                        <button onClick={() => handleExportToExcel(calculatorData, setSnackbar)} className={styles.actionButton}>
                             Export
                         </button>
 
                         <button
-                            onClick={() =>
-                                handleDeleteRows(
-                                    apiUrl,
-                                    Array.from(selectionModel.ids).filter((id): id is number => typeof id === 'number'),
-                                    rows,
-                                    setSnackbar,
-                                    fetchData,
-                                    setRows,
-                                )
-                            }
+                            onClick={() => {
+                                if (selectedIds.length === 0) {
+                                    setSnackbar({ open: true, message: '삭제할 파일을 목록에서 선택해 주세요.', severity: 'warning' });
+                                    return;
+                                }
+                                setDeleteOpen(true);
+                            }}
                             className={styles.actionButton}
+                            disabled={deleting}
                         >
-                            Delete
+                            {deleting ? '삭제 중…' : 'Delete'}
                         </button>
 
                         <button onClick={() => handleTemplateDownload(apiUrl)} className={styles.actionButton}>
@@ -207,6 +235,7 @@ const FileListGrid = () => {
                     rows={rows}
                     columns={columns}
                     selectionModel={selectionModel}
+                    loading={listLoading}
                     handleSelectionChange={async (newSelection: GridRowSelectionModel) => {
                         setSelectionModel(newSelection);
 
@@ -246,6 +275,8 @@ const FileListGrid = () => {
 
                 {snackbar.open && (
                     <div
+                        role={snackbar.severity === 'error' ? 'alert' : 'status'}
+                        aria-live={snackbar.severity === 'error' ? 'assertive' : 'polite'}
                         className={`${commonStyles.snackbar} ${
                             snackbar.severity === 'error'
                                 ? commonStyles.snackbarError
@@ -257,12 +288,26 @@ const FileListGrid = () => {
                         }`}
                     >
                         <span>{snackbar.message}</span>
-                        <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton}>
+                        <button onClick={handleCloseSnackbar} className={commonStyles.snackbarCloseButton} aria-label="알림 닫기">
                             ×
                         </button>
                     </div>
                 )}
             </Box>
+            <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} aria-labelledby="delete-dialog-title">
+                <DialogTitle id="delete-dialog-title">파일 삭제</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        선택한 {selectedIds.length}개 파일과 패킹 리스트가 삭제됩니다. 되돌릴 수 없습니다.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteOpen(false)}>취소</Button>
+                    <Button color="error" variant="contained" onClick={handleDelete}>
+                        삭제
+                    </Button>
+                </DialogActions>
+            </Dialog>
             <UserAdminDialog open={userAdminOpen} onClose={() => setUserAdminOpen(false)} />
             <FileListHandlers />
         </OogColumnsContext.Provider>

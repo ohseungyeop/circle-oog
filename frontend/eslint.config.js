@@ -23,6 +23,8 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // 기존 코드에 any 가 많다. 새 코드에서는 쓰지 않되 당장은 경고로 둔다.
+      '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
 )
