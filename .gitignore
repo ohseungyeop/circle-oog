@@ -1,80 +1,15 @@
-# 📌 공통 (Node.js & React)
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# 📌 환경 변수 파일 (비밀값 포함 - 서버마다 직접 작성, 양식은 backend/.env.example)
-.env
-.env.local
-.env.prd
-.env.development.local
-.env.test.local
-.env.production.local
-
-# 📌 빌드 출력물
 dist/
 build/
-out/
-.vite/
-
-# 📌 로그 및 캐시 파일
-*.log
-logs/
-*.gz
-debug.log
-.npm/
-.pnp/
-.pnp.js
-
-# 📌 IDE 및 OS 파일
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# 📌 Jest 테스트 관련 파일
-coverage/
-jest/
-cypress/videos/
-cypress/screenshots/
-cypress/downloads/
-
-# 📌 ESLint & Prettier
-.eslintcache
-.prettier-cache
-
-# 📌 TypeScript 빌드 파일
-*.tsbuildinfo
-
-# 📌 PM2 로그 및 프로세스 파일
-pm2.log
-pm2.pid
-pids/
-logs/
-
-# 📌 Docker 관련 파일
-docker-compose.override.yml
-
-# 📌 Swagger 자동 생성 파일
-swagger.json
-swagger.yaml
-
-# 📌 특정 폴더별 무시 규칙
-backend/.env
-backend/dist/
-backend/build/
-backend/node_modules/
-
-frontend/.env
-frontend/node_modules/
-frontend/.next/
-frontend/.vercel/
-frontend/.turbo/
-
-# 📌 Claude Code 개인 설정 (공유 설정은 .claude/settings.json)
-.claude/settings.local.json
+.gradle/
+.gradle-cache/
+.packages/
+tools/.packages/
+optimizer/.packages/
+docs/manual-qa/
+.env
+data/
+.runtime/
+__pycache__/
+.venv/
+reference/

@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8083}
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/oog}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    clean-disabled: true
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 16MB
+oog:
+  storage: ${OOG_STORAGE:../data}
+  optimizer: ${OOG_OPTIMIZER:http://127.0.0.1:8003}
+  admin-password: ${OOG_ADMIN_PASSWORD:}
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-expire-ms: ${JWT_ACCESS_EXPIRE:1800000}
+  refresh-token-expire-ms: ${JWT_REFRESH_EXPIRE:604800000}

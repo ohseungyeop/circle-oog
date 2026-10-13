@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-13",
+  "database": "oog",
+  "migration": "V2",
+  "frontendBuild": "passed",
+  "backendBuild": "passed",
+  "javaTests": 20,
+  "optimizerTests": 4,
+  "apiChecks": 19,
+  "checks": [
+    "unauthenticated API rejected",
+    "administrator authenticated",
+    "project created",
+    "project listed",
+    "zero dimension rejected",
+    "real Excel preview",
+    "real Excel imported",
+    "duplicate import rejected atomically",
+    "analysis includes all imported items",
+    "candidate explanations retained",
+    "optimizer scenarios saved",
+    "piece conservation MIN_EQUIPMENT",
+    "piece conservation EASY_HANDLING",
+    "saved scenario reloaded",
+    "analysis Excel contains three cargos",
+    "Flyway V2 applied",
+    "all product tables have oog_ or core_ prefix",
+    "original upload recorded once",
+    "audit records retained"
+  ],
+  "testProjectRemoved": true,
+  "status": "foundation verified",
+  "uiVerification": "Login page rendering only; authenticated UI workflows not tested",
+  "limitations": [
+    "JWT/RBAC migration pending",
+    "OR-Tools pending",
+    "Master values not approved for operations",
+    "Dedicated PDF template pending"
+  ]
+}

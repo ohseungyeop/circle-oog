@@ -1,0 +1,10 @@
+plugins { id 'java-library' }
+java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+repositories { mavenCentral() }
+dependencies {
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.19.4'
+    api 'org.springframework.data:spring-data-commons:3.5.11'
+    api 'org.springframework.security:spring-security-core:6.5.10'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+}
