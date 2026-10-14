@@ -55,7 +55,7 @@
     "frontend/src/ImportDetectionSummary.tsx": "7463dd82b8e409d7e875214ede860d56fb3918d3c52121c2ab476bf088b435c1",
     "frontend/src/ImportTemplatePanel.tsx": "96c9e15622ec26ce34633657c1079d626c050bb251b4b0bb8809cbfd273f4970",
     "frontend/src/main.tsx": "36f0c314c8c794e1b188b19e425e9d47527a4f09e933d4da0dbc88c084ff8b3c",
-    "frontend/src/MeasurementReconciliationPanel.tsx": "00036cb8676286297e78194f0533f2142e7dedfe95bfda6eb68b91b561235df7",
+    "frontend/src/MeasurementReconciliationPanel.tsx": "013a0fdf43eb394360f7afa819dcf682936d8b7c523ae1094ac4bab5950c5e61",
     "frontend/src/MultiFrPanel.tsx": "dfee13c2f940df83444c565ab16bda5ab576fd67444dd472c1a60d59cd08224c",
     "frontend/src/PlanComparisonPanel.tsx": "6a0f0af1e6c5a3a4ed411bdb66c29d7e82f8b08e3f88f69d2f1386a2c96cef6d",
     "frontend/src/PlanEditor.tsx": "6a40e6af1d3d568cee70fd518974d3c548dabd9f9423e9915b13d883c1ddec68",

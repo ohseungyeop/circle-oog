@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-14",
+  "date": "2026-10-13",
   "migration": "V10",
   "database": "oog",
   "javaTests": 150,
@@ -19,8 +19,8 @@
     "registration source audited",
     "company fixture A",
     "company fixture B",
-    "login M_7FAE18AD30AF",
-    "login M_75278484D9AF",
+    "login M_3850276D81C1",
+    "login M_175726E12A75",
     "company viewer can compare reference but no values auto applied",
     "company admin registration forbidden",
     "equipment anonymous denied",
@@ -71,7 +71,7 @@
   ],
   "pdfPages": 5,
   "fixturesRemoved": true,
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "uiWorkflow": "not tested",
   "tables": {
     "core": 8,
     "business": 16,

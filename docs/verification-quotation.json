@@ -4,9 +4,9 @@
   "checks": [
     "login OOG",
     "fixture tenant A",
-    "login Q_0111D2EE70B0",
+    "login Q_B03A61BE85C5",
     "fixture tenant B",
-    "login Q_F51837E613FE",
+    "login Q_6819E1B7CAD0",
     "project",
     "cargo",
     "automatic missing packing rule explicit",
@@ -35,11 +35,5 @@
     "quotes tenant isolated",
     "saved plan and rates snapshot preserved",
     "quotation SQL immutable"
-  ],
-  "date": "2026-10-14",
-  "database": "oog",
-  "migration": "V10",
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
-  "fixturesRemoved": true,
-  "apiChecks": 33
+  ]
 }

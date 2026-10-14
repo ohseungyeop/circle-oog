@@ -3,8 +3,8 @@
   "version": "0.8",
   "status": "PASSED",
   "render": "Microsoft Word PDF and page PNGs; packaged render_docx.py unavailable because LibreOffice is missing",
-  "pages": 30,
-  "pagesInspected": 30,
+  "pages": 32,
+  "pagesInspected": 32,
   "checks": [
     "all rendered pages directly inspected",
     "Korean glyphs native Word equations and tables readable",
@@ -14,9 +14,9 @@
     "v0.6 direct UI evidence is separate from v0.7 code/API-only validation",
     "feature and verification totals refer to canonical source"
   ],
-  "docxSha256": "090a315154f7de6ba10befa8a4e3e6edec0fac5065fdbbdadd960bf7229653e2",
-  "sourceSha256": "eb29710922f34f4474c203e791b04406c0f6860707b92c5f153e42969109e7fb",
-  "pdfSha256": "d08a790f5e8372a0f0d0db07276d76d1a13c5b02654f936eed0e4925ae1c0731",
+  "docxSha256": "42426852e4579135b0751e0940ffefc53b9a27fa74353ec090bc3cf3872dc26a",
+  "sourceSha256": "3593b63548e8936e9124a73f8a7295b100ce26fb2a0c3a1c33f7ecabb210cada",
+  "pdfSha256": "52a159395b39a5746a4fad894a30f2b203fba583d59ca46cfac925bc06659148",
   "pageSha256": {
     "page-1.png": "6db5feac0c2741c43b5e05d9ff2ef28e8cfa44710ec2821535b558f1eaee6680",
     "page-2.png": "078db4ac431a29e1e37181715a59c98d7fb2db2160de819181588671e271fae1",
@@ -47,6 +47,8 @@
     "page-27.png": "d1696ca00f9faa9b601c9769b77b2362f24cd2fb671cb7f53148410486fa6c28",
     "page-28.png": "732881bb7df6287924dc721c481d33a2699bdd50c9ff900d0fa63fa44a7abf87",
     "page-29.png": "c732ea296d609f92803044e570e4f9559595f90ed6e3377b82735bcfe164048b",
-    "page-30.png": "6ec1524d8e4dfad25af894b4b889632396e9ca83d5d55a96d70dd05b71638ebf"
+    "page-30.png": "6ec1524d8e4dfad25af894b4b889632396e9ca83d5d55a96d70dd05b71638ebf",
+    "page-31.png": "cccc925a8d025317e62d69d9f210e80850c05ed63930d4652bad3b86b7d39268",
+    "page-32.png": "ff6b816505e2156bc1278dcd5b06ed9a9552bdf7d5b9ace3dfcf1860e66886b1"
   }
 }

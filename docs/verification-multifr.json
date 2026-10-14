@@ -22,7 +22,5 @@
   ],
   "database": "oog",
   "fixturesRemoved": true,
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
-  "date": "2026-10-14",
-  "migration": "V10"
+  "uiWorkflow": "not tested"
 }

@@ -13,10 +13,5 @@
   ],
   "passed": true,
   "uiDirectWorkflow": "not performed",
-  "businessFixturesCreated": false,
-  "date": "2026-10-14",
-  "database": "oog",
-  "migration": "V10",
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
-  "fixturesRemoved": true
+  "businessFixturesCreated": false
 }

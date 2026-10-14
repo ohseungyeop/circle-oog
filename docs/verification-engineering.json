@@ -76,6 +76,6 @@
     "special checks preserve original CLP"
   ],
   "fixturesRemoved": true,
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "uiWorkflow": "code tests separate",
   "scope": "Review notes plus scoped evidence originals, SHA integrity, expiry and latest external-document decisions; no actual carrier approval"
 }

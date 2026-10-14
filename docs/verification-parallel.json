@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-14",
+  "date": "2026-10-13",
   "database": "oog",
   "migration": "V10",
   "tables": {
@@ -51,8 +51,8 @@
     "development status counts add up"
   ],
   "testProjectsRemoved": true,
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
-  "javaTests": 150,
+  "uiWorkflow": "not tested",
+  "javaTests": null,
   "frontendBuild": "passed",
   "scope": [
     "P03",
@@ -61,15 +61,5 @@
     "O03",
     "H01",
     "numeric development status"
-  ],
-  "fixturesRemoved": true,
-  "numericSummary": {
-    "total": 34,
-    "completed": 32,
-    "inProgress": 2,
-    "notStarted": 0,
-    "verified": 32,
-    "incomplete": 2,
-    "verificationPending": 2
-  }
+  ]
 }

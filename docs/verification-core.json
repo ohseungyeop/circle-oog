@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-14",
+  "date": "2026-10-13",
   "database": "oog",
   "migration": "V10",
   "tables": {
@@ -83,5 +83,5 @@
   ],
   "fixturesRemoved": true,
   "securityHistory": "platform login and company creation security history retained; only test sessions revoked",
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence"
+  "uiWorkflow": "not tested"
 }

@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-14",
+  "date": "2026-10-13",
   "database": "oog",
   "migration": "V10",
   "tables": {
@@ -42,7 +42,5 @@
     "CP-SAT is limited to non-stacked one-dimensional layouts",
     "Master values not approved for operations",
     "Engineering and carrier approval remain separate"
-  ],
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
-  "fixturesRemoved": true
+  ]
 }

@@ -4,13 +4,13 @@
   "checks": [
     "login OOG admin",
     "fixture tenant A",
-    "login EC_0EDBCA05157E author",
+    "login EC_BBBD8F785AA4 author",
     "fixture tenant B",
-    "login EC_0B5D7402F838 author",
+    "login EC_9E3480CFD192 author",
     "independent reviewer created",
-    "login EC_0EDBCA05157E reviewer",
+    "login EC_BBBD8F785AA4 reviewer",
     "planner fixture created",
-    "login EC_0EDBCA05157E planner",
+    "login EC_BBBD8F785AA4 planner",
     "project",
     "cargo fixture",
     "plan fixture",
@@ -49,11 +49,5 @@
     "foreign calculations not listed",
     "oog_engineering_calculation SQL immutable",
     "oog_engineering_decision SQL immutable"
-  ],
-  "date": "2026-10-14",
-  "database": "oog",
-  "migration": "V10",
-  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
-  "fixturesRemoved": true,
-  "apiChecks": 47
+  ]
 }
