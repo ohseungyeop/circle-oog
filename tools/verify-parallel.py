@@ -16,7 +16,7 @@ import openpyxl
 ROOT=Path(__file__).resolve().parents[1]
 config=dict(line.split('=',1) for line in (ROOT/'backend/.env').read_text(encoding='utf-8-sig').splitlines() if '=' in line)
 db_url=urlparse(config['DB_URL'].removeprefix('jdbc:'));assert db_url.path=='/oog'
-token=base64.b64encode(('admin:'+config['OOG_ADMIN_PASSWORD']).encode()).decode()
+token=''
 checks=[];project_ids=[]
 
 def check(name,ok):
@@ -25,7 +25,7 @@ def check(name,ok):
 
 def request(path,method='GET',data=None,content_type='application/json',auth=True):
     headers={'Content-Type':content_type}
-    if auth:headers['Authorization']='Basic '+token
+    if auth:headers['Authorization']='Bearer '+token
     body=json.dumps(data).encode() if isinstance(data,(dict,list)) else data
     try:
         with urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8083/api'+path,data=body,headers=headers,method=method),timeout=45) as response:
@@ -64,7 +64,9 @@ def upload(path,fields,raw):
 
 for i in range(45):
     try:
-        if request('/me')[0]==200:break
+        status,login=request('/auth/login','POST',{'tenantCode':'OOG','username':'admin','password':config['OOG_ADMIN_PASSWORD']},auth=False)
+        if status==200:
+            token=login['accessToken'];break
     except urllib.error.URLError:pass
     time.sleep(1)
 else:raise RuntimeError('OOG API did not become ready')
@@ -75,6 +77,9 @@ if '--status-only' in sys.argv:
     expected=json.loads((ROOT/'docs/verification-parallel.json').read_text(encoding='utf-8'))['numericSummary']
     assert status==200 and payload['summary']==expected
     assert payload['items']==canonical['items'] and payload['version']==canonical['version']
+    with psycopg.connect(host=db_url.hostname,port=db_url.port,dbname='oog',user=config['DB_USERNAME'],password=config['DB_PASSWORD'],connect_timeout=10) as cleanup_db:
+        claims=json.loads(base64.urlsafe_b64decode(token.split('.')[1]+'=='))
+        cleanup_db.execute('update core_session set revoked_at=GREATEST(now(),created_at) where access_jti=%s',(claims['jti'],))
     print(json.dumps({'serverSummary':payload['summary'],'canonicalMatches':True}))
     raise SystemExit(0)
 
@@ -142,7 +147,7 @@ with psycopg.connect(host=db_url.hostname,port=db_url.port,dbname='oog',user=con
             book.close()
         check('foreign project plan export rejected',request('/projects/'+other+'/plans/'+unlocked['id']+'/export')[0]==404)
         status,stats=request('/development/status')
-        check('development status counts add up',status==200 and stats['summary']['total']==25 and stats['summary']['completed']+stats['summary']['incomplete']==25 and stats['summary']['verified']+stats['summary']['verificationPending']==25)
+        check('development status counts add up',status==200 and stats['summary']['total']==len(json.loads((ROOT/'docs/feature-status.json').read_text(encoding='utf-8'))['items']) and stats['summary']['completed']+stats['summary']['incomplete']==stats['summary']['total'] and stats['summary']['verified']+stats['summary']['verificationPending']==stats['summary']['total'])
     finally:
         with db.cursor() as cursor:
             for pid in project_ids:
@@ -154,6 +159,9 @@ with psycopg.connect(host=db_url.hostname,port=db_url.port,dbname='oog',user=con
         for pid in project_ids:
             folder=ROOT/'data'/'projects'/pid
             if folder.exists() and folder.resolve().is_relative_to((ROOT/'data').resolve()):shutil.rmtree(folder)
-report={'date':'2026-10-13','database':'oog','migration':'V2','apiChecks':len(checks),'checks':checks,'testProjectsRemoved':True,'uiWorkflow':'not tested','javaTests':None,'frontendBuild':'passed','scope':['P03','I04','L04','O03','H01','numeric development status']}
+with psycopg.connect(host=db_url.hostname,port=db_url.port,dbname='oog',user=config['DB_USERNAME'],password=config['DB_PASSWORD'],connect_timeout=10) as cleanup_db:
+    claims=json.loads(base64.urlsafe_b64decode(token.split('.')[1]+'=='))
+    cleanup_db.execute('update core_session set revoked_at=GREATEST(now(),created_at) where access_jti=%s',(claims['jti'],))
+report={'date':'2026-10-13','database':'oog','migration':'V10','tables':{'core':8,'business':16,'flyway':1,'total':25},'apiChecks':len(checks),'checks':checks,'testProjectsRemoved':True,'uiWorkflow':'not tested','javaTests':None,'frontendBuild':'passed','scope':['P03','I04','L04','O03','H01','numeric development status']}
 (ROOT/'docs/verification-parallel.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
 print(json.dumps({'apiChecks':len(checks),'database':'oog','fixturesRemoved':True}))

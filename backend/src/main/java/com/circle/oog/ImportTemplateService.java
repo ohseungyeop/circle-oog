@@ -1,0 +1,29 @@
+package com.circle.oog;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.text.Normalizer;
+import java.util.*;
+@Service public class ImportTemplateService {
+ private final JdbcTemplate jdbc;private final ObjectMapper json;
+ public ImportTemplateService(JdbcTemplate jdbc,ObjectMapper json){this.jdbc=jdbc;this.json=json;}
+ public record Input(String customer,String name,List<String> combinedHeaders,Map<String,Integer> mapping,String lengthUnit,String weightUnit,String weightBasis,String reason){}
+ public static String fingerprint(List<String> headers){try{var normalized=new StringBuilder();for(String header:headers){String value=Normalizer.normalize(header,Normalizer.Form.NFKC).trim().toLowerCase(Locale.ROOT).replaceAll("\\s+"," ");normalized.append(value.length()).append(':').append(value);}return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(normalized.toString().getBytes(StandardCharsets.UTF_8)));}catch(Exception e){throw new IllegalStateException(e);}}
+ public static void validate(Input v){
+  if(v==null||v.customer()==null||v.customer().isBlank()||v.customer().length()>200||v.name()==null||v.name().isBlank()||v.name().length()>100||v.reason()==null||v.reason().isBlank()||v.reason().length()>1000||v.combinedHeaders()==null||v.combinedHeaders().isEmpty()||v.combinedHeaders().size()>80||v.combinedHeaders().stream().anyMatch(x->x==null||x.length()>1000)||v.mapping()==null||!Set.of("mm","cm","m").contains(v.lengthUnit()==null?"":v.lengthUnit())||!Set.of("kg","ton").contains(v.weightUnit()==null?"":v.weightUnit())||!Set.of("PER_PIECE","ROW_TOTAL").contains(v.weightBasis()==null?"":v.weightBasis()))bad("고객/이름/헤더/단위/중량 기준/사유를 확인하세요");
+  var allowed=Set.of("itemNo","description","quantity","length","width","height","grossWeight","netWeight","originalLength","originalWidth","originalHeight");var used=new HashSet<Integer>();
+  for(var e:v.mapping().entrySet()){if(!allowed.contains(e.getKey())||e.getValue()==null||e.getValue() < -1||e.getValue()>=v.combinedHeaders().size()||e.getValue()>=0&&!used.add(e.getValue()))bad("매핑 컬럼 중복 또는 범위 오류");}
+  for(String key:List.of("itemNo","length","width","height","grossWeight"))if(v.mapping().getOrDefault(key,-1)<0)bad("필수 컬럼 누락: "+key);
+  if(v.weightBasis().equals("ROW_TOTAL")&&v.mapping().getOrDefault("quantity",-1)<0)bad("행 합계에는 수량 컬럼이 필요합니다");
+  long originals=List.of("originalLength","originalWidth","originalHeight").stream().filter(k->v.mapping().getOrDefault(k,-1)>=0).count();if(originals!=0&&originals!=3)bad("원치수 3개 컬럼을 모두 선택하세요");
+ }
+ private static void bad(String message){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,message);}
+ public List<Map<String,Object>> list(long tenant,String customer){return jdbc.query("SELECT * FROM oog_import_template WHERE tenant_id=? AND (?='' OR customer=?) ORDER BY customer,name,version DESC",(rs,n)->{var row=new LinkedHashMap<String,Object>();row.put("id",rs.getObject("id").toString());row.put("customer",rs.getString("customer"));row.put("name",rs.getString("name"));row.put("version",rs.getLong("version"));row.put("headerFingerprint",rs.getString("header_fingerprint"));row.put("reason",rs.getString("reason"));row.put("createdAt",rs.getTimestamp("created_at").toInstant().toString());try{row.putAll(json.readValue(rs.getString("detail"),Map.class));}catch(Exception e){throw new IllegalStateException(e);}return row;},tenant,customer==null?"":customer,customer==null?"":customer);}
+ @Transactional public Map<String,Object> create(long tenant,long user,Input v)throws Exception{validate(v);String customer=v.customer().trim(),name=v.name().trim();jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?,0))",Object.class,tenant+"|"+customer+"|"+name);long version=jdbc.queryForObject("SELECT COALESCE(max(version),0)+1 FROM oog_import_template WHERE tenant_id=? AND customer=? AND name=?",Long.class,tenant,customer,name);UUID id=UUID.randomUUID();var detail=Map.of("combinedHeaders",v.combinedHeaders(),"mapping",v.mapping(),"lengthUnit",v.lengthUnit(),"weightUnit",v.weightUnit(),"weightBasis",v.weightBasis());jdbc.update("INSERT INTO oog_import_template(id,tenant_id,customer,name,version,header_fingerprint,detail,reason,created_by) VALUES(?,?,?,?,?,?,CAST(? AS jsonb),?,?)",id,tenant,customer,name,version,fingerprint(v.combinedHeaders()),json.writeValueAsString(detail),v.reason().trim(),user);jdbc.update("INSERT INTO core_audit_history(tenant_id,actor_user_id,actor,action,detail) SELECT ?,?,username,'IMPORT_TEMPLATE_CREATED',jsonb_build_object('templateId',CAST(? AS text),'version',CAST(? AS bigint)) FROM core_user_account WHERE tenant_id=? AND user_id=?",tenant,user,id.toString(),version,tenant,user);return Map.of("id",id,"version",version);}
+ @SuppressWarnings("unchecked") public List<Map<String,Object>> suggestions(long tenant,String customer,List<String> headers){if(customer==null||customer.isBlank())return List.of();String fp=fingerprint(headers);var latest=new LinkedHashMap<String,Map<String,Object>>();for(var row:list(tenant,customer.trim()))latest.putIfAbsent((String)row.get("name"),row);var out=new ArrayList<Map<String,Object>>();for(var row:latest.values())if(fp.equals(row.get("headerFingerprint"))){var v=new Input(customer,(String)row.get("name"),headers,(Map<String,Integer>)row.get("mapping"),(String)row.get("lengthUnit"),(String)row.get("weightUnit"),(String)row.get("weightBasis"),(String)row.get("reason"));validate(v);var copy=new LinkedHashMap<>(row);copy.put("confidence","EXACT_HEADER");copy.put("requiresConfirmation",true);out.add(copy);}return out;}
+}

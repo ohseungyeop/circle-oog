@@ -1,0 +1,14 @@
+package com.circle.oog;
+import org.junit.jupiter.api.Test;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import java.util.*;
+import static org.assertj.core.api.Assertions.*;
+class ImportTemplateServiceTest {
+ final List<String> headers=List.of("Item No","Length (cm)","Width (cm)","Height (cm)","Gross Weight per piece (kg)");
+ final Map<String,Integer> mapping=Map.of("itemNo",0,"length",1,"width",2,"height",3,"grossWeight",4);
+ @Test void validatesExplicitMappingAndRejectsDuplicates(){var input=new ImportTemplateService.Input("CUSTOMER","NAME",headers,mapping,"cm","kg","PER_PIECE","Confirmed");assertThatCode(()->ImportTemplateService.validate(input)).doesNotThrowAnyException();var bad=new HashMap<>(mapping);bad.put("width",1);assertThatThrownBy(()->ImportTemplateService.validate(new ImportTemplateService.Input("C","N",headers,bad,"cm","kg","PER_PIECE","R"))).hasMessageContaining("중복");}
+ @Test void fingerprintPreservesColumnOrderAndNormalizesWhitespace(){assertThat(ImportTemplateService.fingerprint(List.of("Length (㎜)","Width"))).isEqualTo(ImportTemplateService.fingerprint(List.of(" length   (mm) ","width")));assertThat(ImportTemplateService.fingerprint(headers)).isNotEqualTo(ImportTemplateService.fingerprint(headers.reversed()));}
+ @Test void rowTotalRequiresQuantityAndIncompleteOriginalRejected(){assertThatThrownBy(()->ImportTemplateService.validate(new ImportTemplateService.Input("C","N",headers,mapping,"cm","kg","ROW_TOTAL","R"))).hasMessageContaining("수량");var bad=new HashMap<>(mapping);bad.put("originalLength",-1);bad.put("originalWidth",2);assertThatThrownBy(()->ImportTemplateService.validate(new ImportTemplateService.Input("C","N",headers,bad,"cm","kg","PER_PIECE","R"))).isInstanceOf(org.springframework.web.server.ResponseStatusException.class);}
+ @Test void genuineLegacyXlsDetectionAndCmConversion()throws Exception{try(var wb=new HSSFWorkbook()){var s=wb.createSheet("Cargo");var h=s.createRow(0);for(int i=0;i<headers.size();i++)h.createCell(i).setCellValue(headers.get(i));var r=s.createRow(1);String[] data={"LEGACY","200","100","120","600"};for(int i=0;i<data.length;i++)r.createCell(i).setCellValue(data[i]);var bytes=new java.io.ByteArrayOutputStream();wb.write(bytes);var path=java.nio.file.Path.of("../.runtime/import-fixture.xls");java.nio.file.Files.createDirectories(path.getParent());java.nio.file.Files.write(path,bytes.toByteArray());try(var loaded=WorkbookFactory.create(new java.io.ByteArrayInputStream(bytes.toByteArray()))){var result=new ImportDetectionService().detect(loaded);assertThat(result.get("autoSelectable")).isEqualTo(true);var c=new ImportMappingService().read(loaded.getSheetAt(0).getRow(1),new com.fasterxml.jackson.databind.ObjectMapper().valueToTree(mapping),10,1,"PER_PIECE",UUID.randomUUID());assertThat(c.length).isEqualTo(2000);assertThat(c.width).isEqualTo(1000);}}}
+}

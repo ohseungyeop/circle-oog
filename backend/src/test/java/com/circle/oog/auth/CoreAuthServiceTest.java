@@ -43,6 +43,20 @@ class CoreAuthServiceTest {
         var refresh=provider.generateRefreshToken(5L);assertTrue(CoreAuthService.hash(refresh).matches("[0-9a-f]{64}"));assertNotEquals(refresh,CoreAuthService.hash(refresh));
     }
     @Test void shortIndependentSecretRejected(){var p=new JwtProperties();p.setSecretKey("short");assertThrows(IllegalStateException.class,()->new JwtProvider(p));}
+    @Test void utf8PasswordLimitRejectsBeforeBCryptAndDatabase() {
+        var jdbc=mock(JdbcTemplate.class);var passwords=mock(PasswordEncoder.class);
+        var service=new CoreAuthService(jdbc,jwt(),passwords,mock(PlatformTransactionManager.class));
+        clearInvocations(passwords);
+        assertThrows(ResponseStatusException.class,()->service.login("OOG","admin","한".repeat(25)));
+        verifyNoInteractions(jdbc,passwords);
+    }
+    @Test void accessWithoutExpirationIsRejectedBeforeDatabaseRead() {
+        var jdbc=mock(JdbcTemplate.class);var provider=mock(JwtProvider.class);
+        var claims=io.jsonwebtoken.Jwts.claims().subject("1").id(UUID.randomUUID().toString()).add("tokenUse","ACCESS").build();
+        when(provider.getClaims("missing-expiration")).thenReturn(claims);
+        assertThrows(ResponseStatusException.class,()->new CoreAuthService(jdbc,provider,mock(PasswordEncoder.class),mock(PlatformTransactionManager.class)).authenticate("missing-expiration"));
+        verifyNoInteractions(jdbc);
+    }
     @Test void signedButRevokedAccessDoesNotAuthenticate() {
         var jdbc=mock(JdbcTemplate.class);var provider=jwt();UUID jti=UUID.randomUUID();when(jdbc.queryForList(anyString(),eq(1L),eq(jti))).thenReturn(List.of());
         var service=new CoreAuthService(jdbc,provider,mock(PasswordEncoder.class),mock(PlatformTransactionManager.class));

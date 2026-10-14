@@ -25,7 +25,7 @@ public class CoreAuthService {
     public record TokenResponse(String accessToken,String refreshToken,UserInfo user,long expiresIn) {}
 
     public TokenResponse login(String tenantCode,String username,String password) {
-        if(username==null||password==null||username.isBlank()||username.length()>120||password.length()>1024)throw unauthorized();
+        if(username==null||password==null||username.isBlank()||username.length()>120||password.getBytes(StandardCharsets.UTF_8).length>72)throw unauthorized();
         String tenant=tenantCode==null||tenantCode.isBlank()?"OOG":tenantCode;
         if(tenant.length()>20)throw unauthorized();
         TokenResponse result=tx.execute(status -> {
@@ -66,7 +66,7 @@ public class CoreAuthService {
         try {jti=UUID.fromString(claims.getId());}catch(Exception ex){throw unauthorized();}
         var rows=jdbc.queryForList(ACCOUNT+"join core_session s on s.user_id=u.user_id and s.tenant_id=u.tenant_id where u.user_id=? and s.access_jti=? and s.revoked_at is null and s.expires_at>now() and s.token_version=u.token_version",userId,jti);
         if(rows.isEmpty())throw unauthorized();var user=rows.getFirst();
-        Number tenant=claims.get("tenantId",Number.class),version=claims.get("tokenVersion",Number.class);
+        Number tenant=integralClaim(claims,"tenantId"),version=integralClaim(claims,"tokenVersion");
         if(!active(user)||tenant==null||version==null||tenant.longValue()!=number(user,"tenant_id")||version.longValue()!=number(user,"token_version"))throw unauthorized();
         return new FmsPrincipal(String.valueOf(user.get("username")),userId,number(user,"tenant_id"),number(user,"role_id"),((Number)user.get("priority")).intValue(),String.valueOf(user.get("role_code")),List.of(),null);
     }
@@ -87,7 +87,8 @@ public class CoreAuthService {
     private void history(Map<String,Object> user,String username,String status){jdbc.update("insert into core_login_history(tenant_id,user_id,username,status) values(?,?,?,?)",user==null?null:user.get("tenant_id"),user==null?null:user.get("user_id"),username,status);}
     private boolean active(Map<String,Object> user){return "ACTIVE".equals(user.get("status"))&&"ACTIVE".equals(user.get("tenant_status"))&&"ACTIVE".equals(user.get("role_status"));}
     private static long number(Map<String,Object> row,String key){return ((Number)row.get(key)).longValue();}
-    private Claims claims(String token,String use){try{var claims=jwt.getClaims(token);if(!use.equals(claims.get("tokenUse",String.class)))throw unauthorized();return claims;}catch(Exception ex){throw unauthorized();}}
+    private Claims claims(String token,String use){try{var claims=jwt.getClaims(token);if(!use.equals(claims.get("tokenUse",String.class))||claims.getExpiration()==null||!claims.getExpiration().toInstant().isAfter(Instant.now()))throw unauthorized();return claims;}catch(Exception ex){throw unauthorized();}}
+    private Number integralClaim(Claims claims,String key){Object value=claims.get(key);if(!(value instanceof Integer)&&!(value instanceof Long))throw unauthorized();return (Number)value;}
     private Long subject(Claims claims){try{long id=Long.parseLong(claims.getSubject());if(id<=0)throw unauthorized();return id;}catch(Exception ex){throw unauthorized();}}
     static String hash(String value){try{return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));}catch(Exception ex){throw new IllegalStateException("SHA-256 unavailable",ex);}}
     static ResponseStatusException unauthorized(){return new ResponseStatusException(HttpStatus.UNAUTHORIZED,"인증 정보를 확인하거나 다시 로그인하세요");}

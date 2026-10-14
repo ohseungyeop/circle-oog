@@ -1,0 +1,28 @@
+{
+  "apiChecks": 18,
+  "checks": [
+    "login",
+    "project",
+    "cargo",
+    "other project",
+    "foreign project cargo rejected",
+    "foreign cargo cannot save review",
+    "anonymous denied",
+    "automatic candidates",
+    "engineering required",
+    "gap not confirmed",
+    "per piece scope",
+    "insufficient manual",
+    "excessive count rejected",
+    "gap range rejected",
+    "unknown cargo404",
+    "review saved",
+    "review history structured",
+    "audit saved"
+  ],
+  "database": "oog",
+  "fixturesRemoved": true,
+  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "date": "2026-10-14",
+  "migration": "V10"
+}

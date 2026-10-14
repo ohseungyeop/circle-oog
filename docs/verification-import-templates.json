@@ -1,0 +1,162 @@
+{
+  "apiChecks": 39,
+  "checks": [
+    "login",
+    "genuine HSSF OLE fixture",
+    "legacy xls detection",
+    "template saved v1",
+    "new version appended",
+    "anonymous templates denied",
+    "duplicate mapping rejected",
+    "row total requires quantity",
+    "only latest exact customer version suggested",
+    "different customer no template",
+    "project created",
+    "legacy xls imported",
+    "cm normalized mm",
+    "cargo boundary quantity 0",
+    "cargo boundary quantity 10001",
+    "cargo boundary length 0",
+    "cargo boundary length 100001",
+    "cargo boundary netWeight 601",
+    "rejected cargos never persisted",
+    "source detection 2023년도물량.xlsx 200 ",
+    "source detection [PL원본]ANP_PUS_NAH_PackingList_Ver4.xlsx 200 ",
+    "source detection DY MACH_PACKING LIST CLP_20240830 - 라싱 견적 요청.xlsx 200 ",
+    "source detection HMMA CLP 1차.xlsx 200 ",
+    "source detection HMMA CLP 1차_분석샘플.xlsx 200 ",
+    "source detection HMMA CLP CUSTOM.xlsx 200 ",
+    "source detection HMMA WASHING & LEVELLER_원본.xlsx 200 ",
+    "source detection lashing.xlsx 200 ",
+    "source detection OOGList_20250623.xls 200 ",
+    "source detection PackingList_20250425.xlsx 200 ",
+    "source detection PackingList_20250425_cbm.xlsx 200 ",
+    "source detection PackingList_grouping_원본임.xlsx 200 ",
+    "source detection PackingList_over.xlsx 200 ",
+    "source detection PackingList_over_6t.xlsx 200 ",
+    "source detection PackingList_over_ver2.xlsx 200 ",
+    "source detection PackingList_sample.xlsx 200 ",
+    "source detection TPW_설비 팽킹_20250619_FR.xlsx 200 ",
+    "source detection 이거.xlsx 200 ",
+    "immutable SQL update",
+    "immutable SQL delete"
+  ],
+  "passed": true,
+  "sourceFiles": [
+    {
+      "file": "2023년도물량.xlsx",
+      "candidates": 0,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "[PL원본]ANP_PUS_NAH_PackingList_Ver4.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "DY MACH_PACKING LIST CLP_20240830 - 라싱 견적 요청.xlsx",
+      "candidates": 0,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "HMMA CLP 1차.xlsx",
+      "candidates": 0,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "HMMA CLP 1차_분석샘플.xlsx",
+      "candidates": 4,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "HMMA CLP CUSTOM.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "HMMA WASHING & LEVELLER_원본.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "lashing.xlsx",
+      "candidates": 0,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "OOGList_20250623.xls",
+      "candidates": 0,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_20250425.xlsx",
+      "candidates": 1,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_20250425_cbm.xlsx",
+      "candidates": 1,
+      "autoSelectable": false,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_grouping_원본임.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_over.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_over_6t.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_over_ver2.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "PackingList_sample.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "TPW_설비 팽킹_20250619_FR.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    },
+    {
+      "file": "이거.xlsx",
+      "candidates": 1,
+      "autoSelectable": true,
+      "requiresManual": true
+    }
+  ],
+  "sourceFilesModified": false,
+  "uiDirectWorkflow": "not performed",
+  "date": "2026-10-14",
+  "database": "oog",
+  "migration": "V10",
+  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "fixturesRemoved": true
+}

@@ -1,0 +1,13 @@
+package com.circle.oog;
+import org.junit.jupiter.api.Test;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import static org.assertj.core.api.Assertions.*;
+class ExcelWorkbookReaderTest {
+ java.io.InputStream input(String value){return new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8));}
+ @Test void inertHtmlSupportsMergedHeadersAndEntities()throws Exception{try(var wb=ExcelWorkbookReader.read(input("<style>table{color:red}</style><table><tr><th rowspan='2'>Item No</th><th colspan='3'>Box Dimension(mm)</th><th rowspan='2'>Gross Weight(kg)</th></tr><tr><th>Length</th><th>Width</th><th>Height</th></tr><tr><td>A &amp; B</td><td>2000</td><td>1000</td><td>1200</td><td>600</td></tr></table>"))){var s=wb.getSheetAt(0);assertThat(s.getNumMergedRegions()).isEqualTo(3);assertThat(s.getRow(2).getCell(0).getStringCellValue()).isEqualTo("A & B");assertThat(new ImportDetectionService().detect(wb).get("autoSelectable")).isEqualTo(true);}}
+ @Test void scriptsStylesLinksAndExternalDtdAreNeverExecutedOrFetched()throws Exception{try(var wb=ExcelWorkbookReader.read(input("<!DOCTYPE html SYSTEM 'http://127.0.0.1:1/never'><table><tr><td><a href='http://127.0.0.1:1/never'>표시</a><img src='http://127.0.0.1:1/never'><script>throw new Error('never')</script></td><td>=HYPERLINK(\"http://127.0.0.1:1/never\")</td></tr></table>"))){assertThat(wb.getSheetAt(0).getRow(0).getCell(0).getStringCellValue()).isEqualTo("표시");assertThat(wb.getSheetAt(0).getRow(0).getCell(1).getCellType()).isEqualTo(org.apache.poi.ss.usermodel.CellType.STRING);}}
+ @Test void rejectsExcessiveSpan(){assertThatThrownBy(()->ExcelWorkbookReader.read(input("<table><tr><td colspan='81'>bad</td></tr></table>"))).isInstanceOf(IOException.class);}
+ @Test void binaryXlsAndXlsxUnchanged()throws Exception{for(var original:java.util.List.of(new org.apache.poi.hssf.usermodel.HSSFWorkbook(),new org.apache.poi.xssf.usermodel.XSSFWorkbook())){try(original){original.createSheet("Binary").createRow(0).createCell(0).setCellValue("원본");var out=new ByteArrayOutputStream();original.write(out);try(var loaded=ExcelWorkbookReader.read(new ByteArrayInputStream(out.toByteArray()))){assertThat(loaded.getSheetAt(0).getRow(0).getCell(0).getStringCellValue()).isEqualTo("원본");}}}}
+ @Test void actualHtmlNamedXlsSourceIsReadableWithoutModification()throws Exception{var path=java.nio.file.Path.of("D:/01. 오승엽/OOG/OOGList_20250623.xls");org.junit.jupiter.api.Assumptions.assumeTrue(java.nio.file.Files.exists(path));try(var input=java.nio.file.Files.newInputStream(path);var wb=ExcelWorkbookReader.read(input)){assertThat(wb.getNumberOfSheets()).isPositive();assertThat(wb.getSheetAt(0).getPhysicalNumberOfRows()).isPositive();}}
+}

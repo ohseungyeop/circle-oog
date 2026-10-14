@@ -13,4 +13,5 @@ public class Equipment {
     public double payload;
     public boolean openWidth;
     public boolean openHeight;
+    @Version public long version;
 }

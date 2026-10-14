@@ -28,6 +28,13 @@ class PlanRevisionServiceTest {
         assertThat(source).isEqualTo(before);assertThat(result.path("scenarios").get(1)).isEqualTo(before.path("scenarios").get(1));
         assertThat(result.path("scenarios").get(0).path("containers").get(0).path("usedLength").asDouble()).isEqualTo(3500);
     }
+    @Test void manualRevisionDoesNotClaimToBeANewSolverResult() throws Exception {
+        var source=source();((ObjectNode)source.path("scenarios").get(0)).set("optimization",json.createObjectNode().put("method","CP_SAT").put("optimal",true));
+        var result=service.apply(snapshot(),source,patch(2500,0,true,null));
+        assertThat(result.path("scenarios").get(0).path("optimization").path("optimal").asBoolean()).isFalse();
+        assertThat(result.path("scenarios").get(0).path("optimization").path("sourceOptimization").path("optimal").asBoolean()).isTrue();
+        assertThat(source.path("scenarios").get(0).path("optimization").path("optimal").asBoolean()).isTrue();
+    }
     @Test void rejectsOverlapAndBoundsAndRotation() throws Exception {
         JsonNode snap=snapshot(),source=source();
         assertThatThrownBy(()->service.apply(snap,source,patch(500,0,null,null))).isInstanceOf(ResponseStatusException.class).hasMessageContaining("겹칩니다");

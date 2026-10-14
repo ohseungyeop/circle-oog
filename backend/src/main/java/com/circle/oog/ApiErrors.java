@@ -8,6 +8,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 class ApiErrors {
+    @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)
+    ResponseEntity<?> stale(org.springframework.dao.OptimisticLockingFailureException e) {return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message","다른 사용자가 데이터를 변경했습니다. 다시 조회하세요"));}
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<?> validation(MethodArgumentNotValidException e) {return ResponseEntity.badRequest().body(Map.of("message","필수값과 치수·중량을 확인하세요"));}
     @ExceptionHandler(DataIntegrityViolationException.class)

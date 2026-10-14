@@ -1,7 +1,13 @@
 {
-  "date": "2026-10-13",
+  "date": "2026-10-14",
   "database": "oog",
-  "migration": "V2",
+  "migration": "V10",
+  "tables": {
+    "core": 8,
+    "business": 16,
+    "flyway": 1,
+    "total": 25
+  },
   "apiChecks": 39,
   "checks": [
     "new history endpoint requires authentication",
@@ -45,8 +51,8 @@
     "development status counts add up"
   ],
   "testProjectsRemoved": true,
-  "uiWorkflow": "not tested",
-  "javaTests": 20,
+  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "javaTests": 150,
   "frontendBuild": "passed",
   "scope": [
     "P03",
@@ -56,17 +62,14 @@
     "H01",
     "numeric development status"
   ],
-  "javaFailures": 0,
-  "optimizerTests": 4,
-  "manualVersion": "0.2",
-  "manualPages": 11,
+  "fixturesRemoved": true,
   "numericSummary": {
-    "total": 25,
-    "completed": 18,
-    "incomplete": 7,
-    "inProgress": 3,
-    "notStarted": 4,
-    "verified": 17,
-    "verificationPending": 8
+    "total": 34,
+    "completed": 32,
+    "inProgress": 2,
+    "notStarted": 0,
+    "verified": 32,
+    "incomplete": 2,
+    "verificationPending": 2
   }
 }

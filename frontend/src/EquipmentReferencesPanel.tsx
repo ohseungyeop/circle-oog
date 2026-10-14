@@ -1,0 +1,11 @@
+import {useEffect,useState} from 'react';
+import {Alert,Button,Card,Table,Tag} from 'antd';
+import type {Api} from './ProjectHistory';
+import type {ReferenceCandidate} from './EquipmentRegistration';
+type Data={catalog:{sourceFile:string;sourceImageSha256:string;notes:string[]};comparison:{reference:ReferenceCandidate&{doorWidthMm?:number;doorHeightMm?:number;tareKg:number;maximumGrossKg:number};registered:boolean;differentFields:string[]}[]};
+export function EquipmentReferencesPanel({api,version}:{api:Api;version:string}){
+ const [data,setData]=useState<Data>(),[error,setError]=useState(''),[reload,setReload]=useState(0);
+ useEffect(()=>{const abort=new AbortController();setError('');api<Data>('/equipment/references',{signal:abort.signal}).then(v=>{if(!abort.signal.aborted)setData(v);}).catch(e=>{if(!abort.signal.aborted)setError(String(e));});return()=>abort.abort();},[version,reload]);
+ const names:Record<string,string>={length:'길이',width:'폭',height:'높이',payload:'Payload',openWidth:'측면 개방',openHeight:'상부 개방'};
+ return <Card title="원본 참고 제원과 현재 DB 비교" extra={<Button onClick={()=>setReload(v=>v+1)}>비교 새로고침</Button>} style={{marginTop:18}}><Alert type="warning" message="일반 참고 제원 · 실장비 확인값 아님" description="원본 이미지의 비냉동 8종을 전사했습니다. 현재 DB와 차이를 표시하며 자동 수정하지 않습니다. 명판·선사·모델 확인 후 등록/편집하세요. 등록 창에서 참고 값을 불러올 수 있습니다."/>{error&&<Alert type="error" message={error}/>}<Table rowKey={r=>r.reference.code} pagination={false} dataSource={data?.comparison||[]} columns={[{title:'참고 타입',render:(_,r)=>r.reference.code},{title:'참고 L×W×H mm',render:(_,r)=>[r.reference.length,r.reference.width,r.reference.height].join(' × ')},{title:'Payload kg',render:(_,r)=>r.reference.payload},{title:'문 개구부 W×H mm',render:(_,r)=>r.reference.doorWidthMm&&r.reference.doorHeightMm?`${r.reference.doorWidthMm} × ${r.reference.doorHeightMm}`:'기재 없음'},{title:'현재 DB와 비교',render:(_,r)=><Tag color={!r.registered?'blue':r.differentFields.length?'orange':'default'}>{!r.registered?'미등록':r.differentFields.length?'차이: '+r.differentFields.map(v=>names[v]||v).join(', '):'표 수치 동일 · 실장비 확인 아님'}</Tag>}]} />{data?.catalog.notes.map(n=><p key={n}>{n}</p>)}{data&&<details><summary>참고 이미지 출처·SHA-256</summary>{data.catalog.sourceFile}<p>{data.catalog.sourceImageSha256}</p></details>}</Card>;
+}

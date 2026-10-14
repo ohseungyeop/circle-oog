@@ -15,7 +15,7 @@ ROOT=Path(__file__).resolve().parents[1]
 config=dict(line.split('=',1) for line in (ROOT/'backend/.env').read_text(encoding='utf-8-sig').splitlines() if '=' in line)
 url=urlparse(config['DB_URL'].removeprefix('jdbc:'))
 assert url.path=='/oog', 'Only oog DB is permitted'
-token=base64.b64encode(('admin:'+config['OOG_ADMIN_PASSWORD']).encode()).decode()
+token=''
 checks=[]
 project_id=None
 
@@ -25,7 +25,7 @@ def check(name,ok):
 
 def request(path,method='GET',data=None,content_type='application/json',authorized=True):
     headers={'Content-Type':content_type}
-    if authorized:headers['Authorization']='Basic '+token
+    if authorized:headers['Authorization']='Bearer '+token
     payload=json.dumps(data).encode() if isinstance(data,(dict,list)) else data
     req=urllib.request.Request('http://127.0.0.1:8083/api'+path,data=payload,headers=headers,method=method)
     try:
@@ -48,7 +48,9 @@ def multipart(path,fields,file_path):
 
 for attempt in range(45):
     try:
-        if request('/me')[0]==200:break
+        status,login=request('/auth/login','POST',{'tenantCode':'OOG','username':'admin','password':config['OOG_ADMIN_PASSWORD']},authorized=False)
+        if status==200:
+            token=login['accessToken'];break
     except urllib.error.URLError:
         pass
     time.sleep(1)
@@ -87,10 +89,10 @@ with psycopg.connect(host=url.hostname,port=url.port,dbname='oog',user=config['D
         book.close()
         with db.cursor() as cursor:
             cursor.execute('select version,success from flyway_schema_history where success order by installed_rank desc limit 1')
-            migration=cursor.fetchone();check('Flyway V2 applied',migration==('2',True))
+            migration=cursor.fetchone();check('Flyway V10 applied',migration==('10',True))
             cursor.execute("select tablename from pg_tables where schemaname='public' and tablename<>'flyway_schema_history'")
             tables=[row[0] for row in cursor.fetchall()]
-            check('all product tables have oog_ or core_ prefix',len(tables)==7 and all(t.startswith(('oog_','core_')) for t in tables))
+            check('all twenty-four product tables have oog_ or core_ prefix',len(tables)==24 and all(t.startswith(('oog_','core_')) for t in tables))
             cursor.execute('select count(*) from oog_packing_list where project_id=%s',(project_id,));check('original upload recorded once',cursor.fetchone()[0]==1)
             cursor.execute('select count(*) from core_audit_history where project_id=%s',(project_id,));check('audit records retained',cursor.fetchone()[0]>=3)
     finally:
@@ -103,8 +105,11 @@ with psycopg.connect(host=url.hostname,port=url.port,dbname='oog',user=config['D
             import shutil
             fixture_dir=ROOT/'data'/'projects'/project_id
             if fixture_dir.exists() and fixture_dir.resolve().is_relative_to((ROOT/'data').resolve()):shutil.rmtree(fixture_dir)
+with psycopg.connect(host=url.hostname,port=url.port,dbname='oog',user=config['DB_USERNAME'],password=config['DB_PASSWORD'],connect_timeout=10) as cleanup_db:
+    claims=json.loads(base64.urlsafe_b64decode(token.split('.')[1]+'=='))
+    cleanup_db.execute('update core_session set revoked_at=GREATEST(now(),created_at) where access_jti=%s',(claims['jti'],))
 from xml.etree import ElementTree as ET
 java_tests=sum(int(ET.parse(p).getroot().get('tests',0)) for p in (ROOT/'backend/build/test-results/test').glob('TEST-*.xml'))
-result={'date':'2026-10-13','database':'oog','migration':'V2','frontendBuild':'passed','backendBuild':'passed','javaTests':java_tests,'optimizerTests':4,'apiChecks':len(checks),'checks':checks,'testProjectRemoved':True,'status':'foundation verified','uiVerification':'Login page rendering only; authenticated UI workflows not tested','limitations':['JWT/RBAC migration pending','OR-Tools pending','Master values not approved for operations','Dedicated PDF template pending']}
+result={'date':'2026-10-13','database':'oog','migration':'V10','tables':{'core':8,'business':16,'flyway':1,'total':25},'frontendBuild':'passed','backendBuild':'passed','javaTests':java_tests,'optimizerTests':10,'apiChecks':len(checks),'checks':checks,'testProjectRemoved':True,'status':'foundation verified','uiVerification':'This API script does not exercise UI; see verification-ui.json','pdfExport':'Saved CLP snapshot export; dedicated PDF API verification is recorded separately','limitations':['CP-SAT is limited to non-stacked one-dimensional layouts','Master values not approved for operations','Engineering and carrier approval remain separate']}
 (ROOT/'docs/verification-foundation.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
-print(json.dumps({'apiChecks':len(checks),'database':'oog','migration':'V2','fixtureRemoved':True}))
+print(json.dumps({'apiChecks':len(checks),'database':'oog','migration':'V10','fixtureRemoved':True}))

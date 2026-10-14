@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-14",
+  "status": "PASSED_REPRESENTATIVE_WORKFLOWS",
+  "method": "Codex in-app browser direct UI actions; disposable test company",
+  "checks": [
+    "login and create project",
+    "choose generated Excel; detect sheet/header; inspect original and packed mappings, mm/kg/per-piece; explicit confirmation and import",
+    "automatic analysis and saved CLP after import; automatic recommendation and manual alternative selection",
+    "Top/Side/Front tabs and SVG equipment/cargo rectangles",
+    "move and lock piece in alternative 2; immutable revision; reject moving a locked piece",
+    "download CLP Excel and PDF through actual UI buttons",
+    "compare original and revision: alternative 1 unchanged, alternative 2 container/x/lock changed",
+    "save customer mapping template v1, apply exact header match, final confirmation remains required",
+    "save estimated engineering calculation: symmetric reactions 5.886kN and pressure 0.05886MPa, stored equations and no carrier approval",
+    "internal approval option disabled for estimated/self-authored calculation",
+    "generate automatic PRE_QUOTE with missing rates; totals unresolved and optional fees explicitly unconfirmed",
+    "download quotation Excel and PDF through UI buttons",
+    "dashboard v0.6 shows total30 complete29 incomplete1 verified29 pending1",
+    "final dashboard document scrollWidth equals clientWidth 1265px"
+  ],
+  "screenshots": [
+    "ui-qa/dashboard-v06.jpg",
+    "ui-qa/quotation-validation.jpg",
+    "ui-qa/version-comparison.jpg",
+    "ui-qa/lock-validation.jpg"
+  ],
+  "pdfVisualQA": {
+    "uiClpPages": 7,
+    "apiQuotationPages": 1,
+    "unitQuotationPages": 1,
+    "allPagesInspected": true,
+    "defects": [],
+    "uiQuotationPages": 2,
+    "improvementNotes": [
+      "UI quotation final explanatory lines flow to a mostly empty second page; readable, no omitted content"
+    ]
+  },
+  "limitations": [
+    "Representative browser workflows only; no claim of exhaustive browser or input coverage",
+    "Independent internal approval verified by API; UI verified disabled approval for estimated/self-authored report",
+    "Automatic CP-SAT engine and fallback verified by Python and live APIs; legacy saved plan used for UI revision comparison",
+    "Full engineering, operational input evidence and carrier approval remain outside completed scope"
+  ],
+  "fixturesRemoved": true,
+  "cleanupScope": {
+    "uiTenantId": 30,
+    "uiTenantIdentity": "UI_8684A6D561 / Disposable OOG UI verification",
+    "uiTenantRowsRemoved": 74,
+    "uiUploadFoldersRemoved": 1,
+    "testSessionsRevoked": [
+      "platformSession",
+      "setupSession"
+    ],
+    "foundationFixtureProjectId": "d80b424e-a56b-453a-8a94-5f87205f3cb2",
+    "foundationFixtureExpectedName": "VERIFY-bf0f77d8b27141abad284bc80a8976ea",
+    "foundationFixtureRowsRemoved": {
+      "oog_engineering_decision": 0,
+      "oog_engineering_calculation": 0,
+      "oog_engineering_review": 0,
+      "oog_multi_fr_review": 0,
+      "oog_quotation": 0,
+      "oog_packing_estimate": 0,
+      "core_audit_history": 3,
+      "oog_clp_scenario": 1,
+      "oog_packing_list": 1,
+      "oog_cargo": 3,
+      "oog_project": 1
+    },
+    "foundationFixtureOtherProjectsSearchedOrChanged": false,
+    "immutableTriggersRestoredAndVerified": true,
+    "productionDataChanged": false
+  },
+  "excelReadback": {
+    "quotationSheets": 1,
+    "clpSheets": 11,
+    "errorCells": 0,
+    "formulaCells": 0,
+    "missingRateAndUnconfirmedFeesPreserved": true
+  }
+}

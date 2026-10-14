@@ -1,0 +1,2 @@
+from pathlib import Path
+p=Path(__file__).resolve().parents[1]/'frontend/src/main.tsx';s=p.read_text(encoding='utf-8').replace('cargos={analysis.map(a=>a.cargo)}','cargos={[...analysis].sort((a,b)=>Number(b.recommended===\'ENGINEERING_REVIEW\')-Number(a.recommended===\'ENGINEERING_REVIEW\')).map(a=>a.cargo)}');p.write_text(s,encoding='utf-8');print('Engineering-review cargo is the initial Multi-FR candidate')

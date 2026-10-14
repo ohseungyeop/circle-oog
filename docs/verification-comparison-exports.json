@@ -1,0 +1,28 @@
+{
+  "passed": 16,
+  "failed": 0,
+  "checks": [
+    "login",
+    "project",
+    "cargo",
+    "first saved plan",
+    "second saved plan",
+    "comparison unauthenticated401",
+    "same snapshots no pieces changed",
+    "unknown plan404",
+    "quote saved",
+    "quote export unauthenticated401",
+    "xlsx workbook",
+    "pdf binary",
+    "prequote Korean text",
+    "fees unconfirmed warnings preserved",
+    "alternatives separate",
+    "unknown quote404"
+  ],
+  "fixturesRemoved": true,
+  "date": "2026-10-14",
+  "database": "oog",
+  "migration": "V10",
+  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "apiChecks": 16
+}

@@ -1,0 +1,822 @@
+{
+  "readOnly": true,
+  "files": [
+    {
+      "file": "2023년도물량.xlsx",
+      "sha256": "610fa5a578e113ff055562da4bb1a0cc93dbf99c0d95f5272a55f7286539ae80",
+      "sheets": [
+        {
+          "name": "Sheet1",
+          "state": "visible",
+          "nonemptyCells": 130,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "[PL원본]ANP_PUS_NAH_PackingList_Ver4.xlsx",
+      "sha256": "ca0ae53d9589035dbd700ec5fdf1413822c01ce13d80039a2641768557f060b4",
+      "sheets": [
+        {
+          "name": "PL (2)",
+          "state": "visible",
+          "nonemptyCells": 422,
+          "formulas": 0
+        }
+      ],
+      "matches": [
+        {
+          "sheet": "PL (2)",
+          "cell": "B6",
+          "value": "DRUM SUPPORT\nTHREAD ROLL DRIVE",
+          "rowContext": [
+            {
+              "cell": "A6",
+              "value": "4"
+            },
+            {
+              "cell": "B6",
+              "value": "DRUM SUPPORT\nTHREAD ROLL DRIVE"
+            }
+          ]
+        },
+        {
+          "sheet": "PL (2)",
+          "cell": "B10",
+          "value": "ROLL DRAWING TABLE",
+          "rowContext": [
+            {
+              "cell": "A10",
+              "value": "8"
+            },
+            {
+              "cell": "B10",
+              "value": "ROLL DRAWING TABLE"
+            }
+          ]
+        }
+      ],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "DY MACH_PACKING LIST CLP_20240830 - 라싱 견적 요청.xlsx",
+      "sha256": "89de69cedabdca17a3ef8c2f87619d156cee610675a15b41488d08f9c43e0535",
+      "sheets": [
+        {
+          "name": "팩킹",
+          "state": "visible",
+          "nonemptyCells": 81,
+          "formulas": 13
+        },
+        {
+          "name": "CLP",
+          "state": "visible",
+          "nonemptyCells": 94,
+          "formulas": 23
+        },
+        {
+          "name": "Sheet1",
+          "state": "visible",
+          "nonemptyCells": 1,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [
+        "xl/drawings/drawing1.xml"
+      ],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "HMMA CLP 1차.xlsx",
+      "sha256": "eb007b92fedc87243112d3c21d5a1ebf3e7fdcafdaaa11e1bab2a91ef5174cdf",
+      "sheets": [
+        {
+          "name": "패킹리스트",
+          "state": "visible",
+          "nonemptyCells": 1034,
+          "formulas": 156
+        },
+        {
+          "name": "CLP",
+          "state": "visible",
+          "nonemptyCells": 1269,
+          "formulas": 349
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "HMMA CLP 1차_분석샘플.xlsx",
+      "sha256": "c40bd8e4b726af39b3b1445002ecc982e57b3c1aa5d4677436ded8c90b6b0613",
+      "sheets": [
+        {
+          "name": "패킹리스트",
+          "state": "visible",
+          "nonemptyCells": 1034,
+          "formulas": 156
+        },
+        {
+          "name": "CLP",
+          "state": "visible",
+          "nonemptyCells": 1269,
+          "formulas": 349
+        },
+        {
+          "name": "Sheet1",
+          "state": "visible",
+          "nonemptyCells": 1207,
+          "formulas": 335
+        },
+        {
+          "name": "Sheet2",
+          "state": "visible",
+          "nonemptyCells": 1472,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [
+        "xl/drawings/drawing1.xml"
+      ],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "HMMA CLP CUSTOM.xlsx",
+      "sha256": "39e01150642e08c73f0488ab5c9a8c9238cb6698079d355712e3dd543946f9e3",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 551,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "HMMA WASHING & LEVELLER_원본.xlsx",
+      "sha256": "8d6053c6bf97aace64682c79d09b5edfb1ca84f9e571ba447540fa1016c9a697",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 94,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "lashing.xlsx",
+      "sha256": "1c33e9661283096974825634a6681e6a2d6cd53450f25ce90b63b82caa265d3f",
+      "sheets": [
+        {
+          "name": "Table DD",
+          "state": "visible",
+          "nonemptyCells": 191,
+          "formulas": 0
+        },
+        {
+          "name": "BOX SIZE 보류",
+          "state": "visible",
+          "nonemptyCells": 122,
+          "formulas": 0
+        },
+        {
+          "name": "VOS_OOG_PCK_LST",
+          "state": "visible",
+          "nonemptyCells": 1126,
+          "formulas": 0
+        },
+        {
+          "name": "VOS_OOG_CLP_OPT ",
+          "state": "visible",
+          "nonemptyCells": 135,
+          "formulas": 0
+        },
+        {
+          "name": "Sheet1",
+          "state": "visible",
+          "nonemptyCells": 38,
+          "formulas": 0
+        }
+      ],
+      "matches": [
+        {
+          "sheet": "Table DD",
+          "cell": "D32",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "B32",
+              "value": "PCK_CNTR_LSG_PICT"
+            },
+            {
+              "cell": "C32",
+              "value": "VC(1000)"
+            },
+            {
+              "cell": "D32",
+              "value": "컨테이너  LASHING이미지  경로"
+            }
+          ]
+        },
+        {
+          "sheet": "Table DD",
+          "cell": "D68",
+          "value": " 라싱표기 ex(R1xL1,R2xL2….. F1xB1,F2xB2,F3xB3)",
+          "rowContext": [
+            {
+              "cell": "B68",
+              "value": "CLP_RSG_DESC"
+            },
+            {
+              "cell": "C68",
+              "value": "VC2(500)"
+            },
+            {
+              "cell": "D68",
+              "value": " 라싱표기 ex(R1xL1,R2xL2….. F1xB1,F2xB2,F3xB3)"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I4",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G4",
+              "value": "1200"
+            },
+            {
+              "cell": "H4",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I4",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J4",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K4",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L4",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I5",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G5",
+              "value": "2200"
+            },
+            {
+              "cell": "H5",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I5",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J5",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K5",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L5",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I6",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G6",
+              "value": "2800"
+            },
+            {
+              "cell": "H6",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I6",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J6",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K6",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L6",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I7",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G7",
+              "value": "3200"
+            },
+            {
+              "cell": "H7",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I7",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J7",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K7",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L7",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I8",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G8",
+              "value": "1200"
+            },
+            {
+              "cell": "H8",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I8",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J8",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K8",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L8",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I9",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G9",
+              "value": "2200"
+            },
+            {
+              "cell": "H9",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I9",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J9",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K9",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L9",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I10",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G10",
+              "value": "2800"
+            },
+            {
+              "cell": "H10",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I10",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J10",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K10",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L10",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I11",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G11",
+              "value": "3200"
+            },
+            {
+              "cell": "H11",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I11",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J11",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K11",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L11",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I12",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G12",
+              "value": "1200"
+            },
+            {
+              "cell": "H12",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I12",
+              "value": "컨테이너  LASHING이미지  경로"
+            },
+            {
+              "cell": "J12",
+              "value": "2025-01-13 00:00:00"
+            },
+            {
+              "cell": "K12",
+              "value": "bulls1223"
+            },
+            {
+              "cell": "L12",
+              "value": "2025-01-13 00:00:00"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I13",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G13",
+              "value": "2200"
+            },
+            {
+              "cell": "H13",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I13",
+              "value": "컨테이너  LASHING이미지  경로"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I14",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G14",
+              "value": "2800"
+            },
+            {
+              "cell": "H14",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I14",
+              "value": "컨테이너  LASHING이미지  경로"
+            }
+          ]
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I15",
+          "value": "컨테이너  LASHING이미지  경로",
+          "rowContext": [
+            {
+              "cell": "G15",
+              "value": "3200"
+            },
+            {
+              "cell": "H15",
+              "value": "이미지 경로"
+            },
+            {
+              "cell": "I15",
+              "value": "컨테이너  LASHING이미지  경로"
+            }
+          ]
+        }
+      ],
+      "images": [
+        {
+          "drawing": "xl/drawings/drawing1.xml",
+          "part": "xl/media/image1.jpg",
+          "name": "그림 2",
+          "description": "",
+          "anchorRow": 17,
+          "sha256": "3dc7679f129544075ce062b04319bad36c2c863e928ddd872df1304016acba45",
+          "bytes": 124217
+        }
+      ],
+      "embeddedParts": [],
+      "drawingParts": [
+        "xl/drawings/drawing1.xml",
+        "xl/drawings/drawing2.xml"
+      ],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_20250425.xlsx",
+      "sha256": "4409e982cf2226811335c1127e5c37b45b47a366cff45be78b93d102d2c1c6c2",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 134,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_20250425_cbm.xlsx",
+      "sha256": "813779c60ee0f3857ac3e134470ea430503d7a9b7ea8fbc55e4b4a72512d5c0a",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 125,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_grouping_원본임.xlsx",
+      "sha256": "bd5759ae8a5cd561bea2d8eb94e4048185c08d230228f67304b5c827d73f2bc7",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 861,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_over.xlsx",
+      "sha256": "0d8b9f89f7476c681a49cd50794f7244b3703e377e9273de4cc526f3480898e9",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 861,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_over_6t.xlsx",
+      "sha256": "0ab51e70584f713317baf13a356805be548dce6b82eb8763b8bafa9b97952d2e",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 861,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_over_ver2.xlsx",
+      "sha256": "aff3bfbf53d1348fdf582df9d86bcd35f9c5db6c4e3db08d75d95f5646e376a3",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 930,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "PackingList_sample.xlsx",
+      "sha256": "ee9aae4d190ae18da09b565d764f4fb8122c1680eefa52fdc0a02a8b2c70a425",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 62,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "TPW_설비 팽킹_20250619_FR.xlsx",
+      "sha256": "48a6a4a3935cf04dc80ab173e87f6a8cc25fb0e5f5dcd8859cbcc4c9f933794c",
+      "sheets": [
+        {
+          "name": "PL",
+          "state": "visible",
+          "nonemptyCells": 113,
+          "formulas": 0
+        }
+      ],
+      "matches": [],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "이거.xlsx",
+      "sha256": "2d31a3a24896376bfcdda13da3df11f6a41ce1ba047cb664a7506372b5c21509",
+      "sheets": [
+        {
+          "name": "PL (2)",
+          "state": "visible",
+          "nonemptyCells": 402,
+          "formulas": 0
+        }
+      ],
+      "matches": [
+        {
+          "sheet": "PL (2)",
+          "cell": "B6",
+          "value": "DRUM SUPPORT\nTHREAD ROLL DRIVE",
+          "rowContext": [
+            {
+              "cell": "A6",
+              "value": "4"
+            },
+            {
+              "cell": "B6",
+              "value": "DRUM SUPPORT\nTHREAD ROLL DRIVE"
+            }
+          ]
+        },
+        {
+          "sheet": "PL (2)",
+          "cell": "B10",
+          "value": "ROLL DRAWING TABLE",
+          "rowContext": [
+            {
+              "cell": "A10",
+              "value": "8"
+            },
+            {
+              "cell": "B10",
+              "value": "ROLL DRAWING TABLE"
+            }
+          ]
+        }
+      ],
+      "images": [],
+      "embeddedParts": [],
+      "drawingParts": [],
+      "drawingTextCandidates": []
+    },
+    {
+      "file": "OOGList_20250623.xls",
+      "sha256": "105e0b9a6daa3ea00a71327bd0acae7b72ab1ebadb4a8c9adaedf7b46d3947e0",
+      "bytes": 15591,
+      "status": "HTML_DISGUISED_AS_XLS",
+      "encoding": "utf-8",
+      "nonemptyCellTexts": 194,
+      "matches": []
+    }
+  ],
+  "limitations": [
+    "All nonempty XLSX cells/formula strings and drawing text candidates inspected; labels can be cargo names, not structural data.",
+    "HTML-disguised XLS table text is inspected. No source file is modified or recalculated.",
+    "The single embedded reference image was separately visually reviewed. Its equipment values are general references with unknown carrier/unit identity. Not physical certification."
+  ]
+}

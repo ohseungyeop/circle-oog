@@ -43,6 +43,7 @@ public class PlanningExportController {
                 for(var scenario:savedResult.path("scenarios")) {var entry=summary.createRow(row++);entry.createCell(0).setCellValue(index++);entry.createCell(1).setCellValue(scenario.path("objective").asText());entry.createCell(2).setCellValue(scenario.path("equipmentCount").asInt());entry.createCell(3).setCellValue(scenario.path("unassigned").size());entry.createCell(4).setCellValue("PRE_PLAN");}
             }
             summary.createRow(summary.getLastRowNum()+2).createCell(0).setCellValue("Source plan: "+savedResult.path("revision").path("sourcePlanId").asText("original generated plan"));
+            selectionMetadata(summary,summary.getLastRowNum()+2,input.path("ruleSelection"));
             var assignments=wb.createSheet("Assignments");
             var assignmentRows=jsonArray();
             for(var box:result.path("containers")) for(var a:box.path("assignments")) {
@@ -60,6 +61,13 @@ public class PlanningExportController {
             for(var sheet:wb) {sheet.createFreezePane(0,1);if(List.of("Top","Side","Front").contains(sheet.getSheetName())){for(int c=0;c<24;c++)sheet.setColumnWidth(c,1152);for(var r:sheet)r.setHeightInPoints(16);}else for(int c=0;c<Math.min(30,sheet.getRow(0).getLastCellNum());c++) sheet.setColumnWidth(c,6000);}
             wb.write(out);return out.toByteArray();
         }
+    }
+    static void selectionMetadata(Sheet sheet,int row,JsonNode selection) {
+        if(!selection.isObject()) {var r=sheet.createRow(row);r.createCell(0).setCellValue("Rule selection");r.createCell(1).setCellValue("Legacy saved snapshot: carrier selection metadata unavailable");return;}
+        for(String key:List.of("carrier","effectiveDate","fallbackPolicy")){var r=sheet.createRow(row++);r.createCell(0).setCellValue(key);r.createCell(1).setCellValue(selection.path(key).asText());}
+        var header=sheet.createRow(row++);String[] keys={"equipmentCode","carrier","version","source","usedFallback","validFrom","validUntil","id"};
+        for(int i=0;i<keys.length;i++)header.createCell(i).setCellValue(keys[i]);
+        for(var version:selection.path("versions")){var r=sheet.createRow(row++);for(int i=0;i<keys.length;i++){var value=version.path(keys[i]);r.createCell(i).setCellValue(value.isNull()||value.isMissingNode()?"":value.asText());}}
     }
     private static com.fasterxml.jackson.databind.node.ArrayNode jsonArray() {return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.arrayNode();}
     private static JsonNode flattenScenarios(JsonNode source) {

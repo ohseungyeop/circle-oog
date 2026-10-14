@@ -1,0 +1,30 @@
+package com.circle.oog;
+import com.fasterxml.jackson.databind.*;
+import java.time.LocalDate;
+import java.util.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestController @RequestMapping("/api/projects/{id}/plans/{planId}/engineering/reconciliations")
+public class MeasurementReconciliationController {
+ public record Request(String targetType,UUID targetId,UUID evidenceId,JsonNode measured,Boolean subjectConfirmed,String reason){}
+ private final JdbcTemplate jdbc;private final ObjectMapper json;private final EngineeringEvidenceController evidence;
+ public MeasurementReconciliationController(JdbcTemplate jdbc,ObjectMapper json,EngineeringEvidenceController evidence){this.jdbc=jdbc;this.json=json;this.evidence=evidence;}
+ private JsonNode plan(UUID id,UUID plan)throws Exception{var rows=jdbc.queryForList("select input_snapshot::text from oog_clp_scenario s join oog_project p on p.id=s.project_id where p.tenant_id=? and s.project_id=? and s.id=?",VerifiedActor.tenantId(),id,plan);if(rows.isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND,"계획을 찾을 수 없습니다");return json.readTree((String)rows.getFirst().get("input_snapshot"));}
+ @GetMapping public Object list(@PathVariable UUID id,@PathVariable UUID planId)throws Exception{plan(id,planId);var rows=jdbc.queryForList("select id,author_id,created_at,detail::text from oog_engineering_review where tenant_id=? and project_id=? and plan_id=? and detail->>'kind'='MEASUREMENT_CHECK' order by created_at desc,id desc",VerifiedActor.tenantId(),id,planId);for(var row:rows)row.put("detail",json.readTree((String)row.get("detail")));return rows;}
+ @PostMapping @Transactional(rollbackFor=Exception.class) public Object create(@PathVariable UUID id,@PathVariable UUID planId,@RequestBody Request r)throws Exception{
+  var actor=VerifiedActor.current();if(!Set.of("ENGINEER","ADMIN","SUPER_ADMIN").contains(actor.getRoleCode()))throw new ResponseStatusException(HttpStatus.FORBIDDEN,"실측 대조는 엔지니어 또는 관리자 역할이 필요합니다");
+  JsonNode saved=plan(id,planId);if(r==null||r.targetId()==null||r.evidenceId()==null||r.reason()==null||r.reason().isBlank()||r.reason().length()>2000)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"대상·증빙과 페이지/측정 근거를 입력하세요");MeasurementReconciliation.fields(Objects.toString(r.targetType(),""));
+  JsonNode source;boolean estimated;String category;
+  if(r.targetType().equals("CARGO")){source=null;for(var c:saved.path("cargos"))if(c.path("id").asText().equals(r.targetId().toString()))source=c;if(source==null)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"저장 계획의 화물이 아닙니다");estimated=source.path("estimated").asBoolean(true);category="PACKED_DIMENSIONS";}
+  else {var rows=jdbc.queryForList("select input_snapshot::text from oog_engineering_calculation where id=? and tenant_id=? and project_id=? and plan_id=?",r.targetId(),actor.getTenantId(),id,planId);if(rows.isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND,"해당 계획의 수치 계산이 아닙니다");var calculationSnapshot=json.readTree((String)rows.getFirst().get("input_snapshot"));source=calculationSnapshot.path("request");estimated=!source.path("sourceMode").asText().equals("CONFIRMED")||calculationSnapshot.path("cargo").path("estimated").asBoolean(true);category="COG_MEASURED";}
+  var docs=jdbc.queryForList("select detail::text from oog_engineering_review where id=? and tenant_id=? and project_id=? and plan_id=? and detail->>'kind'='EVIDENCE_FILE'",r.evidenceId(),actor.getTenantId(),id,planId);if(docs.isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND,"해당 계획의 증빙이 아닙니다");JsonNode doc=json.readTree((String)docs.getFirst().get("detail"));if(!doc.path("metadata").path("category").asText().equals(category))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"대상과 증빙 범주가 맞지 않습니다");String until=doc.path("metadata").path("validUntil").asText("");if(!until.isBlank()&&!until.equals("null")&&LocalDate.parse(until).isBefore(LocalDate.now()))throw new ResponseStatusException(HttpStatus.CONFLICT,"유효기간이 지난 증빙입니다");
+  var latest=jdbc.queryForList("select id from oog_engineering_review where tenant_id=? and project_id=? and plan_id=? and detail->>'kind'='EVIDENCE_FILE' and detail->'metadata'->>'category'=? and detail->'metadata'->>'subject'=? order by created_at desc,id desc limit 1",actor.getTenantId(),id,planId,category,doc.path("metadata").path("subject").asText());if(latest.isEmpty()||!r.evidenceId().equals(latest.getFirst().get("id")))throw new ResponseStatusException(HttpStatus.CONFLICT,"같은 범주·대상의 최신 증빙을 선택하세요");
+  evidence.download(id,planId,r.evidenceId()); // Validates actual bytes against the saved SHA-256, without returning them here.
+  Object result=MeasurementReconciliation.compare(r.targetType(),r.measured(),source,estimated,r.subjectConfirmed());UUID key=UUID.randomUUID();var detail=new LinkedHashMap<String,Object>();detail.put("kind","MEASUREMENT_CHECK");detail.put("request",r);detail.put("source",source);detail.put("evidenceMetadata",doc.path("metadata"));detail.put("evidenceSha256",doc.path("sha256"));detail.put("result",result);detail.put("reason",r.reason());detail.put("observations",Map.of());detail.put("approved",false);detail.put("planStatus","PRE_PLAN");
+  jdbc.update("insert into oog_engineering_review(id,tenant_id,project_id,plan_id,author_id,status,detail) values(?,?,?,?,?,'REVIEW_RECORDED_NOT_APPROVED',cast(? as jsonb))",key,actor.getTenantId(),id,planId,actor.getUserId(),json.writeValueAsString(detail));jdbc.update("insert into core_audit_history(project_id,action,actor,tenant_id,actor_user_id,detail) values(?,'MEASUREMENT_RECONCILED',?,?,?,cast(? as jsonb))",id,actor.getName(),actor.getTenantId(),actor.getUserId(),json.writeValueAsString(Map.of("id",key,"planId",planId,"targetId",r.targetId(),"evidenceId",r.evidenceId())));return Map.of("id",key,"result",result);
+ }
+}

@@ -1,0 +1,23 @@
+import {useEffect,useState} from 'react';
+import {Alert,Button,Card,Form,Input,InputNumber,Modal,Select,Space,Table,Tag} from 'antd';
+import type {Api} from './ProjectHistory';
+type RuleVersion={id:string;carrier:string;equipment_code:string;version:number;valid_from:string;valid_until:string|null;usable_length_ratio:number;planning_weight_ratio:number;max_over_width:number;max_over_height:number;reason:string};
+type Selection={carrier:string;effectiveDate:string;allowDefaultFallback:boolean};
+export function CarrierRulesPanel({api,equipment,canCreate,selection,onSelectionChange}:{api:Api;equipment:{code:string;name:string}[];canCreate:boolean;selection?:Selection;onSelectionChange?:(value:Selection)=>void}){
+    const [rows,setRows]=useState<RuleVersion[]>([]);const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [open,setOpen]=useState(false);const [form]=Form.useForm();
+    async function load(){setBusy(true);setError('');try{setRows(await api<RuleVersion[]>('/carrier-rules'));}catch(e){setError(e instanceof Error?e.message:'선사 규칙 조회 실패');}finally{setBusy(false);}}
+    useEffect(()=>{void load();},[]);
+    return <Card title="회사별 선사 규칙 · 유효기간과 버전" extra={<Space><Button onClick={()=>void load()}>새로고침</Button>{canCreate&&<Button type="primary" onClick={()=>setOpen(true)}>규칙 버전 등록</Button>}</Space>}>
+        <p>등록된 버전은 변경하지 않습니다. 동일 선사·장비의 유효기간은 겹칠 수 없으며 종료일을 포함합니다. 이후 기간의 새 버전을 등록하세요. 종료일 없이 등록하면 이후 버전의 기간도 겹치므로 변경이 예상되는 규칙에는 종료일을 지정하세요.</p>
+        {error&&<Alert type="error" showIcon message={error}/>}
+        {selection&&onSelectionChange&&<Space wrap><Select aria-label="적용 선사" value={selection.carrier} style={{width:180}} options={[...new Set(['DEFAULT',...rows.map(r=>r.carrier)])].map(value=>({value,label:value}))} onChange={carrier=>onSelectionChange({...selection,carrier})}/><Input aria-label="규칙 적용일" type="date" value={selection.effectiveDate} onChange={e=>onSelectionChange({...selection,effectiveDate:e.target.value})}/><Select aria-label="규칙 미일치 정책" value={selection.allowDefaultFallback?'DEFAULT_FALLBACK':'REQUIRE_MATCH'} style={{width:230}} options={[{value:'DEFAULT_FALLBACK',label:'미일치 장비는 DEFAULT 적용'},{value:'REQUIRE_MATCH',label:'모든 장비의 선사 규칙 필요'}]} onChange={value=>onSelectionChange({...selection,allowDefaultFallback:value==='DEFAULT_FALLBACK'})}/></Space>}
+        <Table rowKey="id" loading={busy} dataSource={rows} scroll={{x:1000}} columns={[{title:'선사',dataIndex:'carrier'},{title:'장비',dataIndex:'equipment_code'},{title:'버전',render:(_:unknown,r:RuleVersion)=><Tag>v{r.version}</Tag>},{title:'유효기간',render:(_:unknown,r:RuleVersion)=>r.valid_from+' ~ '+(r.valid_until||'종료 없음')},{title:'길이 비율',dataIndex:'usable_length_ratio'},{title:'중량 비율',dataIndex:'planning_weight_ratio'},{title:'허용 초과 폭 mm',dataIndex:'max_over_width'},{title:'허용 초과 높이 mm',dataIndex:'max_over_height'},{title:'근거',dataIndex:'reason'}]}/>
+        <Modal title="선사 규칙 새 버전 등록" open={open} onCancel={()=>setOpen(false)} confirmLoading={busy} onOk={()=>form.submit()}>
+            <Form form={form} layout="vertical" initialValues={{usableLengthRatio:.94,planningWeightRatio:.9,maxOverWidth:0,maxOverHeight:0}} onFinish={async value=>{setBusy(true);setError('');try{await api('/carrier-rules',{method:'POST',body:JSON.stringify({...value,validUntil:value.validUntil||null})});setOpen(false);form.resetFields();await load();}catch(e){setError(e instanceof Error?e.message:'선사 규칙 등록 실패');}finally{setBusy(false);}}}>
+                <Form.Item name="carrier" label="선사" rules={[{required:true,max:60}]}><Input maxLength={60}/></Form.Item><Form.Item name="equipmentCode" label="장비" rules={[{required:true}]}><Select options={equipment.map(e=>({value:e.code,label:e.code+' · '+e.name}))}/></Form.Item>
+                <Form.Item name="validFrom" label="적용 시작일" rules={[{required:true}]}><Input type="date"/></Form.Item><Form.Item name="validUntil" label="적용 종료일 · 종료일 포함"><Input type="date"/></Form.Item>
+                <Form.Item name="usableLengthRatio" label="유효 길이 비율" rules={[{required:true}]}><InputNumber min={.1} max={1} step={.01}/></Form.Item><Form.Item name="planningWeightRatio" label="계획 중량 비율" rules={[{required:true}]}><InputNumber min={.1} max={1} step={.01}/></Form.Item><Form.Item name="maxOverWidth" label="허용 초과 폭 mm" rules={[{required:true}]}><InputNumber min={0} max={30000}/></Form.Item><Form.Item name="maxOverHeight" label="허용 초과 높이 mm" rules={[{required:true}]}><InputNumber min={0} max={30000}/></Form.Item><Form.Item name="reason" label="변경 근거" rules={[{required:true,max:1000}]}><Input.TextArea maxLength={1000}/></Form.Item>
+            </Form>
+        </Modal>
+    </Card>;
+}

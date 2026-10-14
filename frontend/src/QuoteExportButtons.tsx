@@ -1,0 +1,2 @@
+import {Button,Space} from 'antd';
+export function QuoteExportButtons({projectId,quoteId,download}:{projectId:string;quoteId:string;download:(path:string,name:string)=>Promise<void>}){return <Space><Button onClick={()=>void download(`/projects/${projectId}/quotations/${quoteId}/export`,`oog-quotation-${quoteId}.xlsx`)}>Excel</Button><Button onClick={()=>void download(`/projects/${projectId}/quotations/${quoteId}/export/pdf`,`oog-quotation-${quoteId}.pdf`)}>PDF</Button></Space>;}

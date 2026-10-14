@@ -1,0 +1,20 @@
+from pathlib import Path
+root=Path(__file__).resolve().parents[1]
+p=root/'frontend/src/main.tsx';s=p.read_text(encoding='utf-8')
+s=s.replace("import {CorePanel} from './CorePanel';", "import {CorePanel} from './CorePanel';\nimport {CarrierRulesPanel} from './CarrierRulesPanel';")
+s=s.replace(" const [analysis,setAnalysis]", " const [selection,setSelection]=useState({carrier:'DEFAULT',effectiveDate:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul'}).format(new Date()),allowDefaultFallback:true});\n const ruleQuery='?'+new URLSearchParams({carrier:selection.carrier,effectiveDate:selection.effectiveDate,allowDefaultFallback:String(selection.allowDefaultFallback)}).toString();\n const [analysis,setAnalysis]")
+s=s.replace("'/projects/'+id+'/analysis'", "'/projects/'+id+'/analysis'+ruleQuery")
+s=s.replace("'/projects/'+project.id+'/analysis'", "'/projects/'+project.id+'/analysis'+ruleQuery")
+s=s.replace("},[project?.id,auth]);", "},[project?.id,auth,ruleQuery]);")
+s=s.replace("'/projects/'+project.id+'/plans',{method:'POST'}", "'/projects/'+project.id+'/plans'+ruleQuery,{method:'POST'}")
+s=s.replace('<Button onClick={()=>window.print()}>계획 인쇄 / PDF</Button>', '<Button disabled={!plan||!can("PLANNING","canExport")} onClick={()=>run(async()=>{await downloadFile(\'/projects/\'+project.id+\'/plans/\'+plan!.id+\'/export/pdf\',\'oog-clp.pdf\');})}>CLP PDF</Button>')
+s=s.replace("{title:'Payload kg',dataIndex:'payload'}]", "{title:'Payload kg',dataIndex:'payload'},{title:'버전',dataIndex:'version'},{title:'수정',render:(_:unknown,e:Equipment)=><EquipmentEditor equipment={e} disabled={identity?.role!==\"SUPER_ADMIN\"||identity?.tenantId!==1||!can(\"MASTER\",\"canEdit\")} save={async value=>{await api('/equipment/'+value.code,{method:'PUT',body:JSON.stringify(value)});const data=await api<{equipment:Equipment[]}>('/equipment');setEquipment(data.equipment);if(project)await refresh(project.id);msg.success('장비 제원 변경 완료');}}/>}]")
+anchor="{tab==='core'&&<CorePanel"
+s=s.replace(anchor,"{tab==='master'&&<CarrierRulesPanel api={api} equipment={equipment} canCreate={can('MASTER','canCreate')} selection={selection} onSelectionChange={setSelection}/>}\n "+anchor)
+s=s.replace("OR-Tools, 견적, 규칙 다중 버전, 추가 회사 설정", "OR-Tools, 견적, Multi-FR, 공학 검토, 추가 회사 설정")
+s=s.replace("보수적 자동배치 · 수동 이동/잠금 · 2D · CLP Excel", "보수적 자동배치 · 수동 이동/잠금 · 2D · CLP Excel/PDF · 장비 편집 · 회사별 선사 규칙")
+p.write_text(s,encoding='utf-8')
+p=root/'frontend/src/ProjectHistory.tsx';s=p.read_text(encoding='utf-8')
+s=s.replace('}>CLP Excel</Button></Space>', '}>CLP Excel</Button><Button onClick={()=>file(`/projects/${projectId}/plans/${p.id}/export/pdf`,\'oog-clp.pdf\')}>CLP PDF</Button></Space>')
+p.write_text(s,encoding='utf-8')
+print('Master editors, carrier selection, and saved CLP PDF connected')

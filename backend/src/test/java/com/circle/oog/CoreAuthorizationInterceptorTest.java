@@ -25,7 +25,20 @@ class CoreAuthorizationInterceptorTest {
         assertThat(CoreAuthorizationInterceptor.permission("/api/projects/{projectId}/plans/{planId}/revisions","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PLANNING","edit"));
         assertThat(CoreAuthorizationInterceptor.permission("/api/imports/preview","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PACKING","view"));
         assertThat(CoreAuthorizationInterceptor.permission("/api/projects/{id}/imports/{uploadId}/file","GET")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PACKING","export"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/projects/{id}/plans/{planId}/export/pdf","GET")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PLANNING","export"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/carrier-rules","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("MASTER","create"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/equipment/{code}","PUT")).isEqualTo(new CoreAuthorizationInterceptor.Permission("MASTER","edit"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/imports/detect","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PACKING","view"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/projects/{id}/multifr/preview","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PLANNING","view"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/projects/{id}/plans/{planId}/engineering","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("PLANNING","edit"));
+        assertThat(CoreAuthorizationInterceptor.permission("/api/quotation/rates","POST")).isEqualTo(new CoreAuthorizationInterceptor.Permission("MASTER","create"));
         assertThat(CoreAuthorizationInterceptor.permission("/api/projects/{id}/future-unknown","GET")).isNull();
+    }
+    @Test void globalRulesRequirePlatformTenantAndSuperAdministratorTogether() {
+        assertThat(CoreAuthorizationInterceptor.platformRulesAdministrator(new FmsPrincipal("a",1L,2L,1L,0,"ADMIN",List.of(),null))).isFalse();
+        assertThat(CoreAuthorizationInterceptor.platformRulesAdministrator(new FmsPrincipal("a",1L,2L,1L,0,"SUPER_ADMIN",List.of(),null))).isFalse();
+        assertThat(CoreAuthorizationInterceptor.platformRulesAdministrator(new FmsPrincipal("a",1L,1L,1L,0,"ADMIN",List.of(),null))).isFalse();
+        assertThat(CoreAuthorizationInterceptor.platformRulesAdministrator(new FmsPrincipal("a",1L,1L,1L,0,"SUPER_ADMIN",List.of(),null))).isTrue();
     }
     @Test void foreignTenantRejectedBeforeMenuAndHandlerExecution() throws Exception {
         authenticate();var jdbc=mock(JdbcTemplate.class);UUID project=UUID.randomUUID();

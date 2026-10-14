@@ -18,7 +18,7 @@ public class AnalysisService {
         for(var e: equipment) {
             var r = rules.stream().filter(v -> v.equipmentCode.equals(e.code)).findFirst().orElseThrow();
             double l=c.length, w=c.width;
-            if(c.rotationAllowed && c.length>e.length*r.usableLengthRatio && c.width<=e.length*r.usableLengthRatio) {
+            if(c.rotationAllowed && !(c.length<=e.length*r.usableLengthRatio && c.width<=e.width+(e.openWidth?r.maxOverWidth:0)) && c.width<=e.length*r.usableLengthRatio && c.length<=e.width+(e.openWidth?r.maxOverWidth:0)) {
                 l=c.width; w=c.length;
             }
             double ol=Math.max(0,l-e.length*r.usableLengthRatio), ow=Math.max(0,w-e.width),
@@ -39,7 +39,9 @@ public class AnalysisService {
         if(base.overHeight>0) classification.add("OH");
         if(base.overWeight>0) classification.add("OVERWEIGHT");
         if(classification.isEmpty()) classification.add("NORMAL");
-        String recommended=List.of("20GP","40HC","40OT","20FR","40FR").stream()
+        var priority=new ArrayList<>(List.of("20GP","40GP","40HC","45HC","20OT","40OT","40HCOT","20FR","40FR","20PLATFORM","40PLATFORM"));
+        equipment.stream().map(v->v.code).sorted().filter(v->!priority.contains(v)).forEach(priority::add);
+        String recommended=priority.stream()
             .filter(code -> candidates.stream().anyMatch(v -> v.code.equals(code)&&v.feasible)).findFirst().orElse("ENGINEERING_REVIEW");
         if(recommended.equals("ENGINEERING_REVIEW")) warnings.add("Multi-FR / Platform / Breakbulk 공학 검토 필요");
         if(!classification.equals(List.of("NORMAL"))) warnings.add("선사 승인 및 지지점·라싱 검토 필요");

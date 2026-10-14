@@ -35,6 +35,10 @@ public class PlanRevisionService {
             ||request.changes()==null||request.changes().isEmpty()||request.changes().size()>20000) fail("시나리오와 변경 항목을 확인하세요");
         ObjectNode result=source.deepCopy();
         JsonNode scenario=result.path("scenarios").get(request.scenarioIndex());
+        if(scenario instanceof ObjectNode selected&&selected.has("optimization")){
+            var optimization=json.createObjectNode().put("method","MANUAL_REVISION").put("status","MANUALLY_REVISED").put("optimal",false).put("fallbackReason","USER_EDITED_SAVED_PLAN");
+            optimization.set("sourceOptimization",selected.path("optimization").deepCopy());selected.set("optimization",optimization);
+        }
         var boxes=new HashMap<Integer,JsonNode>();
         for(JsonNode box:scenario.path("containers")) if(boxes.put(box.path("number").asInt(),box)!=null) fail("중복 컨테이너 번호");
         Set<String> changed=new HashSet<>();
@@ -47,7 +51,7 @@ public class PlanRevisionService {
             for(JsonNode box:boxes.values()) for(JsonNode a:box.path("assignments")) if(key(a).equals(key)) {found=(ObjectNode)a;oldAssignments=(ArrayNode)box.path("assignments");}
             if(found==null) fail("배정된 화물만 이동할 수 있습니다");
             boolean move=found.path("x").asDouble()!=change.x()||found.path("y").asDouble()!=change.y()||oldAssignments!=target.path("assignments")||change.rotated()!=null&&change.rotated()!=found.path("rotated").asBoolean();
-            if(found.path("locked").asBoolean()&&move&&!Boolean.FALSE.equals(change.locked())) fail("잠긴 화물은 locked:false로 잠금을 해제해야 이동할 수 있습니다");
+            if(found.path("locked").asBoolean()&&move&&!Boolean.FALSE.equals(change.locked())) fail("잠금을 해제한 뒤 이동하세요. '이 위치 잠금' 체크를 끄세요");
             ObjectNode moved=found.deepCopy();moved.put("x",change.x());moved.put("y",change.y());moved.put("z",0);
             if(change.locked()!=null)moved.put("locked",change.locked());if(change.rotated()!=null)moved.put("rotated",change.rotated());
             for(int i=0;i<oldAssignments.size();i++) if(oldAssignments.get(i)==found){oldAssignments.remove(i);break;}

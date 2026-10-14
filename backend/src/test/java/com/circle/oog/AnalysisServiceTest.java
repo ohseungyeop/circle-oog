@@ -5,6 +5,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AnalysisServiceTest {
+    @Test void rotatesWideCargoWhenLengthAlreadyFits() {
+        var c=new Cargo();c.length=2000;c.width=6000;c.height=1000;c.grossWeight=1000;c.quantity=1;c.rotationAllowed=true;
+        assertThat(new AnalysisService().analyze(c,List.of(equipment("40HC",false)),List.of(rule("40HC"))).recommended()).isEqualTo("40HC");
+    }
+    @Test void recommendsAdditionalRegisteredOpenTop() {
+        var c=new Cargo();c.length=2000;c.width=2000;c.height=3500;c.grossWeight=1000;c.quantity=1;
+        var ot=equipment("20OT",true);var r=rule("20OT");r.maxOverHeight=1500;
+        assertThat(new AnalysisService().analyze(c,List.of(equipment("40HC",false),ot),List.of(rule("40HC"),r)).recommended()).isEqualTo("20OT");
+    }
     Equipment equipment(String code, boolean open) {
         var e=new Equipment();e.code=code;e.length=12000;e.width=2400;e.height=2700;
         e.payload=40000;e.openWidth=open;e.openHeight=open;return e;

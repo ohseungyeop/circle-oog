@@ -1,11 +1,12 @@
 from typing import Literal
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 app = FastAPI(title="Circle OOG Optimizer", version="0.1.0")
 
 
 class Cargo(BaseModel):
+    model_config=ConfigDict(allow_inf_nan=False)
     id: str
     itemNo: str
     quantity: int = Field(ge=1, le=10000)
@@ -17,6 +18,7 @@ class Cargo(BaseModel):
 
 
 class Equipment(BaseModel):
+    model_config=ConfigDict(allow_inf_nan=False)
     code: str
     length: float = Field(gt=0)
     width: float = Field(gt=0)
@@ -27,6 +29,7 @@ class Equipment(BaseModel):
 
 
 class Rule(BaseModel):
+    model_config=ConfigDict(allow_inf_nan=False)
     equipmentCode: str
     usableLengthRatio: float = Field(gt=0, le=1)
     planningWeightRatio: float = Field(gt=0, le=1)
@@ -39,6 +42,8 @@ class Request(BaseModel):
     cargos: list[Cargo] = Field(max_length=10000)
     equipment: list[Equipment]
     rules: list[Rule]
+    planningMode: Literal['AUTO', 'HEURISTIC'] = 'AUTO'
+    timeLimitSeconds: float = Field(default=3, ge=.05, le=10)
 
 
 def orientation(c, e, r):
@@ -50,6 +55,13 @@ def orientation(c, e, r):
             yield length, width, rotated
 
 
+def ordered_equipment_codes(equipment, rules):
+    # Keep the established preference while allowing every explicitly configured type.
+    preferred=["40HC", "40OT", "40FR", "20FR", "20GP"]
+    available=set(equipment) & set(rules)
+    return [code for code in preferred if code in available] + sorted(available-set(preferred))
+
+
 def pack(request, objective):
     equipment = {e.code: e for e in request.equipment}
     rules = {r.equipmentCode: r for r in request.rules}
@@ -57,7 +69,7 @@ def pack(request, objective):
     expanded = [(c, piece + 1) for c in request.cargos for piece in range(c.quantity)]
     expanded.sort(key=lambda p: (p[0].width > 2400, p[0].length * p[0].width, p[0].grossWeight), reverse=True)
     for c, piece in expanded:
-        choices = [code for code in ["40HC", "40OT", "40FR", "20FR", "20GP"]
+        choices = [code for code in ordered_equipment_codes(equipment, rules)
                    if code in equipment and code in rules and list(orientation(c, equipment[code], rules[code]))]
         if not choices:
             unassigned.append({"cargoId": c.id, "itemNo": c.itemNo, "piece": piece, "reason": "장비 계획 범위 초과. Multi-FR / Platform 공학 검토 필요"})
@@ -110,10 +122,16 @@ def optimize(request: Request):
     if missing:
         from fastapi import HTTPException
         raise HTTPException(422, "장비 규칙 누락")
-    return {"algorithm": "conservative-first-fit-decreasing-v1", "scenarios":
-            [pack(request, "MIN_EQUIPMENT"), pack(request, "EASY_HANDLING")]}
+    if len({c.id for c in request.cargos})!=len(request.cargos) or len({e.code for e in request.equipment})!=len(request.equipment) or len({r.equipmentCode for r in request.rules})!=len(request.rules):
+        from fastapi import HTTPException
+        raise HTTPException(422,"화물/장비/규칙 식별자는 중복될 수 없습니다")
+    from cp_optimizer import optimize_one_row
+    minimum=optimize_one_row(request,pack,orientation,assignment)
+    return {"algorithm": "ortools-cp-sat-one-row-v1" if minimum['optimization']['method']=='CP_SAT' else "conservative-first-fit-decreasing-v1", "scenarios":
+            [minimum, pack(request, "EASY_HANDLING")]}
 
 
 @app.get("/health")
 def health():
-    return {"status": "UP"}
+    from cp_optimizer import cp_model
+    return {"status": "UP", "product":"circle-oog-optimizer", "ortoolsAvailable":cp_model is not None}

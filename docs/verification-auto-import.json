@@ -1,0 +1,22 @@
+{
+  "apiChecks": 9,
+  "checks": [
+    "login",
+    "anonymous denied",
+    "detect succeeds",
+    "unique header selected",
+    "explicit units and basis",
+    "confirmation always required",
+    "ambiguous sheets require selection",
+    "numbers do not establish units or basis",
+    "invalid workbook rejected"
+  ],
+  "passed": true,
+  "uiDirectWorkflow": "not performed",
+  "businessFixturesCreated": false,
+  "date": "2026-10-14",
+  "database": "oog",
+  "migration": "V10",
+  "uiWorkflow": "API-only; see verification-ui.json for separate direct UI evidence",
+  "fixturesRemoved": true
+}

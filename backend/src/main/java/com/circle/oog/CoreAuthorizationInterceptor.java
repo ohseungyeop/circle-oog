@@ -32,26 +32,50 @@ public class CoreAuthorizationInterceptor implements HandlerInterceptor {
             Long count=jdbc.queryForObject("select count(*) from oog_project where id=? and tenant_id=?",Long.class,projectId,actor.getTenantId());
             if(count==null||count==0)throw new ResponseStatusException(HttpStatus.NOT_FOUND,"프로젝트를 찾을 수 없습니다");
         }
-        if(pattern.startsWith("/api/rules/")&&!Set.of("ADMIN","SUPER_ADMIN").contains(actor.getRoleCode()))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"장비 규칙 변경은 관리자 권한이 필요합니다");
+        if((pattern.startsWith("/api/rules/")||pattern.equals("/api/equipment/{code}")||(pattern.equals("/api/equipment")&&request.getMethod().equals("POST")))&&!platformRulesAdministrator(actor))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"공통 장비 규칙 변경은 플랫폼 관리자 권한이 필요합니다");
         // The column is selected from the fixed Permission contract, never from user input.
         String column=switch(required.action()) {case "view"->"can_view";case "create"->"can_create";case "edit"->"can_edit";case "delete"->"can_delete";case "export"->"can_export";default->throw new IllegalStateException();};
         Long count=jdbc.queryForObject("select count(*) from core_role_menu rm join core_menu m on m.menu_id=rm.menu_id and m.tenant_id=rm.tenant_id where rm.tenant_id=? and rm.role_id=? and m.menu_key=? and rm."+column+"=true",Long.class,actor.getTenantId(),actor.getRoleId(),required.menu());
         if(count==null||count==0)throw new ResponseStatusException(HttpStatus.FORBIDDEN,"메뉴 작업 권한이 없습니다");
         return true;
     }
+    static boolean platformRulesAdministrator(com.fms.security.FmsPrincipal actor) {
+        return actor.getTenantId()==1L&&"SUPER_ADMIN".equals(actor.getRoleCode());
+    }
     static Permission permission(String path,String method) {
         String menu;
         if(path.equals("/api/projects"))menu="PROJECT";
-        else if(path.equals("/api/imports/preview"))return method.equals("POST")?new Permission("PACKING","view"):null;
-        else if(path.equals("/api/equipment")||path.equals("/api/rules/{code}"))menu="MASTER";
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/reconciliations"))return new Permission("PLANNING",method.equals("GET")?"view":"edit");
+        else if(path.equals("/api/equipment/references"))return method.equals("GET")?new Permission("MASTER","view"):null;
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/evidence/package"))return new Permission("PLANNING","export");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/checks(?:/\\{kind})?"))return new Permission("PLANNING",method.equals("GET")?"view":"edit");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/evidence(?:/\\{evidenceId}/file)?"))return new Permission("PLANNING",path.endsWith("/file")?"export":method.equals("GET")?"view":"edit");
+        else if(path.equals("/api/equipment/{code}/clearance"))return method.equals("POST")?new Permission("MASTER","view"):null;
+        else if(path.equals("/api/imports/preview")||path.equals("/api/imports/detect"))return method.equals("POST")?new Permission("PACKING","view"):null;
+        else if(path.equals("/api/equipment")||path.equals("/api/equipment/{code}")||path.equals("/api/rules/{code}"))menu="MASTER";
+        else if(path.equals("/api/carrier-rules"))menu="MASTER";
+        else if(path.equals("/api/import-templates"))menu="PACKING";
+        else if(path.equals("/api/quotation/rates")||path.equals("/api/packing/rules"))menu="MASTER";
         else if(path.equals("/api/development/status"))menu="DEVELOPMENT";
         else if(path.matches("/api/projects/\\{(?:id|projectId)}/cargos(?:/\\{cargoId})?")||path.matches("/api/projects/\\{(?:id|projectId)}/imports(?:/\\{uploadId}/file)?"))menu="PACKING";
         else if(path.matches("/api/projects/\\{(?:id|projectId)}/(?:analysis|export)"))menu="ANALYSIS";
-        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans(?:/\\{planId}/(?:export|revisions))?"))menu="PLANNING";
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans(?:/\\{planId}/(?:export(?:/pdf)?|revisions))?"))menu="PLANNING";
         else if(path.matches("/api/projects/\\{(?:id|projectId)}/history"))menu="HISTORY";
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/packing-estimates"))menu="PACKING";
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/quotations"))menu="PROJECT";
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/quotations/\\{quoteId}/export(?:/pdf)?"))return new Permission("PROJECT","export");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/compare"))return new Permission("PLANNING","view");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/calculations/(?:context|expanded/profiles|expanded/references)"))return new Permission("PLANNING","view");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/calculations/expanded/load-distribution"))return method.equals("POST")?new Permission("PLANNING","view"):null;
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/calculations/expanded"))return method.equals("POST")?new Permission("PLANNING","create"):null;
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/calculations"))return new Permission("PLANNING",method.equals("GET")?"view":"create");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering/calculations/\\{calculationId}/decisions"))return new Permission("PLANNING","edit");
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/multifr/preview"))return method.equals("POST")?new Permission("PLANNING","view"):null;
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/multifr/reviews"))menu="PLANNING";
+        else if(path.matches("/api/projects/\\{(?:id|projectId)}/plans/\\{planId}/engineering"))return new Permission("PLANNING",method.equals("GET")?"view":"edit");
         else return null;
-        String action=path.endsWith("/export")||path.endsWith("/file")?"export":path.endsWith("/revisions")?"edit":switch(method){case "GET"->"view";case "POST"->"create";case "PUT","PATCH"->"edit";case "DELETE"->"delete";default->null;};
+        String action=path.endsWith("/export")||path.endsWith("/export/pdf")||path.endsWith("/file")?"export":path.endsWith("/revisions")?"edit":switch(method){case "GET"->"view";case "POST"->"create";case "PUT","PATCH"->"edit";case "DELETE"->"delete";default->null;};
         return action==null?null:new Permission(menu,action);
     }
 }

@@ -14,7 +14,7 @@ public class CoreBootstrap implements ApplicationRunner {
     private final JdbcTemplate jdbc; private final String password;
     public CoreBootstrap(JdbcTemplate jdbc,@Value("${oog.admin-password}") String password){this.jdbc=jdbc;this.password=password;}
     @Override @Transactional public void run(ApplicationArguments args) {
-        if(password.length()<12)throw new IllegalStateException("OOG_ADMIN_PASSWORD must contain at least 12 characters");
+        if(password.length()<12||password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>72)throw new IllegalStateException("OOG_ADMIN_PASSWORD must contain at least 12 characters and at most 72 UTF-8 bytes");
         seedTenant(1);
         jdbc.update("""
             INSERT INTO core_user_account(tenant_id,role_id,username,password_hash)
@@ -36,7 +36,7 @@ public class CoreBootstrap implements ApplicationRunner {
     static boolean[] permissions(String role,String menu) {
         if(List.of("SUPER_ADMIN","ADMIN").contains(role))return new boolean[]{true,true,true,true,true};
         if(role.equals("PLANNER")){boolean write=!List.of("MASTER","HISTORY","DEVELOPMENT").contains(menu);return new boolean[]{true,write,write,write,write};}
-        if(role.equals("ENGINEER")){boolean work=List.of("ANALYSIS","PLANNING").contains(menu);return new boolean[]{work,work,work,false,work};}
+        if(role.equals("ENGINEER")){boolean work=List.of("ANALYSIS","PLANNING").contains(menu);boolean read=work||List.of("PROJECT","PACKING","MASTER","HISTORY","DEVELOPMENT").contains(menu);return new boolean[]{read,work,work,false,work};}
         boolean read=List.of("PROJECT","ANALYSIS","PLANNING").contains(menu)||(role.equals("SALES")&&menu.equals("HISTORY"));
         return new boolean[]{read,false,false,false,read};
     }

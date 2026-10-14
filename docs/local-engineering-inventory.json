@@ -1,0 +1,104 @@
+{
+  "readOnly": true,
+  "scope": "xlsx cell values: first 300 rows per sheet; drawings/embedded files not inspected",
+  "files": [
+    {
+      "file": "lashing.xlsx",
+      "matches": [
+        {
+          "sheet": "Table DD",
+          "cell": "D32",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "Table DD",
+          "cell": "D68",
+          "label": " 라싱표기 ex(R1xL1,R2xL2….. F1xB1,F2xB2,F3xB3)"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I4",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I5",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I6",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I7",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I8",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I9",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I10",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I11",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I12",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I13",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I14",
+          "label": "컨테이너  LASHING이미지  경로"
+        },
+        {
+          "sheet": "BOX SIZE 보류",
+          "cell": "I15",
+          "label": "컨테이너  LASHING이미지  경로"
+        }
+      ],
+      "count": 14
+    },
+    {
+      "file": "[PL원본]ANP_PUS_NAH_PackingList_Ver4.xlsx",
+      "matches": [
+        {
+          "sheet": "PL (2)",
+          "cell": "B6",
+          "label": "DRUM SUPPORT\nTHREAD ROLL DRIVE"
+        }
+      ],
+      "count": 1
+    },
+    {
+      "file": "이거.xlsx",
+      "matches": [
+        {
+          "sheet": "PL (2)",
+          "cell": "B6",
+          "label": "DRUM SUPPORT\nTHREAD ROLL DRIVE"
+        }
+      ],
+      "count": 1
+    }
+  ]
+}

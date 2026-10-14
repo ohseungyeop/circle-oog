@@ -92,6 +92,9 @@ for index,page in enumerate(source['pages']):
             for number,text in enumerate(block['steps'],1):paragraph(f'{number}. {text}')
         if 'bullets' in block:
             for text in block['bullets']:paragraph(text,'List Bullet')
+        if 'equations' in block:
+            for expression in block['equations']:
+                p=paragraph('');math=OxmlElement('m:oMath');run=OxmlElement('m:r');text=OxmlElement('m:t');text.text=expression;run.append(text);math.append(run);p._p.append(math)
         if 'table' in block:table(**block['table'])
         if 'image' in block:
             path=ROOT/block['image']

@@ -1,6 +1,6 @@
 {
-  "updated": "2026-10-13",
-  "version": "0.2",
+  "updated": "2026-10-14",
+  "version": "0.8",
   "items": [
     {
       "id": "C01",
@@ -13,18 +13,18 @@
     {
       "id": "C02",
       "name": "초기 인증",
-      "description": "admin Basic·API 보호",
+      "description": "DB 관리자 계정·JWT API 인증",
       "development": "COMPLETE",
       "verification": "PASSED",
-      "evidence": "인증/비인증 API 통과·로그인 화면 표시 확인"
+      "evidence": "DB 로그인·세션 폐기·재발급/토큰 갱신 API 검증. 메모리/Basic 인증 제거"
     },
     {
       "id": "C03",
       "name": "사용자/회사/역할",
-      "description": "FMS 공통 인증 이식·JWT·RBAC",
-      "development": "NOT_STARTED",
-      "verification": "PENDING",
-      "evidence": "미검증"
+      "description": "회사/사용자/역할/메뉴·JWT·DB 세션·회사 접근 분리",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "core_ 7개 신규·회사/초기 관리자/사용자/메뉴 권한 연결·JWT/회전/폐기/잠금/회사 분리 API 66건. 추가 회사·조직/구독 설정 제외"
     },
     {
       "id": "P01",
@@ -64,7 +64,7 @@
       "description": "수동 매핑·mm/cm/m·kg/ton",
       "development": "COMPLETE",
       "verification": "PASSED",
-      "evidence": "실제 mm/kg 매핑 API 통과·다른 단위 미검증"
+      "evidence": "실제 mm/kg와 m/ton·행합계 매핑 API 통과. cm/다른 고객 양식은 별도 검증"
     },
     {
       "id": "I03",
@@ -77,10 +77,10 @@
     {
       "id": "I04",
       "name": "자동 매핑·합계/중량 의미",
-      "description": "1/2행·병합 헤더 자동 컬럼 제안·개당/행합계 중량",
+      "description": "자동 시트/헤더 탐지·매핑 제안·개당/행합계·수동 확인",
       "development": "COMPLETE",
       "verification": "PASSED",
-      "evidence": "병합 2행 자동 매핑·행합계/수량·ton→kg 실제 API 확인. 고객 확인 필요"
+      "evidence": "탐지 API 9건·병합/다중 시트/단위 미확정 검사. 파일 선택 시 자동 기본, 모호한 값은 선택·확인 필요. UI는 build 검증"
     },
     {
       "id": "A01",
@@ -101,18 +101,10 @@
     {
       "id": "M01",
       "name": "장비·규칙",
-      "description": "분리 조회·DEFAULT 계획 규칙 변경",
-      "development": "IN_PROGRESS",
-      "verification": "PENDING",
-      "evidence": "실제 선사 제원 미승인"
-    },
-    {
-      "id": "M02",
-      "name": "선사 Rule 버전",
-      "description": "선사별 복수 규칙·유효기간",
-      "development": "NOT_STARTED",
-      "verification": "PENDING",
-      "evidence": "미검증"
+      "description": "장비 물리 제원 편집·DEFAULT 규칙 분리·버전 충돌·감사",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "실제 장비 편집/범위·버전/플랫폼 권한/전후 감사 API 통과. 초기 제원의 실무 승인은 별도"
     },
     {
       "id": "L01",
@@ -125,18 +117,18 @@
     {
       "id": "L02",
       "name": "시나리오",
-      "description": "장비 대수 우선·개별 작업 우선",
+      "description": "미배정 수·장비 대수 기준 자동 추천·수동 대안 선택",
       "development": "COMPLETE",
       "verification": "PASSED",
-      "evidence": "두 시나리오 API 통과·최적해/비용 최적화 미구현"
+      "evidence": "대안 생성·배정/미배정 보존 API와 실제 UI 자동 추천·수동 대안 전환 확인"
     },
     {
       "id": "L03",
       "name": "2D",
       "description": "Top/Side/Front",
       "development": "COMPLETE",
-      "verification": "PENDING",
-      "evidence": "TypeScript/build 통과·로그인 이후 UI 미검증"
+      "verification": "PASSED",
+      "evidence": "실제 UI Top/Side/Front 탭과 SVG 화물 표시 확인. UI CLP PDF7페이지 전부 시각 검수"
     },
     {
       "id": "L04",
@@ -149,10 +141,10 @@
     {
       "id": "L05",
       "name": "Multi-FR",
-      "description": "공학 검토 필요 표시",
-      "development": "IN_PROGRESS",
-      "verification": "PENDING",
-      "evidence": "대수/지지점 자동계산 미구현"
+      "description": "개당 Multi-FR 자동 배열 후보·수동 비교·검토 이력",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "API 18건. 최대 32대·원입력 치수 방향·잠정 배열 필요조건 검토. 단순 payload 합산은 적재가능 판정이 아님. 지지점/CoG/반력 계산 제외"
     },
     {
       "id": "O01",
@@ -165,10 +157,10 @@
     {
       "id": "O02",
       "name": "CLP PDF",
-      "description": "브라우저 인쇄",
-      "development": "IN_PROGRESS",
-      "verification": "PENDING",
-      "evidence": "전용 PDF 템플릿 미구현"
+      "description": "저장 CLP 전용 한글 PDF·전체 시나리오·3면 개략도",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "API PDF·한글·미배정·대안 보존 및 실제 UI 다운로드7페이지 전부 시각 검수. 공학도면 아님"
     },
     {
       "id": "O03",
@@ -176,23 +168,23 @@
       "description": "전체 시나리오 배정/입력/규칙/경고/미배정/3면 도면 출력",
       "development": "COMPLETE",
       "verification": "PASSED",
-      "evidence": "실제 Excel 11시트·전체 시나리오·배정/미배정·3면 도면 셀·공식 입력 문자 검증. 개략도이며 공학도면 아님"
+      "evidence": "API Excel11시트·배정/미배정·3면·수식문자 검증과 실제 UI 다운로드 완료"
     },
     {
       "id": "Q01",
       "name": "견적/포장추정",
-      "description": "비용·포장 Rule",
-      "development": "NOT_STARTED",
-      "verification": "PENDING",
-      "evidence": "미검증"
+      "description": "회사 포장 규칙·등록 단가로 자동 추정/사전견적·수동 선택",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "API33건. PRE_PACK/PRE_QUOTE 불변 snapshot·통화혼합 거부·미단가 합계 null. 실제 UI 자동 견적 생성 확인"
     },
     {
       "id": "E01",
       "name": "라싱/공학",
-      "description": "지지점·CoG·하중·승인",
-      "development": "NOT_STARTED",
+      "description": "실제 장비·실측 화물 자료 대조와 운송/선사 승인 연계",
+      "development": "IN_PROGRESS",
       "verification": "PENDING",
-      "evidence": "미검증"
+      "evidence": "계획별 증빙 원본/SHA·유효일·외부 문서 결정·검토 ZIP·포장 치수/중량 및 CoG 실측 대조 구현. 증빙 대상/범주/계획/회사/최신본/실제 해시 검사. 추정·불일치는 새 사본 필요. 실물 대조/진위/선사 승인 연계는 대기"
     },
     {
       "id": "H01",
@@ -200,22 +192,108 @@
       "description": "원본 파일·매핑·계획 사본·감사 이력 조회",
       "development": "COMPLETE",
       "verification": "PASSED",
-      "evidence": "원본 bytes·구조화 JSON·계획/감사·소속/페이징 API 검증. UI 직접 업무검증 미실시"
+      "evidence": "원본 bytes·매핑·계획/감사·회사격리 API 및 실제 UI 원본→개정 계획 비교 확인"
+    },
+    {
+      "id": "I05",
+      "name": "고객 Excel 매핑 템플릿",
+      "description": "회사·고객·헤더별 불변 템플릿·자동 제안·수동 최종 확인",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "실제 고객파일18개 탐지 포함39검사. xls/HTML표xls/xlsx·cm/mm·입력경계; UI 저장/재적용 확인"
+    },
+    {
+      "id": "H02",
+      "name": "저장 계획 버전 비교",
+      "description": "시나리오별 배정·미배정·이동·회전·잠금·규칙 차이",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "비교/출력 API16검사. 실제 UI 원본→개정 대안의 이동·잠금 차이 확인"
+    },
+    {
+      "id": "Q02",
+      "name": "견적 Excel/PDF",
+      "description": "저장 견적 snapshot·대안별 분리·미확정 금액 명시",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "비교/출력 API16검사·실제 견적 PDF1페이지 시각 검수 및 UI Excel/PDF 다운로드"
+    },
+    {
+      "id": "L06",
+      "name": "자동 최소 대수 최적화",
+      "description": "CP-SAT 적층없는 1열·128개 제한·시간제한·수동 기본계획",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "Python12/API35검사. 알려진 예제3대→최적2대, 보수적 반올림·명시적 fallback·수량 보존 추가 등록 타입 자동/수동 계산 검증"
+    },
+    {
+      "id": "E02",
+      "name": "제한 공학 계산·독립 내부 검토",
+      "description": "두 정적 지지점 반력/평균 면압·한 방향 직접 라싱·불변 검토 결정",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "API43검사. 역할/회사·자기승인·추정값 차단·버전충돌 검증. UI 추정 계산 저장·산식·반력·승인 비활성 확인. 확대공학과 선사승인 제외"
+    },
+    {
+      "id": "E03",
+      "name": "운송 구간별 확대 공학 수치 검토",
+      "description": "4방향 전도·3D 직접 라싱·압축 다점 접촉·Coulomb/yaw 배분·단순 보 응력/처짐",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "CTU/CSS·MIT·공개 논문 원문 분석. 알려진 해·독립 마찰 증거 검산 및 실제 API65검사. jsdom 프런트17검사, 브라우저 미사용. 실장비/실해상 인증 아님 공개 선사 3개 출처·FR 8개 표 열의 읽기 전용 점검. 실제 장비 승인 제외"
+    },
+    {
+      "id": "M03",
+      "name": "장비 타입·모델 신규 등록",
+      "description": "물리 제원·DEFAULT 규칙 원자적 등록·근거 감사·플랫폼 권한·중복 차단",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "Java 입력/권한·실제 API 생성/규칙/감사/중복/타회사 차단·jsdom 검사. 가상 제원 자동 등록 없음 · 원본 일반 제원 8종 참고 후보/DB 차이 비교, 실제 확인 근거·규칙은 별도 입력"
+    },
+    {
+      "id": "M04",
+      "name": "반입 개구부 단면 검사",
+      "description": "DOOR/TOP/SIDE 직사각형 단면·면당 여유·수평90도 비교",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "Java 치수 경계/축/회전/개방면/유한 입력·실제 API·jsdom 결과 무효화 검사. 이동 경로·인양 해석 제외"
+    },
+    {
+      "id": "E04",
+      "name": "확대 구조와 실제 장비 모델",
+      "description": "Multi-FR 상호 하중 분담·장비 강성 연성·국부 응력/좌굴/피로 등",
+      "development": "IN_PROGRESS",
+      "verification": "PENDING",
+      "evidence": "일정 EI 보와 2~8개 압축 탄성 지지 연성 FEM 구현·알려진 해/이탈/평형 검증. 실제 장비 전체의 3D/비틀림/좌굴/피로/국부 접합부 해석은 미구현·실제 도면/조건 필요"
+    },
+    {
+      "id": "M02",
+      "name": "다중 선사 Rule",
+      "description": "회사별 선사 규칙·불변 버전·유효기간·선택·대체 정책",
+      "development": "COMPLETE",
+      "verification": "PASSED",
+      "evidence": "회사 분리·중복 기간·v1/v2·종료일 포함·SQL 변경/삭제 거부·snapshot/API/Excel 검증. 종료 없는 버전은 이후 등록을 막으므로 기간 확인 필요"
     }
   ],
   "verificationRuns": {
-    "Java 단위 검사": "20건 통과·실패 0",
-    "Python 검사": "4건 통과",
-    "새 기능 실제 DB/API": "39건 통과",
-    "초기 회귀 API": "이전 19건 통과",
+    "Java 단위 검사": "150건 통과·실패0",
+    "Python 검사": "12건 통과",
+    "실제 DB/API": "521건 통과·13개 검사군",
     "프런트 TypeScript/build": "통과",
-    "UI 직접 업무검증": "미실시",
-    "사용자 매뉴얼": "v0.2 / 11페이지"
+    "UI 직접 업무검증": "v0.6 과거 기록만 보존. v0.7부터 사용자 요청에 따라 브라우저 검증 미실행",
+    "사용자 매뉴얼": "v0.8 / 32페이지 전부 시각 검수",
+    "DB": "V10 / core_8 / oog_16 / 기술원장1 =25",
+    "자동 검증 명령": "tools/verify-all.ps1",
+    "프런트 코드 검사": "29건 통과 · Vitest/jsdom · 브라우저 엔진 미사용",
+    "검증 정책": "FMS처럼 코드/DB/API/빌드 자동화. OOG는 브라우저 검사 제외"
   },
   "notes": [
-    "로그인 이후 UI 직접 업무검증은 미실시다. L03 2D는 build만 확인하여 검증 대기다.",
-    "기능 완료는 명시한 내부 범위 기준이다. M01의 장비 편집, M02 다중 선사 Rule, L05 Multi-FR 대수/지지점, O02 전용 PDF, C03 JWT/회사/RBAC, Q01 견적/포장추정, E01 공학은 남아 있다.",
-    "자동 매핑은 사용자 확인이 필요하며 단위·중량 기준을 자동 확정하지 않는다.",
-    "선사 제원·지지점·하중·CoG·라싱·실무 승인과 최적해 보장은 개발 완료 수치에 포함하지 않는다."
+    "OOG 핵심 범위 전체34·완료32·미완료2(E01/E04), 기능검증32·대기2. 냉동·탱크 전용 운용 S01은 OOG 핵심과 무관하게 넓힌 항목이어서 집계에서 제외했다. 과거35개와의 차이는 범위 정정이며 완료 수를 늘린 것이 아니다.",
+    "실제 화면 대표 업무를 검증했으며 모든 브라우저·입력 조합의 무오류 보장을 뜻하지 않는다. 고객 원본파일18개는 읽기만 수행했다.",
+    "CP-SAT 최적성은 적층없는 1열 모델에서 OPTIMAL인 경우만 확인된다. FEASIBLE·시간초과·128개 초과·수동 선택은 결과에 표시한다. 비용 최적화와 3차원 적재는 제외된다.",
+    "FMS 공통 인증/회사/권한7개와 감사1개를 OOG에 연결했다. 추가 조직·구독·메시지·개인환경·채번 등은 미이식이다.",
+    "확인되지 않은 단위·중량 의미·운임·지지점·계수를 임의로 확정하지 않는다. CLP는 PRE_PLAN, 견적은 PRE_QUOTE를 유지한다.",
+    "확대 모델은 준정적 강체·공면·선형 독립 패드 스프링과 일정 EI 단순 보다. 실제 최대 압축 계수·강성·유효 라싱 용량과 실제 장력·재료/단면 허용값은 자료 확인이 필수다. Dykstra 반환 배분의 평형/마찰 증거만 검증하며 최적성 인증을 주장하지 않는다.",
+    "장비 신규 등록 화면/API 구현. 같은 계열도 선사·모델·상태가 다르면 별도 코드와 근거로 관리한다. 문/상부/측면은 선언 개구부의 직사각형 단면 검사이며 자동 CLP 승인이나 내부 이동 경로 해석은 아니다."
   ]
 }

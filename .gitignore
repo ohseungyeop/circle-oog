@@ -7,6 +7,11 @@ build/
 tools/.packages/
 optimizer/.packages/
 docs/manual-qa/
+docs/export-qa/
+docs/ui-qa/
+docs/comparison-export-qa/
+output/pdf/
+tmp/pdfs/
 .env
 data/
 .runtime/

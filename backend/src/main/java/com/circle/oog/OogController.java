@@ -35,7 +35,11 @@ public class OogController {
         var actor=VerifiedActor.current();
         jdbc.update("insert into core_audit_history(project_id,action,actor,detail,tenant_id,actor_user_id) values(?,?,?,cast(? as jsonb),?,?)",id,action,actor.getName(),json.writeValueAsString(detail),actor.getTenantId(),actor.getUserId());
     }
-    @GetMapping("/me") public Object me(Principal p) {var actor=VerifiedActor.current();return Map.of("username",actor.getName(),"role",actor.getRoleCode(),"tenantId",actor.getTenantId(),"userId",actor.getUserId());}
+    @GetMapping("/me") public Object me(Principal p) {
+        var actor=VerifiedActor.current();
+        var menus=jdbc.queryForList("select m.menu_key as key,rm.can_view as \"canView\",rm.can_create as \"canCreate\",rm.can_edit as \"canEdit\",rm.can_delete as \"canDelete\",rm.can_export as \"canExport\" from core_role_menu rm join core_menu m on m.menu_id=rm.menu_id and m.tenant_id=rm.tenant_id where rm.tenant_id=? and rm.role_id=? order by m.menu_key",actor.getTenantId(),actor.getRoleId());
+        return Map.of("username",actor.getName(),"role",actor.getRoleCode(),"tenantId",actor.getTenantId(),"userId",actor.getUserId(),"menus",menus);
+    }
     @GetMapping("/projects") public Object projects(@RequestParam(defaultValue="0") int page) {
         if(page<0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"페이지 값 오류");
         return com.logistics.common.dto.PageResponse.of(projects.findByTenantId(VerifiedActor.tenantId(),PageRequest.of(page,50,Sort.by("createdAt").descending())));
@@ -74,9 +78,17 @@ public class OogController {
             (c.originalLength>0||c.originalWidth>0||c.originalHeight>0)&&(c.originalLength<=0||c.originalWidth<=0||c.originalHeight<=0))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"원치수는 길이·폭·높이를 모두 입력하거나 모두 비워두세요");
     }
-    @GetMapping("/projects/{id}/analysis") public Object analyze(@PathVariable UUID id) {
-        project(id);var eq=equipments.findAll();var rs=rules.findAll();
-        return cargos.findByProjectIdOrderByItemNo(id).stream().map(c -> analysis.analyze(c,eq,rs)).toList();
+    @GetMapping("/projects/{id}/analysis") public Object analyze(@PathVariable UUID id,@RequestParam(defaultValue="DEFAULT") String carrier,
+        @RequestParam(required=false) java.time.LocalDate effectiveDate,@RequestParam(defaultValue="true") boolean allowDefaultFallback) {
+        project(id);var eq=equipments.findAll();var selection=carrierSelection(carrier,effectiveDate,allowDefaultFallback,eq);
+        return cargos.findByProjectIdOrderByItemNo(id).stream().map(c -> {
+            Map<String,Object> value=json.convertValue(analysis.analyze(c,eq,selection.rules()),new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){});
+            value.put("ruleSelection",selection.ruleSelection());return value;
+        }).toList();
+    }
+    private CarrierRuleService.Selection carrierSelection(String carrier,java.time.LocalDate effectiveDate,boolean allowFallback,List<Equipment> eq) {
+        java.time.LocalDate date=effectiveDate==null?java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")):effectiveDate;
+        return new CarrierRuleService(jdbc).resolve(VerifiedActor.tenantId(),carrier,date,allowFallback,eq,rules.findAll());
     }
     @PostMapping("/imports/preview") public Object preview(@RequestParam MultipartFile file,@RequestParam(defaultValue="0") int sheet,@RequestParam(defaultValue="0") int header,
         @RequestParam(defaultValue="1") int headerRows) throws Exception {
@@ -99,7 +111,7 @@ public class OogController {
         String name=importFileName(file).toLowerCase(Locale.ROOT);
         if(file.isEmpty()||file.getSize()>15*1024*1024||!(name.endsWith(".xlsx")||name.endsWith(".xls")))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"15MB 이하 Excel 파일을 선택하세요");
-        try(var input=file.getInputStream()){return WorkbookFactory.create(input);}
+        try(var input=file.getInputStream()){try{return ExcelWorkbookReader.read(input);}catch(java.io.IOException e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"읽을 수 없는 Excel/HTML 표 파일입니다: "+e.getMessage());}}
     }
     private String importFileName(MultipartFile file) {
         String name=Optional.ofNullable(file.getOriginalFilename()).orElse("").replace('\\','/');
@@ -111,8 +123,9 @@ public class OogController {
     @PostMapping("/projects/{id}/imports") @Transactional(rollbackFor=Exception.class) public Object importExcel(@PathVariable UUID id,@RequestParam MultipartFile file,
         @RequestParam String mapping,@RequestParam(defaultValue="0") int sheet,@RequestParam(defaultValue="0") int header,
         @RequestParam(defaultValue="mm") String lengthUnit,@RequestParam(defaultValue="kg") String weightUnit,
-        @RequestParam(defaultValue="1") int headerRows,@RequestParam(defaultValue="PER_PIECE") String weightBasis,Principal user) throws Exception {
-        project(id);com.fasterxml.jackson.databind.JsonNode map;
+        @RequestParam(defaultValue="1") int headerRows,@RequestParam(defaultValue="PER_PIECE") String weightBasis,
+        @RequestParam(required=false) UUID templateId,Principal user) throws Exception {
+        var ownerProject=project(id);com.fasterxml.jackson.databind.JsonNode map;
         try {map=json.readTree(mapping);}catch(com.fasterxml.jackson.core.JsonProcessingException e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"컬럼 매핑 JSON 오류");}
         var importer=new ImportMappingService();
         try {
@@ -125,11 +138,20 @@ public class OogController {
         double lm=switch(lengthUnit) {case "mm"->1;case "cm"->10;case "m"->1000;default->throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"길이 단위 오류");};
         double wm=switch(weightUnit) {case "kg"->1;case "ton"->1000;default->throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"중량 단위 오류");};
         List<Cargo> values=new ArrayList<>();List<String> errors=new ArrayList<>();Set<String> items=new HashSet<>();
+        var metadata=new LinkedHashMap<String,Object>();metadata.put("columns",map);metadata.put("sheet",sheet);metadata.put("header",header);metadata.put("headerRows",headerRows);metadata.put("lengthUnit",lengthUnit);metadata.put("weightUnit",weightUnit);metadata.put("weightBasis",weightBasis);
         cargos.findByProjectIdOrderByItemNo(id).forEach(c -> items.add(c.itemNo));
         try(var wb=workbook(file)) {
             if(sheet<0||sheet>=wb.getNumberOfSheets()||header<0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"시트/헤더 행 오류");
             var s=wb.getSheetAt(sheet);if(s.getLastRowNum()>10000) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"최대 10,000행까지 지원합니다");
             try {importer.checkHeaders(s,header,headerRows);}catch(IllegalArgumentException e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage());}
+            if(templateId!=null){
+                var templates=jdbc.queryForList("select customer,version,header_fingerprint,detail::text from oog_import_template where id=? and tenant_id=?",templateId,VerifiedActor.tenantId());
+                if(templates.isEmpty())throw new ResponseStatusException(HttpStatus.NOT_FOUND,"선택한 매핑 템플릿을 찾을 수 없습니다");
+                var template=templates.getFirst();var detail=json.readTree(template.get("detail").toString());
+                var headers=json.convertValue(importer.suggest(s,header,headerRows).get("combinedHeaders"),new com.fasterxml.jackson.core.type.TypeReference<List<String>>(){});
+                if(!Objects.toString(ownerProject.customer,"").trim().equals(template.get("customer"))||!ImportTemplateService.fingerprint(headers).equals(template.get("header_fingerprint"))||!detail.path("mapping").equals(map)||!lengthUnit.equals(detail.path("lengthUnit").asText())||!weightUnit.equals(detail.path("weightUnit").asText())||!weightBasis.equals(detail.path("weightBasis").asText()))throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"템플릿과 현재 고객·헤더·매핑·단위가 다릅니다. 수동 설정으로 다시 확인하세요");
+                metadata.put("templateId",templateId);metadata.put("templateVersion",template.get("version"));
+            }
             var fmt=new DataFormatter();
             for(int i=header+headerRows;i<=s.getLastRowNum();i++) {
                 var row=s.getRow(i);if(row==null) continue;
@@ -152,31 +174,42 @@ public class OogController {
         });
         Files.createDirectories(target.getParent());file.transferTo(target);
         jdbc.update("insert into oog_packing_list(id,project_id,original_name,relative_path,mapping) values(?,?,?,?,cast(? as jsonb))",uploadId,id,
-            originalName,relative,json.writeValueAsString(Map.of("columns",map,"sheet",sheet,"header",header,"headerRows",headerRows,"lengthUnit",lengthUnit,"weightUnit",weightUnit,"weightBasis",weightBasis)));
+            originalName,relative,json.writeValueAsString(metadata));
         audit(id,"PACKING_LIST_IMPORTED",Map.of("count",values.size(),"uploadId",uploadId),user);
         return Map.of("imported",values.size(),"errors",List.of());
     }
-    @PostMapping("/projects/{id}/plans") @Transactional public Object plan(@PathVariable UUID id,Principal user) throws Exception {
+    @PostMapping("/projects/{id}/plans") @Transactional public Object plan(@PathVariable UUID id,Principal user,
+        @RequestParam(defaultValue="DEFAULT") String carrier,@RequestParam(required=false) java.time.LocalDate effectiveDate,
+        @RequestParam(defaultValue="true") boolean allowDefaultFallback,
+        @RequestParam(defaultValue="AUTO") String planningMode,@RequestParam(defaultValue="3") double timeLimitSeconds) throws Exception {
         project(id);var cargo=cargos.findByProjectIdOrderByItemNo(id);
         if(cargo.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"화물을 먼저 등록하세요");
-        var input=Map.of("cargos",cargo,"equipment",equipments.findAll(),"rules",rules.findAll());
+        var eq=equipments.findAll();var selection=carrierSelection(carrier,effectiveDate,allowDefaultFallback,eq);
+        if(!Set.of("AUTO","HEURISTIC").contains(planningMode)||!Double.isFinite(timeLimitSeconds)||timeLimitSeconds<0.05||timeLimitSeconds>10)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"계획 방식 또는 계산 시간 범위 오류");
+        var input=Map.of("cargos",cargo,"equipment",eq,"rules",selection.rules(),"ruleSelection",selection.ruleSelection(),"planningMode",planningMode,"timeLimitSeconds",timeLimitSeconds);
         Object result;
         try {result=optimizer.post().uri("/optimize").body(input).retrieve().body(Object.class);}
         catch(org.springframework.web.client.RestClientException ex) {throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,"최적화 서비스를 실행하거나 입력 제약을 확인하세요");}
+        if(!(result instanceof Map<?,?>))throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,"최적화 응답 오류");
+        Map<String,Object> snapshot=json.convertValue(result,new com.fasterxml.jackson.core.type.TypeReference<Map<String,Object>>(){});
+        snapshot.put("ruleSelection",selection.ruleSelection());result=snapshot;
         UUID scenario=UUID.randomUUID();jdbc.update("insert into oog_clp_scenario(id,project_id,result,input_snapshot) values(?,?,cast(? as jsonb),cast(? as jsonb))",scenario,id,json.writeValueAsString(result),json.writeValueAsString(input));
         audit(id,"CLP_GENERATED",Map.of("scenarioId",scenario),user);return Map.of("id",scenario,"result",result);
     }
     @GetMapping("/projects/{id}/plans") public Object plans(@PathVariable UUID id) {project(id);return jdbc.queryForList("select id,result,created_at from oog_clp_scenario where project_id=? order by created_at desc limit 20",id);}
-    @GetMapping("/projects/{id}/export") public ResponseEntity<byte[]> export(@PathVariable UUID id) throws Exception {
+    @GetMapping("/projects/{id}/export") public ResponseEntity<byte[]> export(@PathVariable UUID id,@RequestParam(defaultValue="DEFAULT") String carrier,
+        @RequestParam(required=false) java.time.LocalDate effectiveDate,@RequestParam(defaultValue="true") boolean allowDefaultFallback) throws Exception {
         project(id);try(var wb=new org.apache.poi.xssf.usermodel.XSSFWorkbook();var out=new java.io.ByteArrayOutputStream()) {
             var s=wb.createSheet("OOG Analysis");var h=s.createRow(0);String[] headers={"Item","Description","Qty","L mm","W mm","H mm","GW kg per piece","CBM total","Class (40HC rule)","Recommendation","Warnings"};
             for(int i=0;i<headers.length;i++) h.createCell(i).setCellValue(headers[i]);int row=1;
-            var eq=equipments.findAll();var rs=rules.findAll();
+            var eq=equipments.findAll();var selection=carrierSelection(carrier,effectiveDate,allowDefaultFallback,eq);var rs=selection.rules();
             for(var c:cargos.findByProjectIdOrderByItemNo(id)) {
                 var a=analysis.analyze(c,eq,rs);var r=s.createRow(row++);String[] v={c.itemNo,c.description,""+c.quantity,""+c.length,""+c.width,""+c.height,""+c.grossWeight,""+a.cbm(),String.join(" + ",a.classification()),a.recommended(),String.join(" / ",a.warnings())};
                 for(int i=0;i<v.length;i++) r.createCell(i).setCellValue(v[i]==null?"":v[i]);
             }
-            for(int i=0;i<headers.length;i++) s.setColumnWidth(i,i==10?15000:6000);wb.write(out);
+            for(int i=0;i<headers.length;i++) s.setColumnWidth(i,i==10?15000:6000);
+            var selected=wb.createSheet("Rule Selection");PlanningExportController.selectionMetadata(selected,0,json.valueToTree(selection.ruleSelection()));
+            for(int i=0;i<7;i++)selected.setColumnWidth(i,6000);wb.write(out);
             return ResponseEntity.ok().header("Content-Disposition","attachment; filename=oog-analysis.xlsx").contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")).body(out.toByteArray());
         }
     }
